@@ -1,4 +1,4 @@
-%define date 20130426
+%define date 20131021
 
 Name: sddm
 Summary: Lightweight display manager
@@ -14,6 +14,7 @@ URL: https://github.com/sddm
 Group: Graphical desktop/KDE
 License: GPLv2
 BuildRequires: pkgconfig(QtCore) pkgconfig(QtGui) pkgconfig(QtDeclarative)
+BuildRequires: pkgconfig(systemd)
 
 %description
 Lightweight display manager (login screen)
