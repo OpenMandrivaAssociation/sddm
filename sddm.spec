@@ -15,6 +15,7 @@ Group: Graphical desktop/KDE
 License: GPLv2
 BuildRequires: pkgconfig(QtCore) pkgconfig(QtGui) pkgconfig(QtDeclarative)
 BuildRequires: pkgconfig(systemd)
+BuildRequires: kde4-macros
 
 %description
 Lightweight display manager (login screen)
