@@ -4,12 +4,13 @@ Name: sddm
 Summary: Lightweight display manager
 Version: 0.1
 %if %date
-Release: 0.%date.1
+Release: 0.%date.2
 # Packaged from git for the time being -- no download URL available
 Source0: sddm-%date.tar.xz
 %else
 Release: 1
 %endif
+Patch0: sddm-config.patch
 URL: https://github.com/sddm
 Group: Graphical desktop/KDE
 License: GPLv2
@@ -22,6 +23,7 @@ Lightweight display manager (login screen)
 
 %prep
 %setup -q -n %name-%date
+%apply_patches
 %cmake_kde4
 
 %build
