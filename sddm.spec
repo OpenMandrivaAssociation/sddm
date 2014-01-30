@@ -1,22 +1,24 @@
-%define date 20131021
+%define date 20140130
 
 Name: sddm
 Summary: Lightweight display manager
 Version: 0.1
 %if %date
-Release: 0.%date.2
+Release: 0.%date.1
 # Packaged from git for the time being -- no download URL available
 Source0: sddm-%date.tar.xz
 %else
-Release: 5
+Release: 1
 %endif
 Patch0: sddm-config.patch
 URL: https://github.com/sddm
 Group: Graphical desktop/KDE
 License: GPLv2
-BuildRequires: pkgconfig(QtCore) pkgconfig(QtGui) pkgconfig(QtDeclarative)
+BuildRequires: cmake
+BuildRequires: pkgconfig(Qt5Core) pkgconfig(Qt5Gui) pkgconfig(Qt5Declarative) pkgconfig(Qt5DBus) pkgconfig(Qt5Quick)
 BuildRequires: pkgconfig(systemd)
-BuildRequires: kde4-macros
+BuildRequires: qt5-linguist-tools
+BuildRequires: qmake5
 
 %description
 Lightweight display manager (login screen)
@@ -24,7 +26,7 @@ Lightweight display manager (login screen)
 %prep
 %setup -q -n %name-%date
 %apply_patches
-%cmake_kde4
+%cmake -DUSE_QT5:BOOL=ON
 
 %build
 cd build
@@ -42,4 +44,4 @@ cd build
 %_sysconfdir/pam.d/%name
 %config(noreplace) %_sysconfdir/%name.conf
 /lib/systemd/system/%name.service
-%_prefix/lib/qt4/imports/SddmComponents
+%_libdir/qt5/qml/SddmComponents
