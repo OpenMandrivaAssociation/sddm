@@ -1,8 +1,8 @@
-%define date 20140130
+%define date 20140309
 
 Name: sddm
 Summary: Lightweight display manager
-Version: 0.1
+Version: 0.1.1
 %if %date
 Release: 0.%date.1
 # Packaged from git for the time being -- no download URL available
@@ -11,6 +11,7 @@ Source0: sddm-%date.tar.xz
 Release: 1
 %endif
 Patch0: sddm-config.patch
+Patch1: sddm-20140309-systemd.patch
 URL: https://github.com/sddm
 Group: Graphical desktop/KDE
 License: GPLv2
@@ -18,7 +19,7 @@ BuildRequires: cmake
 BuildRequires: pkgconfig(Qt5Core) pkgconfig(Qt5Gui) pkgconfig(Qt5Declarative) pkgconfig(Qt5DBus) pkgconfig(Qt5Quick)
 BuildRequires: pkgconfig(systemd)
 BuildRequires: qt5-linguist-tools
-BuildRequires: qmake5
+BuildRequires: qmake5 ninja
 
 %description
 Lightweight display manager (login screen)
@@ -26,15 +27,14 @@ Lightweight display manager (login screen)
 %prep
 %setup -q -n %name-%date
 %apply_patches
-%cmake -DUSE_QT5:BOOL=ON
+sed -i -e 's,system-login,system-auth,g' services/*.pam
+%cmake -DUSE_QT5:BOOL=ON -G Ninja
 
 %build
-cd build
-%make
+ninja -C build
 
 %install
-cd build
-%makeinstall_std
+DESTDIR="%{buildroot}" ninja install -C build
 
 %files
 %_bindir/%name

@@ -1,0 +1,11 @@
+--- sddm-20140309/services/sddm.systemd.in.omv~	2014-03-09 10:17:08.830220076 +0100
++++ sddm-20140309/services/sddm.systemd.in	2014-03-09 10:18:20.873319414 +0100
+@@ -1,6 +1,7 @@
+ [Unit]
+ Description=Simple Desktop Display Manager
+-After=systemd-user-sessions.service
++After=livesys-late.service systemd-user-sessions.service getty@tty1.service plymouth-quit.service
++Conflicts=getty@tty1.service
+ 
+ [Service]
+ ExecStart=@BIN_INSTALL_DIR@/sddm
