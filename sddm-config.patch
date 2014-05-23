@@ -1,5 +1,5 @@
---- sddm-20131021/data/sddm.conf.in.omv~	2013-10-23 01:43:48.579923302 +0200
-+++ sddm-20131021/data/sddm.conf.in	2013-10-23 01:52:37.284313587 +0200
+--- sddm-20140523/data/sddm.conf.in.0000~	2014-05-23 01:20:41.000000000 +0200
++++ sddm-20140523/data/sddm.conf.in	2014-05-23 21:46:59.109374015 +0200
 @@ -21,7 +21,7 @@ RebootCommand=@REBOOT_COMMAND@
  
  # Path of the directory containing session files,
@@ -9,6 +9,15 @@
  
  # Name of the session file of the last session
  # selected. This session will be preselected when
+@@ -35,7 +35,7 @@ LastSession=
+ RememberLastSession=true
+ 
+ # Path of script to execute when starting the desktop session
+-SessionCommand=${DATA_INSTALL_DIR}/scripts/Xsession
++SessionCommand=/etc/X11/Xsession
+ 
+ # Path of the directory containing face files
+ # Face files should be in username.face.icon format
 @@ -49,7 +49,7 @@ CurrentTheme=maui
  
  # Minimum user id of the users to be listed in the
@@ -18,3 +27,17 @@
  
  # Maximum user id of the users to be listed in the
  # user interface
+--- sddm-20140523/data/CMakeLists.txt.omv~	2014-05-23 21:48:27.231667181 +0200
++++ sddm-20140523/data/CMakeLists.txt	2014-05-23 21:48:31.092592399 +0200
+@@ -8,11 +8,6 @@ install(FILES       "${CMAKE_BINARY_DIR}
+ 
+ install(FILES org.freedesktop.DisplayManager.conf       DESTINATION ${DBUS_CONFIG_DIR})
+ 
+-install(FILES scripts/Xsession DESTINATION ${DATA_INSTALL_DIR}/scripts
+-        PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE
+-        GROUP_READ GROUP_EXECUTE
+-        WORLD_READ WORLD_EXECUTE)
+-
+ if(BUILD_MAN_PAGES)
+     add_subdirectory(man)
+ endif()

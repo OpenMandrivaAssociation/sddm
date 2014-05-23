@@ -4,7 +4,7 @@ Name: sddm
 Summary: Lightweight display manager
 Version: 0.1.1
 %if %date
-Release: 0.%date.1
+Release: 0.%date.2
 # Packaged from git for the time being -- no download URL available
 Source0: sddm-%date.tar.xz
 %else
@@ -21,6 +21,8 @@ BuildRequires: pkgconfig(systemd) pkgconfig(libsystemd-journal)
 BuildRequires: pam-devel
 BuildRequires: qt5-linguist-tools
 BuildRequires: qmake5 ninja
+# For /etc/X11/Xsession
+Requires: xinitrc
 
 %description
 Lightweight display manager (login screen)
