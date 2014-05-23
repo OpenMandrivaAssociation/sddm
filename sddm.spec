@@ -1,4 +1,4 @@
-%define date 20140309
+%define date 20140523
 
 Name: sddm
 Summary: Lightweight display manager
