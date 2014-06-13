@@ -8,7 +8,7 @@ Release: 0.%date.2
 # Packaged from git for the time being -- no download URL available
 Source0: sddm-%date.tar.xz
 %else
-Release: 1
+Release: 2
 %endif
 Patch0: sddm-config.patch
 Patch1: sddm-20140309-systemd.patch
