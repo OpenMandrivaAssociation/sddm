@@ -1,17 +1,16 @@
-%define date 20140523
+%define date 20140629
 
 Name: sddm
 Summary: Lightweight display manager
 Version: 0.1.1
 %if %date
-Release: 0.%date.2
+Release: 0.%date.1
 # Packaged from git for the time being -- no download URL available
 Source0: sddm-%date.tar.xz
 %else
-Release: 2
+Release: 1
 %endif
 Patch0: sddm-config.patch
-Patch1: sddm-20140309-systemd.patch
 URL: https://github.com/sddm
 Group: Graphical desktop/KDE
 License: GPLv2
@@ -31,7 +30,10 @@ Lightweight display manager (login screen)
 %setup -q -n %name-%date
 %apply_patches
 sed -i -e 's,system-login,system-auth,g' services/*.pam
-%cmake -DUSE_QT5:BOOL=ON -G Ninja
+%cmake \
+	-DUSE_QT5:BOOL=ON \
+	-DSESSION_COMMAND:FILEPATH=/etc/X11/Xsession \
+	-G Ninja
 
 %build
 ninja -C build
@@ -42,9 +44,18 @@ DESTDIR="%{buildroot}" ninja install -C build
 %files
 %_bindir/%name
 %_bindir/%name-greeter
-%_datadir/apps/%name
+%_datadir/%name
 %_sysconfdir/dbus-1/system.d/org.freedesktop.DisplayManager.conf
 %_sysconfdir/pam.d/%name
+%_sysconfdir/pam.d/%name-greeter
+%_sysconfdir/pam.d/%name-autologin
+%_libexecdir/sddm-helper
 %config(noreplace) %_sysconfdir/%name.conf
 /lib/systemd/system/%name.service
 %_libdir/qt5/qml/SddmComponents
+
+%pre
+%_pre_useradd sddm %_datadir/%name /bin/false
+
+%postun
+%_postun_userdel sddm
