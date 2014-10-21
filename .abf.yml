@@ -1,2 +1,4 @@
-sources:
+removed_sources:
   sddm-20140629.tar.xz: d2f06780d6c42996f3d43fd3e6a46eaf891b5766
+sources:
+  sddm-0.9.0.tar.gz: 7a4a1c831e2ba7db953391f64af46b297febea0d
