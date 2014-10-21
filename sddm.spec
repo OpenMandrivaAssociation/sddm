@@ -27,7 +27,7 @@ Requires: xinitrc
 Lightweight display manager (login screen)
 
 %prep
-%setup -q -n %{name}-%date
+%setup -qn %{name}-%{version}
 %apply_patches
 sed -i -e 's,system-login,system-auth,g' services/*.pam
 %cmake \
