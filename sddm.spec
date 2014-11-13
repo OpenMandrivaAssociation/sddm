@@ -1,14 +1,15 @@
-%define date 20140629
+%define date 0
 
 Name: sddm
 Summary: Lightweight display manager
-Version: 0.1.1
+Version: 0.10.0
 %if %date
 Release: 0.%date.1
 # Packaged from git for the time being -- no download URL available
 Source0: sddm-%date.tar.xz
 %else
-Release: 2
+Release: 1
+Source0: https://github.com/sddm/sddm/archive/v%{version}.tar.gz
 %endif
 Patch0: sddm-config.patch
 URL: https://github.com/sddm
@@ -27,7 +28,11 @@ Requires: xinitrc
 Lightweight display manager (login screen)
 
 %prep
+%if %date
 %setup -q -n %name-%date
+%else
+%setup -q
+%endif
 %apply_patches
 sed -i -e 's,system-login,system-auth,g' services/*.pam
 %cmake \
@@ -50,7 +55,6 @@ DESTDIR="%{buildroot}" ninja install -C build
 %_sysconfdir/pam.d/%name-greeter
 %_sysconfdir/pam.d/%name-autologin
 %_libexecdir/sddm-helper
-%config(noreplace) %_sysconfdir/%name.conf
 /lib/systemd/system/%name.service
 %_libdir/qt5/qml/SddmComponents
 
