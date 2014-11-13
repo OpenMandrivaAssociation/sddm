@@ -17,6 +17,7 @@ Group: Graphical desktop/KDE
 License: GPLv2
 BuildRequires: cmake
 BuildRequires: pkgconfig(Qt5Core) pkgconfig(Qt5Gui) pkgconfig(Qt5Declarative) pkgconfig(Qt5DBus) pkgconfig(Qt5Quick)
+BuildRequires: pkgconfig(Qt5Test)
 BuildRequires: pkgconfig(systemd) pkgconfig(libsystemd-journal)
 BuildRequires: pam-devel
 BuildRequires: qt5-linguist-tools
