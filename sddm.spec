@@ -8,7 +8,7 @@ Release: 0.%date.1
 # Packaged from git for the time being -- no download URL available
 Source0: sddm-%date.tar.xz
 %else
-Release: 1
+Release: 2
 Source0: https://github.com/sddm/sddm/archive/v%{version}.tar.gz
 %endif
 Patch0: sddm-config.patch
