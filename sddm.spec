@@ -8,7 +8,7 @@ Release: 0.%date.1
 # Packaged from git for the time being -- no download URL available
 Source0: sddm-%date.tar.xz
 %else
-Release: 1
+Release: 2
 Source0: https://github.com/sddm/sddm/archive/%{name}-%{version}.tar.gz
 %endif
 Patch0: sddm-config.patch
@@ -24,6 +24,7 @@ BuildRequires: qt5-linguist-tools
 BuildRequires: qmake5 ninja
 # For /etc/X11/Xsession
 Requires: xinitrc
+Requires(post,preun):	rpm-helper
 
 %description
 Lightweight display manager (login screen)
@@ -39,6 +40,7 @@ sed -i -e 's,system-login,system-auth,g' services/*.pam
 %cmake \
 	-DUSE_QT5:BOOL=ON \
 	-DSESSION_COMMAND:FILEPATH=/etc/X11/Xsession \
+	-DENABLE_JOURNALD=ON \
 	-G Ninja
 
 %build
@@ -64,3 +66,9 @@ DESTDIR="%{buildroot}" ninja install -C build
 
 %postun
 %_postun_userdel sddm
+
+%post
+%systemd_post %{name}
+
+%preun
+%systemd_preun %{name}
