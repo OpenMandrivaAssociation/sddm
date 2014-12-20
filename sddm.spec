@@ -53,8 +53,8 @@ ninja -C build
 %install
 DESTDIR="%{buildroot}" ninja install -C build
 
-install -Dpm 644 %{SOURCE2} %{buildroot}%{_datadir}/X11/dm.d/11sddm.conf
-install -Dpm 644 %{SOURCE3} %{buildroot}%{_sysconfdir}/sddm.conf
+install -Dpm 644 %{SOURCE1} %{buildroot}%{_datadir}/X11/dm.d/11sddm.conf
+install -Dpm 644 %{SOURCE2} %{buildroot}%{_sysconfdir}/sddm.conf
 
 mkdir -p %{buildroot}%{_localstatedir}/lib/%{name}
 
