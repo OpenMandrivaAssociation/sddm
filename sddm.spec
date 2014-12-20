@@ -8,9 +8,12 @@ Release: 0.%date.1
 # Packaged from git for the time being -- no download URL available
 Source0: sddm-%date.tar.xz
 %else
-Release: 2
+Release: 3
 Source0: https://github.com/sddm/sddm/archive/%{name}-%{version}.tar.gz
 %endif
+# Adds sddm to drakedm
+Source1: 11sddm.conf
+Source2: sddm.conf
 Patch0: sddm-config.patch
 URL: https://github.com/sddm
 Group: Graphical desktop/KDE
@@ -36,6 +39,7 @@ Lightweight display manager (login screen)
 %setup -q
 %endif
 %apply_patches
+
 sed -i -e 's,system-login,system-auth,g' services/*.pam
 %cmake \
 	-DUSE_QT5:BOOL=ON \
@@ -49,20 +53,13 @@ ninja -C build
 %install
 DESTDIR="%{buildroot}" ninja install -C build
 
-%files
-%_bindir/%name
-%_bindir/%name-greeter
-%_datadir/%name
-%_sysconfdir/dbus-1/system.d/org.freedesktop.DisplayManager.conf
-%_sysconfdir/pam.d/%name
-%_sysconfdir/pam.d/%name-greeter
-%_sysconfdir/pam.d/%name-autologin
-%_libexecdir/sddm-helper
-/lib/systemd/system/%name.service
-%_libdir/qt5/qml/SddmComponents
+install -Dpm 644 %{SOURCE2} %{buildroot}%{_datadir}/X11/dm.d/11sddm.conf
+install -Dpm 644 %{SOURCE3} %{buildroot}%{_sysconfdir}/sddm.conf
+
+mkdir -p %{buildroot}%{_localstatedir}/lib/%{name}
 
 %pre
-%_pre_useradd sddm %_datadir/%name /bin/false
+%_pre_useradd sddm %{_datadir}/%{name} /bin/false
 
 %postun
 %_postun_userdel sddm
@@ -72,3 +69,18 @@ DESTDIR="%{buildroot}" ninja install -C build
 
 %preun
 %systemd_preun %{name}
+
+%files
+%{_bindir}/%{name}
+%{_bindir}/%{name}-greeter
+%{_datadir}/%{name}
+%config(noreplace) %{_sysconfdir}/sddm.conf
+%{_sysconfdir}/dbus-1/system.d/org.freedesktop.DisplayManager.conf
+%{_sysconfdir}/pam.d/%name
+%{_sysconfdir}/pam.d/%name-greeter
+%{_sysconfdir}/pam.d/%name-autologin
+%{_libexecdir}/sddm-helper
+/lib/systemd/system/%name.service
+%{_libdir}/qt5/qml/SddmComponents
+%{_datadir}/X11/dm.d/11sddm.conf
+%{_localstatedir}/lib/%{name}
