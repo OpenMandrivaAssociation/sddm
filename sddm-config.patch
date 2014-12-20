@@ -1,20 +1,11 @@
---- sddm-20131021/data/sddm.conf.in.omv~	2013-10-23 01:43:48.579923302 +0200
-+++ sddm-20131021/data/sddm.conf.in	2013-10-23 01:52:37.284313587 +0200
-@@ -21,7 +21,7 @@ RebootCommand=@REBOOT_COMMAND@
+--- sddm-20140629/data/CMakeLists.txt.0000~	2014-06-29 14:22:46.598456928 +0200
++++ sddm-20140629/data/CMakeLists.txt	2014-06-29 14:23:53.470620911 +0200
+@@ -8,7 +8,7 @@ install(FILES       "${CMAKE_BINARY_DIR}
  
- # Path of the directory containing session files,
- # e.g kde-plasma.desktop
--SessionsDir=/usr/share/xsessions
-+SessionsDir=/usr/share/apps/kdm/sessions
+ install(FILES "org.freedesktop.DisplayManager.conf"       DESTINATION "${DBUS_CONFIG_DIR}")
  
- # Name of the session file of the last session
- # selected. This session will be preselected when
-@@ -49,7 +49,7 @@ CurrentTheme=maui
- 
- # Minimum user id of the users to be listed in the
- # user interface
--MinimumUid=1000
-+MinimumUid=500
- 
- # Maximum user id of the users to be listed in the
- # user interface
+-install(FILES "scripts/Xsession" "scripts/Xsetup" DESTINATION "${DATA_INSTALL_DIR}/scripts"
++install(FILES "scripts/Xsetup" DESTINATION "${DATA_INSTALL_DIR}/scripts"
+         PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE
+         GROUP_READ GROUP_EXECUTE
+         WORLD_READ WORLD_EXECUTE)
