@@ -16,6 +16,7 @@ Source1: 11sddm.conf
 Source2: sddm.conf
 Source3: sddm.pam
 Source4: sddm-autologin.pam
+Source5: tmpfiles-sddm.conf
 Patch0: sddm-config.patch
 URL: https://github.com/sddm
 Group: Graphical desktop/KDE
@@ -61,6 +62,7 @@ install -Dpm 644 %{SOURCE1} %{buildroot}%{_datadir}/X11/dm.d/11sddm.conf
 install -Dpm 644 %{SOURCE2} %{buildroot}%{_sysconfdir}/sddm.conf
 install -Dpm 644 %{SOURCE3} %{buildroot}%{_sysconfdir}/pam.d/sddm
 install -Dpm 644 %{SOURCE4} %{buildroot}%{_sysconfdir}/pam.d/sddm-autologin
+install -Dpm 644 %{SOURCE5} %{buildroot}%{_tmpfilesdir}/sddm.conf
 
 mkdir -p %{buildroot}%{_localstatedir}/lib/%{name}
 
@@ -71,6 +73,7 @@ mkdir -p %{buildroot}%{_localstatedir}/lib/%{name}
 %_postun_userdel sddm
 
 %post
+%tmpfiles_create %{name}.conf
 %systemd_post %{name}
 
 %preun
@@ -85,6 +88,7 @@ mkdir -p %{buildroot}%{_localstatedir}/lib/%{name}
 %{_sysconfdir}/pam.d/%{name}
 %{_sysconfdir}/pam.d/%{name}-greeter
 %{_sysconfdir}/pam.d/%{name}-autologin
+%{_tmpfilesdir}/sddm.conf
 %{_libexecdir}/sddm-helper
 %{_unitdir}/%{name}.service
 %{_libdir}/qt5/qml/SddmComponents
