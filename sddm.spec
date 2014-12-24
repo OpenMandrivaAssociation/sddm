@@ -8,12 +8,14 @@ Release: 0.%date.1
 # Packaged from git for the time being -- no download URL available
 Source0: sddm-%date.tar.xz
 %else
-Release: 5
+Release: 6
 Source0: https://github.com/sddm/sddm/archive/%{name}-%{version}.tar.gz
 %endif
 # Adds sddm to drakedm
 Source1: 11sddm.conf
 Source2: sddm.conf
+Source3: sddm.pam
+Source4: sddm-autologin.pam
 Patch0: sddm-config.patch
 URL: https://github.com/sddm
 Group: Graphical desktop/KDE
@@ -57,6 +59,8 @@ DESTDIR="%{buildroot}" ninja install -C build
 
 install -Dpm 644 %{SOURCE1} %{buildroot}%{_datadir}/X11/dm.d/11sddm.conf
 install -Dpm 644 %{SOURCE2} %{buildroot}%{_sysconfdir}/sddm.conf
+install -Dpm 644 %{SOURCE3} %{buildroot}%{_sysconfdir}/pam.d/sddm
+install -Dpm 644 %{SOURCE4} %{buildroot}%{_sysconfdir}/pam.d/sddm-autologin
 
 mkdir -p %{buildroot}%{_localstatedir}/lib/%{name}
 
@@ -78,11 +82,11 @@ mkdir -p %{buildroot}%{_localstatedir}/lib/%{name}
 %{_datadir}/%{name}
 %config(noreplace) %{_sysconfdir}/sddm.conf
 %{_sysconfdir}/dbus-1/system.d/org.freedesktop.DisplayManager.conf
-%{_sysconfdir}/pam.d/%name
-%{_sysconfdir}/pam.d/%name-greeter
-%{_sysconfdir}/pam.d/%name-autologin
+%{_sysconfdir}/pam.d/%{name}
+%{_sysconfdir}/pam.d/%{name}-greeter
+%{_sysconfdir}/pam.d/%{name}-autologin
 %{_libexecdir}/sddm-helper
-/lib/systemd/system/%name.service
+%{_unitdir}/%{name}.service
 %{_libdir}/qt5/qml/SddmComponents
 %{_datadir}/X11/dm.d/11sddm.conf
 %{_localstatedir}/lib/%{name}
