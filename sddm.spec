@@ -8,7 +8,7 @@ Release: 0.%date.1
 # Packaged from git for the time being -- no download URL available
 Source0: sddm-%date.tar.xz
 %else
-Release: 7
+Release: 8
 Source0: https://github.com/sddm/sddm/archive/%{name}-%{version}.tar.gz
 %endif
 # Adds sddm to drakedm
@@ -22,12 +22,18 @@ URL: https://github.com/sddm
 Group: Graphical desktop/KDE
 License: GPLv2
 BuildRequires: cmake
-BuildRequires: pkgconfig(Qt5Core) pkgconfig(Qt5Gui) pkgconfig(Qt5Declarative) pkgconfig(Qt5DBus) pkgconfig(Qt5Quick)
+BuildRequires: pkgconfig(Qt5Core)
+BuildRequires: pkgconfig(Qt5Gui)
+BuildRequires: pkgconfig(Qt5Declarative)
+BuildRequires: pkgconfig(Qt5DBus)
+BuildRequires: pkgconfig(Qt5Quick)
 BuildRequires: pkgconfig(Qt5Test)
-BuildRequires: pkgconfig(systemd) pkgconfig(libsystemd-journal)
+BuildRequires: pkgconfig(systemd)
+BuildRequires: pkgconfig(libsystemd-journal)
 BuildRequires: pam-devel
 BuildRequires: qt5-linguist-tools
-BuildRequires: qmake5 ninja
+BuildRequires: qmake5
+BuildRequires: ninja
 # For /etc/X11/Xsession
 Requires: xinitrc
 Requires(post,preun):	rpm-helper
@@ -66,6 +72,8 @@ install -Dpm 644 %{SOURCE4} %{buildroot}%{_sysconfdir}/pam.d/sddm-autologin
 install -Dpm 644 %{SOURCE5} %{buildroot}%{_tmpfilesdir}/sddm.conf
 
 mkdir -p %{buildroot}%{_localstatedir}/lib/%{name}
+# use default.png as sddm background
+sed -i -e 's,\(^background=\).*,\1%{_datadir}/mdk/backgrounds/default.png,' data/themes/*/theme.conf
 
 %pre
 %_pre_useradd sddm %{_datadir}/%{name} /bin/false
