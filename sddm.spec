@@ -8,7 +8,7 @@ Release: 0.%date.1
 # Packaged from git for the time being -- no download URL available
 Source0: sddm-%date.tar.xz
 %else
-Release: 8
+Release: 9
 Source0: https://github.com/sddm/sddm/archive/%{name}-%{version}.tar.gz
 %endif
 # Adds sddm to drakedm
@@ -18,6 +18,7 @@ Source3: sddm.pam
 Source4: sddm-autologin.pam
 Source5: tmpfiles-sddm.conf
 Patch0: sddm-config.patch
+Patch1:	sddm-wait-for-display-script.patch
 URL: https://github.com/sddm
 Group: Graphical desktop/KDE
 License: GPLv2

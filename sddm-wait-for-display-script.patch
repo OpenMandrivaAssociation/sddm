@@ -1,0 +1,24 @@
+From 846dd0bb3e96ef9acb176a3b1c76ceb81d865369 Mon Sep 17 00:00:00 2001
+From: Robert Xu <robxu9@gmail.com>
+Date: Wed, 14 Jan 2015 20:00:36 -0600
+Subject: [PATCH] wait for the display script to complete
+
+---
+ src/daemon/XorgDisplayServer.cpp | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/src/daemon/XorgDisplayServer.cpp b/src/daemon/XorgDisplayServer.cpp
+index 6400228..a0e5ee0 100644
+--- a/src/daemon/XorgDisplayServer.cpp
++++ b/src/daemon/XorgDisplayServer.cpp
+@@ -260,6 +260,7 @@ namespace SDDM {
+         // start display setup script
+         qDebug() << "Running display setup script " << displayCommand;
+         displayScript->start(displayCommand);
++        displayScript->waitForFinished(-1);
+     }
+ 
+     void XorgDisplayServer::changeOwner(const QString &fileName) {
+-- 
+2.2.1
+
