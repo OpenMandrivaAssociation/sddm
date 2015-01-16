@@ -8,7 +8,7 @@ Release: 0.%date.1
 # Packaged from git for the time being -- no download URL available
 Source0: sddm-%date.tar.xz
 %else
-Release: 9
+Release: 10
 Source0: https://github.com/sddm/sddm/archive/%{name}-%{version}.tar.gz
 %endif
 # Adds sddm to drakedm
@@ -73,8 +73,9 @@ install -Dpm 644 %{SOURCE4} %{buildroot}%{_sysconfdir}/pam.d/sddm-autologin
 install -Dpm 644 %{SOURCE5} %{buildroot}%{_tmpfilesdir}/sddm.conf
 
 mkdir -p %{buildroot}%{_localstatedir}/lib/%{name}
+
 # use default.png as sddm background
-sed -i -e 's,\(^background=\).*,\1%{_datadir}/mdk/backgrounds/default.png,' data/themes/*/theme.conf
+sed -i -e 's,\(^background=\).*,\1%{_datadir}/mdk/backgrounds/default.png,' %{buildroot}%{_datadir}/sddm/themes/*/theme.conf
 
 %pre
 %_pre_useradd sddm %{_datadir}/%{name} /bin/false
