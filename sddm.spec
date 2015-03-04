@@ -8,7 +8,7 @@ Release: 0.%date.1
 # Packaged from git for the time being -- no download URL available
 Source0: sddm-%date.tar.xz
 %else
-Release: 12
+Release: 13
 Source0: https://github.com/sddm/sddm/archive/%{name}-%{version}.tar.gz
 %endif
 # Adds sddm to drakedm
@@ -54,6 +54,7 @@ Lightweight display manager (login screen)
 %apply_patches
 
 sed -i -e 's,system-login,system-auth,g' services/*.pam
+
 %cmake \
 	-DUSE_QT5:BOOL=ON \
 	-DSESSION_COMMAND:FILEPATH=/etc/X11/Xsession \
@@ -82,13 +83,6 @@ sed -i -e 's,\(^background=\).*,\1%{_datadir}/mdk/backgrounds/default.png,' %{bu
 
 %postun
 %_postun_userdel sddm
-
-%post
-%tmpfiles_create %{name}.conf
-%systemd_post %{name}
-
-%preun
-%systemd_preun %{name}
 
 %files
 %{_bindir}/%{name}
