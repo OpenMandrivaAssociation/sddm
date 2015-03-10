@@ -8,7 +8,7 @@ Release: 0.%date.1
 # Packaged from git for the time being -- no download URL available
 Source0: sddm-%date.tar.xz
 %else
-Release: 14
+Release: 15
 Source0: https://github.com/sddm/sddm/archive/%{name}-%{version}.tar.gz
 %endif
 # Adds sddm to drakedm
@@ -79,7 +79,7 @@ mkdir -p %{buildroot}%{_localstatedir}/lib/%{name}
 sed -i -e 's,\(^background=\).*,\1%{_datadir}/mdk/backgrounds/default.png,' %{buildroot}%{_datadir}/sddm/themes/*/theme.conf
 
 %pre
-%_pre_useradd sddm %{_datadir}/%{name} /bin/false
+%_pre_useradd sddm %{_var}/lib/sddm /bin/false
 
 %postun
 %_postun_userdel sddm
