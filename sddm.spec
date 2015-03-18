@@ -8,7 +8,7 @@ Release: 0.%date.1
 # Packaged from git for the time being -- no download URL available
 Source0: sddm-%date.tar.xz
 %else
-Release: 16
+Release: 17
 Source0: https://github.com/sddm/sddm/archive/%{name}-%{version}.tar.gz
 %endif
 # Adds sddm to drakedm
@@ -40,7 +40,8 @@ Requires: xinitrc
 Requires(post,preun):	rpm-helper
 # needed to get xcb plugin on Qt platform
 Requires:	qt5-output-driver-default
-Requires:	%{_lib}qt5declarative5
+# needed for QtQuick
+Requires:	qt5-qtdeclarative
 
 %description
 Lightweight display manager (login screen)
