@@ -1,0 +1,25 @@
+From 40848edbf1708bfe2a6dde9944a988f7524a6346 Mon Sep 17 00:00:00 2001
+From: mscherer <misc@zarb.org>
+Date: Sun, 14 Dec 2014 17:31:12 +0100
+Subject: [PATCH 04/24] Fix one last typo
+
+---
+ README.md | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/README.md b/README.md
+index d181874..b76afbc 100644
+--- a/README.md
++++ b/README.md
+@@ -2,7 +2,7 @@
+ 
+ [![Build Status](https://travis-ci.org/sddm/sddm.svg?branch=master)](https://travis-ci.org/sddm/sddm)
+ 
+-SDDM is a modern display manager for X11 aiming to be fast, simple and beatiful. It uses modern technologies like QtQuick, which in turn gives the designer the ability to create smooth, animated user interfaces.
++SDDM is a modern display manager for X11 aiming to be fast, simple and beautiful. It uses modern technologies like QtQuick, which in turn gives the designer the ability to create smooth, animated user interfaces.
+ 
+ SDDM is extremely themeable. We put no restrictions on the user interface design, it is completely up to the designer. We simply provide a few callbacks to the user interface which can be used for authentication, suspend etc. To further ease theme creation we provide some premade components like a textbox, a combox etc.
+ 
+-- 
+1.9.0
+

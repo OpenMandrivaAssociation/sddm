@@ -1,0 +1,71 @@
+From fa80674c3e3b62820795afdf6ddd06f415acef88 Mon Sep 17 00:00:00 2001
+From: Mathieu Jobin <mathieu@justbudget.com>
+Date: Sat, 4 Apr 2015 09:53:19 -0400
+Subject: [PATCH 24/24] should there be a problem with the sddm user, be more
+ verbose instead of normal exit.
+
+---
+ src/helper/UserSession.cpp | 33 +++++++++++++++++++--------------
+ src/helper/UserSession.h   |  1 -
+ 2 files changed, 19 insertions(+), 15 deletions(-)
+
+diff --git a/src/helper/UserSession.cpp b/src/helper/UserSession.cpp
+index fe3f1d4..34b4aed 100644
+--- a/src/helper/UserSession.cpp
++++ b/src/helper/UserSession.cpp
+@@ -61,21 +61,26 @@ namespace SDDM {
+         return m_path;
+     }
+ 
+-    void UserSession::bail(int status) {
+-        emit finished(status, QProcess::NormalExit);
+-        exit(status);
+-    }
+-
+     void UserSession::setupChildProcess() {
+-        struct passwd *pw = getpwnam(qobject_cast<HelperApp*>(parent())->user().toLocal8Bit());
+-        if (setgid(pw->pw_gid) != 0)
+-            bail(2);
+-        if (initgroups(pw->pw_name, pw->pw_gid) != 0)
+-            bail(2);
+-        if (setuid(pw->pw_uid) != 0)
+-            bail(2);
+-        if (chdir(pw->pw_dir) != 0)
+-            bail(2);
++        const char  *username = qobject_cast<HelperApp*>(parent())->user().toLocal8Bit();
++        struct passwd *pw = getpwnam(username);
++        if (setgid(pw->pw_gid) != 0) {
++            qCritical() << "setgid(" << pw->pw_gid << ") failed for user: " << username;
++            exit(Auth::HELPER_OTHER_ERROR);
++        }
++        if (initgroups(pw->pw_name, pw->pw_gid) != 0) {
++            qCritical() << "initgroups(" << pw->pw_name << ", " << pw->pw_gid << ") failed for user: " << username;
++            exit(Auth::HELPER_OTHER_ERROR);
++        }
++        if (setuid(pw->pw_uid) != 0) {
++            qCritical() << "setuid(" << pw->pw_uid << ") failed for user: " << username;
++            exit(Auth::HELPER_OTHER_ERROR);
++        }
++        if (chdir(pw->pw_dir) != 0) {
++            qCritical() << "chdir(" << pw->pw_dir << ") failed for user: " << username;
++            qCritical() << "verify directory exist and has sufficient permissions";
++            exit(Auth::HELPER_OTHER_ERROR);
++        }
+ 
+         //we cannot use setStandardError file as this code is run in the child process
+         //we want to redirect after we setuid so that .xsession-errors is owned by the user
+diff --git a/src/helper/UserSession.h b/src/helper/UserSession.h
+index 98f7b26..f62fa24 100644
+--- a/src/helper/UserSession.h
++++ b/src/helper/UserSession.h
+@@ -40,7 +40,6 @@ namespace SDDM {
+         QString path() const;
+ 
+     protected:
+-        void bail(int status);
+         void setupChildProcess();
+ 
+     private:
+-- 
+1.9.0
+

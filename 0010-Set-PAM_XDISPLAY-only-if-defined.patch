@@ -1,0 +1,29 @@
+From a2518750a0f031bf8695ed95ccf2b0b94ca73220 Mon Sep 17 00:00:00 2001
+From: Pier Luigi Fiorini <pierluigi.fiorini@gmail.com>
+Date: Sat, 31 Jan 2015 12:38:59 +0100
+Subject: [PATCH 10/24] Set PAM_XDISPLAY only if defined
+
+PAM_XDISPLAY is Linux-PAM specific and cause build failures on *BSD.
+
+Closes: #353
+---
+ src/helper/backend/PamBackend.cpp | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/src/helper/backend/PamBackend.cpp b/src/helper/backend/PamBackend.cpp
+index 54c72e0..757f28b 100644
+--- a/src/helper/backend/PamBackend.cpp
++++ b/src/helper/backend/PamBackend.cpp
+@@ -251,7 +251,9 @@ namespace SDDM {
+         QProcessEnvironment sessionEnv = m_app->session()->processEnvironment();
+         QString display = sessionEnv.value("DISPLAY");
+         if (!display.isEmpty()) {
++#ifdef PAM_XDISPLAY
+             m_pam->setItem(PAM_XDISPLAY, qPrintable(display));
++#endif
+             m_pam->setItem(PAM_TTY, qPrintable(display));
+         }
+         if (!m_pam->putEnv(sessionEnv)) {
+-- 
+1.9.0
+

@@ -1,0 +1,40 @@
+From 82c19145ffeb748281f5a079714c6dbed574d863 Mon Sep 17 00:00:00 2001
+From: Pier Luigi Fiorini <pierluigi.fiorini@gmail.com>
+Date: Sat, 31 Jan 2015 17:09:03 +0100
+Subject: [PATCH 11/24] Include random to fix FreeBSD builds
+
+Issue: #353
+---
+ src/daemon/Utils.h               | 2 ++
+ src/daemon/XorgDisplayServer.cpp | 2 ++
+ 2 files changed, 4 insertions(+)
+
+diff --git a/src/daemon/Utils.h b/src/daemon/Utils.h
+index cab7d94..3722990 100644
+--- a/src/daemon/Utils.h
++++ b/src/daemon/Utils.h
+@@ -21,6 +21,8 @@
+ #ifndef SDDM_UTILS_H
+ #define SDDM_UTILS_H
+ 
++#include <random>
++
+ namespace SDDM {
+ 
+ inline QString generateName(int length) {
+diff --git a/src/daemon/XorgDisplayServer.cpp b/src/daemon/XorgDisplayServer.cpp
+index 6400228..a9c783c 100644
+--- a/src/daemon/XorgDisplayServer.cpp
++++ b/src/daemon/XorgDisplayServer.cpp
+@@ -30,6 +30,8 @@
+ #include <QProcess>
+ #include <QUuid>
+ 
++#include <random>
++
+ #include <xcb/xcb.h>
+ 
+ #include <pwd.h>
+-- 
+1.9.0
+

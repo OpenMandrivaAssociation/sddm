@@ -1,0 +1,90 @@
+From e05bacb60a80575b88a138f5b6f4d8255a2822d0 Mon Sep 17 00:00:00 2001
+From: Pier Luigi Fiorini <pierluigi.fiorini@gmail.com>
+Date: Sat, 31 Jan 2015 12:52:15 +0100
+Subject: [PATCH 07/24] Add Arabic translation
+
+Issue: #329
+---
+ data/translations/CMakeLists.txt |  1 +
+ data/translations/ar.ts          | 59 ++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 60 insertions(+)
+ create mode 100644 data/translations/ar.ts
+
+diff --git a/data/translations/CMakeLists.txt b/data/translations/CMakeLists.txt
+index 84284a4..b5d3954 100644
+--- a/data/translations/CMakeLists.txt
++++ b/data/translations/CMakeLists.txt
+@@ -1,4 +1,5 @@
+ set(TRANSLATION_FILES
++    ar.ts
+     cs.ts
+     de.ts
+     et.ts
+diff --git a/data/translations/ar.ts b/data/translations/ar.ts
+new file mode 100644
+index 0000000..20b1b3d
+--- /dev/null
++++ b/data/translations/ar.ts
+@@ -0,0 +1,59 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!DOCTYPE TS>
++<TS version="2.1" language="ar">
++<context>
++    <name>TextConstants</name>
++    <message>
++        <source>Welcome to %1</source>
++        <translation>مرحبًا في %1</translation>
++    </message>
++    <message>
++        <source>Warning, Caps Lock is ON!</source>
++        <translation>تحذير، مفتاح Caps Lock ممكّن!</translation>
++    </message>
++    <message>
++        <source>Layout</source>
++        <translation>التّخطيط</translation>
++    </message>
++    <message>
++        <source>Login</source>
++        <translation>لِج</translation>
++    </message>
++    <message>
++        <source>Login failed</source>
++        <translation>فشل الولوج</translation>
++    </message>
++    <message>
++        <source>Login succeeded</source>
++        <translation>نجح الولوج</translation>
++    </message>
++    <message>
++        <source>Password</source>
++        <translation>كلمة المرور</translation>
++    </message>
++    <message>
++        <source>Enter your username and password</source>
++        <translation>أدخِل اسم المستخدم وكلمة مروره</translation>
++    </message>
++    <message>
++        <source>Reboot</source>
++        <translation>أعد الإقلاع</translation>
++    </message>
++    <message>
++        <source>Session</source>
++        <translation>الجلسة</translation>
++    </message>
++    <message>
++        <source>Shutdown</source>
++        <translation>أطفئ</translation>
++    </message>
++    <message>
++        <source>User name</source>
++        <translation>اسم المستخدم</translation>
++    </message>
++    <message>
++        <source>Select your user and enter password</source>
++        <translation>اختر مستخدمًا وأدخِل كلمة مروره</translation>
++    </message>
++</context>
++</TS>
+-- 
+1.9.0
+

@@ -1,0 +1,48 @@
+From 5fef418d71730f631fa313a521b23fa1b40a332c Mon Sep 17 00:00:00 2001
+From: Volkan Gezer <wakeup@users.noreply.github.com>
+Date: Sun, 8 Feb 2015 12:48:25 +0100
+Subject: [PATCH 18/24] minor fixes on Turkish translation
+
+---
+ data/translations/tr.ts | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/data/translations/tr.ts b/data/translations/tr.ts
+index 0329d31..1fc08dc 100644
+--- a/data/translations/tr.ts
++++ b/data/translations/tr.ts
+@@ -5,7 +5,7 @@
+     <name>TextConstants</name>
+     <message>
+         <source>Welcome to %1</source>
+-        <translation>Hoşgeldiniz (%1)</translation>
++        <translation>Hoş Geldiniz (%1)</translation>
+     </message>
+     <message>
+         <source>Warning, Caps Lock is ON!</source>
+@@ -29,11 +29,11 @@
+     </message>
+     <message>
+         <source>Password</source>
+-        <translation>Şifre</translation>
++        <translation>Parola</translation>
+     </message>
+     <message>
+         <source>Enter your username and password</source>
+-        <translation>Kullanıcı adınızı ve şifrenizi giriniz</translation>
++        <translation>Kullanıcı adınızı ve parolanızı giriniz</translation>
+     </message>
+     <message>
+         <source>Reboot</source>
+@@ -53,7 +53,7 @@
+     </message>
+     <message>
+         <source>Select your user and enter password</source>
+-        <translation>Kullanıcınızı seçiniz ve şifrenizi giriniz</translation>
++        <translation>Kullanıcınızı seçiniz ve parolanızı giriniz</translation>
+     </message>
+ </context>
+ </TS>
+-- 
+1.9.0
+

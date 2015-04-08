@@ -1,0 +1,27 @@
+From 44fe999e77c91cb7b740bf97988f3a712b6477e0 Mon Sep 17 00:00:00 2001
+From: Pier Luigi Fiorini <pierluigi.fiorini@gmail.com>
+Date: Sat, 31 Jan 2015 12:58:16 +0100
+Subject: [PATCH 08/24] Start adding next release highlights
+
+---
+ ChangeLog | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/ChangeLog b/ChangeLog
+index 6744dee..165b662 100644
+--- a/ChangeLog
++++ b/ChangeLog
+@@ -4,6 +4,10 @@
+     - Bug fixes
+     * Others
+ 
++## 0.12.0 - XXXX-XX-XX
++----------------------
++    * Add Arabic translation by Safa Alfulaij.
++
+ ## 0.11.0 - 2014-11-20
+ ----------------------
+     + Reload the configuration every time we start a new session
+-- 
+1.9.0
+

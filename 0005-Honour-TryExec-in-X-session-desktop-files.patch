@@ -1,0 +1,42 @@
+From a176fb96551ce02f9ce36ee532250ac977e094ae Mon Sep 17 00:00:00 2001
+From: Jonathan Marten <jjm@keelhaul.me.uk>
+Date: Thu, 22 Jan 2015 20:08:49 +0000
+Subject: [PATCH 05/24] Honour TryExec in X session desktop files
+
+GitHub issue #341
+---
+ src/greeter/SessionModel.cpp | 9 ++++++++-
+ 1 file changed, 8 insertions(+), 1 deletion(-)
+
+diff --git a/src/greeter/SessionModel.cpp b/src/greeter/SessionModel.cpp
+index a451b54..32be117 100644
+--- a/src/greeter/SessionModel.cpp
++++ b/src/greeter/SessionModel.cpp
+@@ -57,6 +57,7 @@ namespace SDDM {
+                 continue;
+             SessionPtr si { new Session { session, "", "", "" } };
+             QTextStream in(&inputFile);
++            bool execAllowed = true;
+             while (!in.atEnd()) {
+                 QString line = in.readLine();
+                 if (line.startsWith("Name="))
+@@ -65,9 +66,15 @@ namespace SDDM {
+                     si->exec = line.mid(5);
+                 if (line.startsWith("Comment="))
+                     si->comment = line.mid(8);
++                if (line.startsWith("TryExec=")) {
++                    QFileInfo fi(line.mid(8));
++                    if (!fi.exists() || !fi.isExecutable())
++                        execAllowed = false;
++                }
+             }
+             // add to sessions list
+-            d->sessions.push_back(si);
++            if (execAllowed)
++                d->sessions.push_back(si);
+             // close file
+             inputFile.close();
+         }
+-- 
+1.9.0
+

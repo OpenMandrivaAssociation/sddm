@@ -1,0 +1,31 @@
+From 9a9bdd4f355b93e2acccd4c7dfe57f5a631fe5df Mon Sep 17 00:00:00 2001
+From: leuqarte <leuqarte@users.noreply.github.com>
+Date: Wed, 18 Feb 2015 09:05:34 -0800
+Subject: [PATCH 16/24] add comma-separation note for HideUsers...
+
+Clarifying how to list multiple HideUsers/HideShells
+---
+ data/man/sddm.conf.rst.in | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/data/man/sddm.conf.rst.in b/data/man/sddm.conf.rst.in
+index 6a28224..39182df 100644
+--- a/data/man/sddm.conf.rst.in
++++ b/data/man/sddm.conf.rst.in
+@@ -104,11 +104,11 @@ OPTIONS
+ 	Default value is 65000.
+ 
+ `HideUsers=`
+-	Users that shouldn't show up in the user list.
++	Comma-separated list of Users that shouldn't show up in the user list.
+ 	Default value is empty.
+ 
+ `HideShells=`
+-	Shells of users that shouldn't show up in the user list.
++	Comma-separated list of Shells of users that shouldn't show up in the user list.
+ 	Default value is empty.
+ 
+ `RememberLastUser=`
+-- 
+1.9.0
+
