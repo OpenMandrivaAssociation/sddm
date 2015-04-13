@@ -8,7 +8,7 @@ Release: 0.%date.1
 # Packaged from git for the time being -- no download URL available
 Source0: sddm-%date.tar.xz
 %else
-Release: 19
+Release: 20
 Source0: https://github.com/sddm/sddm/archive/%{name}-%{version}.tar.gz
 %endif
 # Adds sddm to drakedm
@@ -17,6 +17,7 @@ Source2: sddm.conf
 Source3: sddm.pam
 Source4: sddm-autologin.pam
 Source5: tmpfiles-sddm.conf
+Source6: omv-background.png
 Patch0: sddm-config.patch
 Patch1: sddm-wait-for-display-script.patch
 Patch2: sddm-0.11.0-reload-config-after-displayScript-finish.patch
@@ -101,8 +102,9 @@ install -Dpm 644 %{SOURCE5} %{buildroot}%{_tmpfilesdir}/sddm.conf
 
 mkdir -p %{buildroot}%{_localstatedir}/lib/%{name}
 
-# use default.png as sddm background
-sed -i -e 's,\(^background=\).*,\1%{_datadir}/mdk/backgrounds/default.png,' %{buildroot}%{_datadir}/sddm/themes/*/theme.conf
+# use omv-background.png as sddm background for all themes
+install -Dpm 644 %{SOURCE6} %{buildroot}%{_datadir}/%{name}/themes/omv-background.png
+sed -i -e 's,\(^background=\).*,\1%{_datadir}/%{name}/themes/omv-background.png,' %{buildroot}%{_datadir}/sddm/themes/*/theme.conf
 
 %pre
 %_pre_useradd sddm %{_var}/lib/sddm /bin/false
