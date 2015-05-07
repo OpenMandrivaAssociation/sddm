@@ -8,7 +8,7 @@ Release: 0.%date.1
 # Packaged from git for the time being -- no download URL available
 Source0: sddm-%date.tar.xz
 %else
-Release: 21
+Release: 22
 Source0: https://github.com/sddm/sddm/archive/%{name}-%{version}.tar.gz
 %endif
 # Adds sddm to drakedm
@@ -48,7 +48,7 @@ Patch26: 0024-should-there-be-a-problem-with-the-sddm-user-be-more.patch
 URL: https://github.com/sddm
 Group: Graphical desktop/KDE
 License: GPLv2
-BuildRequires: cmake
+BuildRequires: cmake(ECM)
 BuildRequires: pkgconfig(Qt5Core)
 BuildRequires: pkgconfig(Qt5Gui)
 BuildRequires: pkgconfig(Qt5Declarative)
@@ -59,8 +59,6 @@ BuildRequires: pkgconfig(systemd)
 BuildRequires: pkgconfig(libsystemd-journal)
 BuildRequires: pam-devel
 BuildRequires: qt5-linguist-tools
-BuildRequires: qmake5
-BuildRequires: ninja
 # For /etc/X11/Xsession
 Requires: xinitrc
 Requires(post,preun):	rpm-helper
@@ -70,7 +68,7 @@ Requires:	qt5-output-driver-default
 Requires:	qt5-qtdeclarative
 
 %description
-Lightweight display manager (login screen)
+Lightweight display manager (login screen).
 
 %prep
 %if %date
@@ -82,17 +80,16 @@ Lightweight display manager (login screen)
 
 sed -i -e 's,system-login,system-auth,g' services/*.pam
 
-%cmake \
+%cmake_kde5 \
 	-DUSE_QT5:BOOL=ON \
 	-DSESSION_COMMAND:FILEPATH=/etc/X11/Xsession \
-	-DENABLE_JOURNALD=ON \
-	-G Ninja
+	-DENABLE_JOURNALD=ON
 
 %build
-ninja -C build
+%ninja -C build
 
 %install
-DESTDIR="%{buildroot}" ninja install -C build
+%ninja_install -C build
 
 install -Dpm 644 %{SOURCE1} %{buildroot}%{_datadir}/X11/dm.d/11sddm.conf
 install -Dpm 644 %{SOURCE2} %{buildroot}%{_sysconfdir}/sddm.conf
@@ -126,4 +123,4 @@ sed -i -e 's,\(^background=\).*,\1%{_datadir}/%{name}/themes/omv-background.png,
 %{_unitdir}/%{name}.service
 %{_libdir}/qt5/qml/SddmComponents
 %{_datadir}/X11/dm.d/11sddm.conf
-%{_localstatedir}/lib/%{name}
+%attr(0755,sddm,sddm) %{_localstatedir}/lib/%{name}
