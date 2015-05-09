@@ -8,7 +8,7 @@ Release: 0.%date.1
 # Packaged from git for the time being -- no download URL available
 Source0: sddm-%date.tar.xz
 %else
-Release: 22
+Release: 23
 Source0: https://github.com/sddm/sddm/archive/%{name}-%{version}.tar.gz
 %endif
 # Adds sddm to drakedm
@@ -21,30 +21,36 @@ Source6: omv-background.png
 Patch0: sddm-config.patch
 Patch1: sddm-wait-for-display-script.patch
 Patch2: sddm-0.11.0-reload-config-after-displayScript-finish.patch
-Patch3: 0001-Replace-signal-handling-method-of-detecting-X-startu.patch
-Patch4: 0002-Don-t-set-the-DISPLAY-environment-to-the-process-tha.patch
-Patch5: 0003-Don-t-pass-a-display-ID-to-X-let-X-figure-out-what-I.patch
-Patch6: 0004-Fix-one-last-typo.patch
-Patch7: 0005-Honour-TryExec-in-X-session-desktop-files.patch
-Patch8: 0006-Allow-SYSTEMD_SYSTEM_UNIT_DIR-to-be-overidden.patch
-Patch9: 0007-Add-Arabic-translation.patch
-Patch10: 0008-Start-adding-next-release-highlights.patch
-Patch11: 0009-ChangeLog-Remove-empty-line.patch
-Patch12: 0010-Set-PAM_XDISPLAY-only-if-defined.patch
-Patch13: 0011-Include-random-to-fix-FreeBSD-builds.patch
-Patch14: 0012-Fix-session-startup-with-zsh.patch
-Patch15: 0013-Add-Hungarian-translation.patch
-Patch16: 0014-Portuguese-language-update.patch
-Patch17: 0015-Update-it.ts.patch
-Patch18: 0016-add-comma-separation-note-for-HideUsers.patch
-Patch19: 0017-cleanup.patch
-Patch20: 0018-minor-fixes-on-Turkish-translation.patch
-Patch21: 0019-handle-merge-of-libsystemd-journal-libsystemd-for-sy.patch
-Patch22: 0020-Allow-to-specify-QT_IMPORTS_DIR.patch
-Patch23: 0021-Add-XephyrPath-option-instead-of-hardcoded-string.patch
-Patch24: 0022-Improve-Russian-translation.patch
-Patch25: 0023-Add-russian-translation-improvements-to-ChangeLog.patch
-Patch26: 0024-should-there-be-a-problem-with-the-sddm-user-be-more.patch
+Patch3: sddm-0.11.0-pass-locale-env.patch
+
+# git patches
+Patch100: 0001-Replace-signal-handling-method-of-detecting-X-startu.patch
+Patch101: 0002-Don-t-set-the-DISPLAY-environment-to-the-process-tha.patch
+Patch102: 0003-Don-t-pass-a-display-ID-to-X-let-X-figure-out-what-I.patch
+Patch103: 0004-Fix-one-last-typo.patch
+Patch104: 0005-Honour-TryExec-in-X-session-desktop-files.patch
+Patch105: 0006-Allow-SYSTEMD_SYSTEM_UNIT_DIR-to-be-overidden.patch
+Patch106: 0007-Add-Arabic-translation.patch
+Patch107: 0008-Start-adding-next-release-highlights.patch
+Patch108: 0009-ChangeLog-Remove-empty-line.patch
+Patch109: 0010-Set-PAM_XDISPLAY-only-if-defined.patch
+Patch110: 0011-Include-random-to-fix-FreeBSD-builds.patch
+Patch111: 0012-Fix-session-startup-with-zsh.patch
+Patch112: 0013-Add-Hungarian-translation.patch
+Patch113: 0014-Portuguese-language-update.patch
+Patch114: 0015-Update-it.ts.patch
+Patch115: 0016-add-comma-separation-note-for-HideUsers.patch
+Patch116: 0017-cleanup.patch
+Patch117: 0018-minor-fixes-on-Turkish-translation.patch
+Patch118: 0019-handle-merge-of-libsystemd-journal-libsystemd-for-sy.patch
+Patch119: 0020-Allow-to-specify-QT_IMPORTS_DIR.patch
+Patch120: 0021-Add-XephyrPath-option-instead-of-hardcoded-string.patch
+Patch121: 0022-Improve-Russian-translation.patch
+Patch122: 0023-Add-russian-translation-improvements-to-ChangeLog.patch
+Patch123: 0024-should-there-be-a-problem-with-the-sddm-user-be-more.patch
+Patch124: 0026-Correcting-small-typo-in-TextConstants.qml.patch
+Patch125: 0028-Check-for-TryExec-in-PATH-if-it-is-not-absolute.patch
+
 URL: https://github.com/sddm
 Group: Graphical desktop/KDE
 License: GPLv2
