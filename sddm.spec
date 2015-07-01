@@ -28,8 +28,11 @@ BuildRequires: pkgconfig(Qt5Gui)
 BuildRequires: pkgconfig(Qt5Declarative)
 BuildRequires: pkgconfig(Qt5DBus)
 BuildRequires: pkgconfig(Qt5Quick)
+BuildRequires: pkgconfig(Qt5Network)
+BuildRequires: pkgconfig(Qt5Qml)
 BuildRequires: pkgconfig(Qt5Test)
 BuildRequires: pkgconfig(systemd)
+BuildRequires: pkgconfig(libsystemd)
 BuildRequires: pkgconfig(libsystemd-journal)
 BuildRequires: pam-devel
 BuildRequires: qt5-linguist-tools
