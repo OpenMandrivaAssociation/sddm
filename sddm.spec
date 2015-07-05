@@ -1,4 +1,4 @@
-%define date 20150701
+%define date 20150705
 
 Name: sddm
 Summary: Lightweight display manager
@@ -60,7 +60,8 @@ sed -i -e 's,system-login,system-auth,g' services/*.pam
 %cmake_kde5 \
 	-DUSE_QT5:BOOL=ON \
 	-DSESSION_COMMAND:FILEPATH=/etc/X11/Xsession \
-	-DENABLE_JOURNALD=ON
+	-DENABLE_JOURNALD=ON \
+	-DLOGIN_DEFS_PATH="/etc/login.defs"
 
 %build
 %ninja -C build
