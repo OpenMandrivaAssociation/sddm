@@ -61,7 +61,8 @@ sed -i -e 's,system-login,system-auth,g' services/*.pam
 	-DUSE_QT5:BOOL=ON \
 	-DSESSION_COMMAND:FILEPATH=/etc/X11/Xsession \
 	-DENABLE_JOURNALD=ON \
-	-DLOGIN_DEFS_PATH="/etc/login.defs"
+	-DUID_MIN="1000" \
+	-DUID_MAX="60000"
 
 %build
 %ninja -C build
