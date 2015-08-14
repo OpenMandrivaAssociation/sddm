@@ -1,0 +1,12 @@
+diff -Naur sddm-0.11.0-20150815/src/daemon/XorgDisplayServer.cpp sddm-0.11.0-20150815.tpg/src/daemon/XorgDisplayServer.cpp
+--- sddm-0.11.0-20150815/src/daemon/XorgDisplayServer.cpp	2015-07-16 16:31:12.000000000 +0000
++++ sddm-0.11.0-20150815.tpg/src/daemon/XorgDisplayServer.cpp	2015-08-14 22:07:40.265713842 +0000
+@@ -292,7 +292,7 @@
+         displayScript->start(displayCommand);
+ 
+         // wait for finished
+-        if (!displayScript->waitForFinished(30000))
++        if (!displayScript->waitForFinished(600000))
+             displayScript->kill();
+ 
+         // reload config if needed
