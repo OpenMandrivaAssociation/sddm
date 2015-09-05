@@ -1,16 +1,16 @@
-%define date 20150822
+%define date 0
 
 Name: sddm
 Summary: Lightweight display manager
-Version: 0.11.0
-%if %date
-Release: 24.%{date}.7
+Version: 0.12.0
+%if %{date}
+Release: 0.%{date}.1
 # Packaged from git for the time being -- no download URL available
 # git archive --format=tar --prefix sddm-0.11.0-$(date +%Y%m%d)/ HEAD | xz -vf > sddm-0.11.0-$(date +%Y%m%d).tar.xz
-Source0: sddm-%{version}-%date.tar.xz
+Source0: sddm-%{version}-%{date}.tar.xz
 %else
-Release: 24
-Source0: https://github.com/sddm/sddm/archive/%{name}-%{version}.tar.gz
+Release: 1
+Source0: https://github.com/sddm/sddm/releases/download/v%{version}/sddm-%{version}.tar.xz
 %endif
 # Adds sddm to drakedm
 Source1: 11sddm.conf
@@ -50,7 +50,7 @@ Requires:	qt5-qtdeclarative
 Lightweight display manager (login screen).
 
 %prep
-%if %date
+%if %{date}
 %setup -q -n %{name}-%{version}-%{date}
 %else
 %setup -q
