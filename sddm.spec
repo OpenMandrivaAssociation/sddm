@@ -9,7 +9,7 @@ Release: 0.%{date}.1
 # git archive --format=tar --prefix sddm-0.11.0-$(date +%Y%m%d)/ HEAD | xz -vf > sddm-0.11.0-$(date +%Y%m%d).tar.xz
 Source0: sddm-%{version}-%{date}.tar.xz
 %else
-Release: 3
+Release: 4
 Source0: https://github.com/sddm/sddm/releases/download/v%{version}/sddm-%{version}.tar.xz
 %endif
 # Adds sddm to drakedm
@@ -28,6 +28,7 @@ Patch1: 0001-Inherit-path-environment-variables-from-parent.patch
 Patch2: 0002-Don-t-cast-QByteArray-to-char.patch
 # (tpg) https://github.com/sddm/sddm/pull/494
 Patch3: 0003-Close-the-pipe-fd-passed-to-X-server.patch
+Patch4: 0004-Disable-greeters-from-loading-KDE-s-debug-hander.patch
 BuildRequires: cmake(ECM)
 BuildRequires: pkgconfig(Qt5Core)
 BuildRequires: pkgconfig(Qt5Gui)
