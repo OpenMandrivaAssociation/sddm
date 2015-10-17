@@ -9,7 +9,7 @@ Release: 0.%{date}.1
 # git archive --format=tar --prefix sddm-0.11.0-$(date +%Y%m%d)/ HEAD | xz -vf > sddm-0.11.0-$(date +%Y%m%d).tar.xz
 Source0: sddm-%{version}-%{date}.tar.xz
 %else
-Release: 4
+Release: 5
 Source0: https://github.com/sddm/sddm/releases/download/v%{version}/sddm-%{version}.tar.xz
 %endif
 # Adds sddm to drakedm
@@ -50,6 +50,7 @@ Requires(post,preun):	rpm-helper
 Requires:	qt5-output-driver-default
 # needed for QtQuick
 Requires:	qt5-qtdeclarative
+Requires:	qt5-qtimageformats
 
 %description
 Lightweight display manager (login screen).
