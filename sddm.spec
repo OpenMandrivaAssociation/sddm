@@ -9,7 +9,7 @@ Release: 0.%{date}.1
 # git archive --format=tar --prefix sddm-0.11.0-$(date +%Y%m%d)/ HEAD | xz -vf > sddm-0.11.0-$(date +%Y%m%d).tar.xz
 Source0: sddm-%{version}-%{date}.tar.xz
 %else
-Release: 5
+Release: 6
 Source0: https://github.com/sddm/sddm/releases/download/v%{version}/sddm-%{version}.tar.xz
 %endif
 # Adds sddm to drakedm
@@ -22,8 +22,8 @@ Source6: omv-background.png
 URL: https://github.com/sddm
 Group: Graphical desktop/KDE
 License: GPLv2
-# needed for drakx-finish-install
-Patch0: sddm-0.11.0-Wait-for-display-setup-script-no-more-than-10m.patch
+# (rxu) wait until script exits
+Patch0: sddm-0.12.0-waitForFinished.patch
 Patch1: 0001-Inherit-path-environment-variables-from-parent.patch
 Patch2: 0002-Don-t-cast-QByteArray-to-char.patch
 # (tpg) https://github.com/sddm/sddm/pull/494
