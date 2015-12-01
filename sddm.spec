@@ -2,7 +2,7 @@
 
 Name: sddm
 Summary: Lightweight display manager
-Version: 0.12.0
+Version: 0.13.0
 %if %{date}
 Release: 0.%{date}.1
 # Packaged from git for the time being -- no download URL available
@@ -24,11 +24,6 @@ Group: Graphical desktop/KDE
 License: GPLv2
 # (rxu) wait until script exits
 Patch0: sddm-0.12.0-waitForFinished.patch
-Patch1: 0001-Inherit-path-environment-variables-from-parent.patch
-Patch2: 0002-Don-t-cast-QByteArray-to-char.patch
-# (tpg) https://github.com/sddm/sddm/pull/494
-Patch3: 0003-Close-the-pipe-fd-passed-to-X-server.patch
-Patch4: 0004-Disable-greeters-from-loading-KDE-s-debug-hander.patch
 BuildRequires: cmake(ECM)
 BuildRequires: pkgconfig(Qt5Core)
 BuildRequires: pkgconfig(Qt5Gui)
@@ -69,6 +64,7 @@ sed -i -e 's,system-login,system-auth,g' services/*.pam
 	-DUSE_QT5:BOOL=ON \
 	-DSESSION_COMMAND:FILEPATH=/etc/X11/Xsession \
 	-DENABLE_JOURNALD=ON \
+	-DENABLE_PAM=ON \
 	-DUID_MIN="1000" \
 	-DUID_MAX="60000"
 
