@@ -9,7 +9,7 @@ Release: 0.%{date}.1
 # git archive --format=tar --prefix sddm-0.11.0-$(date +%Y%m%d)/ HEAD | xz -vf > sddm-0.11.0-$(date +%Y%m%d).tar.xz
 Source0: sddm-%{version}-%{date}.tar.xz
 %else
-Release: 6
+Release: 7
 Source0: https://github.com/sddm/sddm/releases/download/v%{version}/sddm-%{version}.tar.xz
 %endif
 # Adds sddm to drakedm
@@ -61,6 +61,7 @@ Lightweight display manager (login screen).
 sed -i -e 's,system-login,system-auth,g' services/*.pam
 
 %cmake_kde5 \
+	-DCMAKE_BUILD_TYPE="Debug" \
 	-DUSE_QT5:BOOL=ON \
 	-DSESSION_COMMAND:FILEPATH=/etc/X11/Xsession \
 	-DENABLE_JOURNALD=ON \
