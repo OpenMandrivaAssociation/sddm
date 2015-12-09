@@ -9,7 +9,7 @@ Release: 0.%{date}.1
 # git archive --format=tar --prefix sddm-0.11.0-$(date +%Y%m%d)/ HEAD | xz -vf > sddm-0.11.0-$(date +%Y%m%d).tar.xz
 Source0: sddm-%{version}-%{date}.tar.xz
 %else
-Release: 9
+Release: 10
 Source0: https://github.com/sddm/sddm/releases/download/v%{version}/sddm-%{version}.tar.xz
 %endif
 # Adds sddm to drakedm
@@ -24,6 +24,7 @@ Group: Graphical desktop/KDE
 License: GPLv2
 # (rxu) wait until script exits
 Patch0: sddm-0.12.0-waitForFinished.patch
+Patch1:  hideshells-conf-breakage-fix.patch
 BuildRequires: cmake(ECM)
 BuildRequires: pkgconfig(Qt5Core)
 BuildRequires: pkgconfig(Qt5Gui)
