@@ -1,8 +1,8 @@
-%define date 0
+%define date 20151218
 
 Name: sddm
 Summary: Lightweight display manager
-Version: 0.13.0
+Version: 0.14.0
 %if %{date}
 Release: 0.%{date}.1
 # Packaged from git for the time being -- no download URL available
@@ -24,7 +24,6 @@ Group: Graphical desktop/KDE
 License: GPLv2
 # (rxu) wait until script exits
 Patch0: sddm-0.12.0-waitForFinished.patch
-Patch1:  hideshells-conf-breakage-fix.patch
 BuildRequires: cmake(ECM)
 BuildRequires: pkgconfig(Qt5Core)
 BuildRequires: pkgconfig(Qt5Gui)
@@ -41,12 +40,12 @@ BuildRequires: pam-devel
 BuildRequires: qt5-linguist-tools
 # For /etc/X11/Xsession
 Requires: xinitrc
-Requires(post,preun):	rpm-helper
+Requires(post,preun): rpm-helper
 # needed to get xcb plugin on Qt platform
-Requires:	qt5-output-driver-default
+Requires: qt5-output-driver-default
 # needed for QtQuick
-Requires:	qt5-qtdeclarative
-Requires:	qt5-qtimageformats
+Requires: qt5-qtdeclarative
+Requires: qt5-qtimageformats
 
 %description
 Lightweight display manager (login screen).
