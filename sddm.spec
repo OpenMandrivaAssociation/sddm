@@ -24,6 +24,12 @@ Group: Graphical desktop/KDE
 License: GPLv2
 # (rxu) wait until script exits
 Patch0: sddm-0.12.0-waitForFinished.patch
+Patch1: sddm-0.14.0-by-default-use-plasma-session.patch
+#Patch2: sddm-0.14.0-call-retain-splash-on-plymouth.patch
+# (tpg) based on this https://github.com/sddm/sddm/pull/525
+Patch3: sddm-0.14.0-add-support-to-QtAccountsService.patch
+# (tpg) based on this https://github.com/sddm/sddm/pull/439
+Patch4: sddm-0.14.0-add-suport-to-plymouth-smooth-transition.patch
 BuildRequires: cmake(ECM)
 BuildRequires: pkgconfig(Qt5Core)
 BuildRequires: pkgconfig(Qt5Gui)
@@ -36,6 +42,7 @@ BuildRequires: pkgconfig(Qt5Test)
 BuildRequires: pkgconfig(systemd)
 BuildRequires: pkgconfig(libsystemd)
 BuildRequires: pkgconfig(libsystemd-journal)
+BuildRequires: cmake(QtAccountsService)
 BuildRequires: pam-devel
 BuildRequires: qt5-linguist-tools
 # For /etc/X11/Xsession
@@ -66,6 +73,7 @@ sed -i -e 's,system-login,system-auth,g' services/*.pam
 	-DSESSION_COMMAND:FILEPATH=/etc/X11/Xsession \
 	-DENABLE_JOURNALD=ON \
 	-DENABLE_PAM=ON \
+	-DENABLE_PLYMOUTH=ON \
 	-DUID_MIN="1000" \
 	-DUID_MAX="60000"
 

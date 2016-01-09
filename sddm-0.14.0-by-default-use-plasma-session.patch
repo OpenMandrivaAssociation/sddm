@@ -1,0 +1,14 @@
+diff -Naur sddm-0.14.0-20151218/src/common/Configuration.h sddm-0.14.0-20151218.tpg/src/common/Configuration.h
+--- sddm-0.14.0-20151218/src/common/Configuration.h	2015-12-09 13:24:52.000000000 +0000
++++ sddm-0.14.0-20151218.tpg/src/common/Configuration.h	2016-01-09 19:34:15.349633983 +0000
+@@ -96,8 +96,9 @@
+ 
+     Config(StateConfig, []()->QString{auto tmp = getpwnam("sddm"); return tmp ? QString::fromLocal8Bit(tmp->pw_dir) : QStringLiteral(STATE_DIR);}().append(QStringLiteral("/state.conf")),
+         Section(Last,
+-            Entry(Session,         QString,     QString(),                                      _S("Name of the session for the last logged-in user.\n"
++            Entry(Session,         QString,     _S("/usr/share/xsessions/plasma.desktop"),      _S("Name of the session for the last logged-in user.\n"
+                                                                                                    "This session will be preselected when the login screen appears."));
++
+             Entry(User,            QString,     QString(),                                      _S("Name of the last logged-in user.\n"
+                                                                                                    "This user will be preselected when the login screen appears"));
+         );
