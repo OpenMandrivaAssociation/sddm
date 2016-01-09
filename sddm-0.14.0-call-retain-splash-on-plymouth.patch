@@ -1,0 +1,11 @@
+diff -Naur sddm-0.14.0-20151218/services/sddm.service.in sddm-0.14.0-20151218.tpg/services/sddm.service.in
+--- sddm-0.14.0-20151218/services/sddm.service.in	2015-12-09 13:24:52.000000000 +0000
++++ sddm-0.14.0-20151218.tpg/services/sddm.service.in	2016-01-09 19:36:20.598992238 +0000
+@@ -5,6 +5,7 @@
+ After=systemd-user-sessions.service getty@tty1.service plymouth-quit.service
+ 
+ [Service]
++ExecStartPre=-@CMAKE_INSTALL_FULL_BINDIR@/plymouth quit --retain-splash
+ ExecStart=@CMAKE_INSTALL_FULL_BINDIR@/sddm
+ Restart=always
+ PrivateTmp=yes

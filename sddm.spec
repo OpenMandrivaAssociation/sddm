@@ -24,6 +24,8 @@ Group: Graphical desktop/KDE
 License: GPLv2
 # (rxu) wait until script exits
 Patch0: sddm-0.12.0-waitForFinished.patch
+Patch1: sddm-0.14.0-by-default-use-plasma-session.patch
+Patch2: sddm-0.14.0-call-retain-splash-on-plymouth.patch
 BuildRequires: cmake(ECM)
 BuildRequires: pkgconfig(Qt5Core)
 BuildRequires: pkgconfig(Qt5Gui)
