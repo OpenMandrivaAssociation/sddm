@@ -1,31 +1,21 @@
 diff -Naur sddm-0.14.0-20151218/CMakeLists.txt sddm-0.14.0-20151218.tpg/CMakeLists.txt
---- sddm-0.14.0-20151218/CMakeLists.txt	2016-01-09 20:27:31.464072471 +0000
-+++ sddm-0.14.0-20151218.tpg/CMakeLists.txt	2016-01-09 20:19:50.875770718 +0000
-@@ -90,18 +90,9 @@
- find_package(Qt5DBus REQUIRED)
- find_package(Qt5LinguistTools REQUIRED)
+--- sddm-0.14.0-20151218/CMakeLists.txt	2016-01-09 21:42:03.297667263 +0000
++++ sddm-0.14.0-20151218.tpg/CMakeLists.txt	2016-01-09 21:43:54.901608034 +0000
+@@ -104,6 +104,11 @@
+     set(HAVE_QTACCOUNTSSERVICE TRUE)
+ endif()
  
--# AccountsService Qt5 binding
--find_package(QtAccountsService)
--set_package_properties(QtAccountsService PROPERTIES 
--    DESCRIPTION "Qt-style API to use freedesktop.org's AccountsService DBus service"
--    URL "https://github.com/hawaii-desktop/qtaccountsservice"
--    TYPE OPTIONAL
--    PURPOSE "Use AccountsService's iconFileName"
--)
--set(HAVE_QTACCOUNTSSERVICE FALSE)
--if (QtAccountsService_FOUND)
--    add_definitions(-DHAVE_QTACCOUNTSSERVICE)
--    set(HAVE_QTACCOUNTSSERVICE TRUE)
 +if (ENABLE_PLYMOUTH)
 +    add_definitions(-DHAVE_PLYMOUTH)
 +    set(HAVE_PLYMOUTH TRUE)
- endif()
- 
++endif()
++
  # find qt5 imports dir
+ get_target_property(QMAKE_EXECUTABLE Qt5::qmake LOCATION)
+ if(NOT QT_IMPORTS_DIR)
 diff -Naur sddm-0.14.0-20151218/services/sddm.service.in sddm-0.14.0-20151218.tpg/services/sddm.service.in
 --- sddm-0.14.0-20151218/services/sddm.service.in	2015-12-09 13:24:52.000000000 +0000
-+++ sddm-0.14.0-20151218.tpg/services/sddm.service.in	2016-01-09 20:25:44.897226796 +0000
++++ sddm-0.14.0-20151218.tpg/services/sddm.service.in	2016-01-09 21:44:27.526466664 +0000
 @@ -1,8 +1,11 @@
  [Unit]
  Description=Simple Desktop Display Manager
@@ -42,7 +32,7 @@ diff -Naur sddm-0.14.0-20151218/services/sddm.service.in sddm-0.14.0-20151218.tp
  ExecStart=@CMAKE_INSTALL_FULL_BINDIR@/sddm
 diff -Naur sddm-0.14.0-20151218/src/daemon/DisplayManager.cpp sddm-0.14.0-20151218.tpg/src/daemon/DisplayManager.cpp
 --- sddm-0.14.0-20151218/src/daemon/DisplayManager.cpp	2015-12-09 13:24:52.000000000 +0000
-+++ sddm-0.14.0-20151218.tpg/src/daemon/DisplayManager.cpp	2016-01-09 20:21:34.840548088 +0000
++++ sddm-0.14.0-20151218.tpg/src/daemon/DisplayManager.cpp	2016-01-09 21:44:27.527466690 +0000
 @@ -40,6 +40,9 @@
          QDBusConnection connection = (daemonApp->testing()) ? QDBusConnection::sessionBus() : QDBusConnection::systemBus();
          connection.registerService(DISPLAYMANAGER_SERVICE);
@@ -55,12 +45,13 @@ diff -Naur sddm-0.14.0-20151218/src/daemon/DisplayManager.cpp sddm-0.14.0-201512
      QString DisplayManager::seatPath(const QString &seatName) {
 diff -Naur sddm-0.14.0-20151218/src/daemon/Greeter.cpp sddm-0.14.0-20151218.tpg/src/daemon/Greeter.cpp
 --- sddm-0.14.0-20151218/src/daemon/Greeter.cpp	2015-12-09 13:24:52.000000000 +0000
-+++ sddm-0.14.0-20151218.tpg/src/daemon/Greeter.cpp	2016-01-09 20:20:20.891572613 +0000
-@@ -71,6 +71,10 @@
++++ sddm-0.14.0-20151218.tpg/src/daemon/Greeter.cpp	2016-01-09 21:46:25.494571619 +0000
+@@ -71,6 +71,11 @@
              // log message
              qDebug() << "Greeter starting...";
  
 +#if HAVE_PLYMOUTH
++	    qDebug() << "Plymouth quit...";
 +            system("/usr/bin/plymouth --wait quit --retain-splash");
 +#endif
 +
