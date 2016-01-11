@@ -52,7 +52,7 @@ diff -Naur sddm-0.14.0-20151218/src/daemon/Greeter.cpp sddm-0.14.0-20151218.tpg/
  
 +#if HAVE_PLYMOUTH
 +	    qDebug() << "Plymouth quit...";
-+            system("/usr/bin/plymouth --wait quit --retain-splash");
++            system("/usr/bin/plymouth quit --retain-splash");
 +#endif
 +
              // set process environment
