@@ -38,7 +38,7 @@ diff -Naur sddm-0.14.0-20151218/src/daemon/DisplayManager.cpp sddm-0.14.0-201512
          connection.registerService(DISPLAYMANAGER_SERVICE);
          connection.registerObject(DISPLAYMANAGER_PATH, this);
 +#if HAVE_PLYMOUTH
-+        system("/usr/bin/plymouth deactivate");
++        system("/bin/plymouth deactivate");
 +#endif
      }
  
@@ -52,7 +52,7 @@ diff -Naur sddm-0.14.0-20151218/src/daemon/Greeter.cpp sddm-0.14.0-20151218.tpg/
  
 +#if HAVE_PLYMOUTH
 +	    qDebug() << "Plymouth quit...";
-+            system("/usr/bin/plymouth quit --retain-splash");
++            system("/bin/plymouth quit --retain-splash");
 +#endif
 +
              // set process environment
