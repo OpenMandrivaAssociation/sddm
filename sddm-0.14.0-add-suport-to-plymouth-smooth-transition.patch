@@ -1,13 +1,22 @@
 diff -Naur sddm-0.14.0-20151218/CMakeLists.txt sddm-0.14.0-20151218.tpg/CMakeLists.txt
---- sddm-0.14.0-20151218/CMakeLists.txt	2016-01-09 21:42:03.297667263 +0000
-+++ sddm-0.14.0-20151218.tpg/CMakeLists.txt	2016-01-09 21:43:54.901608034 +0000
-@@ -104,6 +104,11 @@
+--- sddm-0.14.0-20151218/CMakeLists.txt	2016-01-12 18:53:44.715676105 +0000
++++ sddm-0.14.0-20151218.tpg/CMakeLists.txt	2016-01-12 18:58:25.128315403 +0000
+@@ -32,6 +32,7 @@
+ option(BUILD_MAN_PAGES "Build man pages" OFF)
+ option(ENABLE_JOURNALD "Enable logging to journald" ON)
+ option(ENABLE_PAM "Enable PAM support" ON)
++option(ENABLE_PLYMOUTH "Enable PLYMOUTH support" OFF)
+ 
+ # Definitions
+ add_definitions(-Wall -std=c++11 -DQT_NO_CAST_FROM_ASCII -DQT_NO_CAST_FROM_BYTEARRAY)
+@@ -104,6 +105,12 @@
      set(HAVE_QTACCOUNTSSERVICE TRUE)
  endif()
  
 +if (ENABLE_PLYMOUTH)
 +    add_definitions(-DHAVE_PLYMOUTH)
 +    set(HAVE_PLYMOUTH TRUE)
++    message(STATUS "Enable plymouth smooth tranistion")
 +endif()
 +
  # find qt5 imports dir
@@ -15,7 +24,7 @@ diff -Naur sddm-0.14.0-20151218/CMakeLists.txt sddm-0.14.0-20151218.tpg/CMakeLis
  if(NOT QT_IMPORTS_DIR)
 diff -Naur sddm-0.14.0-20151218/services/sddm.service.in sddm-0.14.0-20151218.tpg/services/sddm.service.in
 --- sddm-0.14.0-20151218/services/sddm.service.in	2015-12-09 13:24:52.000000000 +0000
-+++ sddm-0.14.0-20151218.tpg/services/sddm.service.in	2016-01-09 21:44:27.526466664 +0000
++++ sddm-0.14.0-20151218.tpg/services/sddm.service.in	2016-01-12 18:53:57.773032234 +0000
 @@ -1,8 +1,11 @@
  [Unit]
  Description=Simple Desktop Display Manager
@@ -32,7 +41,7 @@ diff -Naur sddm-0.14.0-20151218/services/sddm.service.in sddm-0.14.0-20151218.tp
  ExecStart=@CMAKE_INSTALL_FULL_BINDIR@/sddm
 diff -Naur sddm-0.14.0-20151218/src/daemon/DisplayManager.cpp sddm-0.14.0-20151218.tpg/src/daemon/DisplayManager.cpp
 --- sddm-0.14.0-20151218/src/daemon/DisplayManager.cpp	2015-12-09 13:24:52.000000000 +0000
-+++ sddm-0.14.0-20151218.tpg/src/daemon/DisplayManager.cpp	2016-01-09 21:44:27.527466690 +0000
++++ sddm-0.14.0-20151218.tpg/src/daemon/DisplayManager.cpp	2016-01-12 18:53:57.774032261 +0000
 @@ -40,6 +40,9 @@
          QDBusConnection connection = (daemonApp->testing()) ? QDBusConnection::sessionBus() : QDBusConnection::systemBus();
          connection.registerService(DISPLAYMANAGER_SERVICE);
@@ -45,7 +54,7 @@ diff -Naur sddm-0.14.0-20151218/src/daemon/DisplayManager.cpp sddm-0.14.0-201512
      QString DisplayManager::seatPath(const QString &seatName) {
 diff -Naur sddm-0.14.0-20151218/src/daemon/Greeter.cpp sddm-0.14.0-20151218.tpg/src/daemon/Greeter.cpp
 --- sddm-0.14.0-20151218/src/daemon/Greeter.cpp	2015-12-09 13:24:52.000000000 +0000
-+++ sddm-0.14.0-20151218.tpg/src/daemon/Greeter.cpp	2016-01-09 21:46:25.494571619 +0000
++++ sddm-0.14.0-20151218.tpg/src/daemon/Greeter.cpp	2016-01-12 18:53:57.775032289 +0000
 @@ -71,6 +71,11 @@
              // log message
              qDebug() << "Greeter starting...";
