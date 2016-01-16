@@ -4,7 +4,7 @@ Name: sddm
 Summary: Lightweight display manager
 Version: 0.14.0
 %if %{date}
-Release: 0.%{date}.8
+Release: 0.%{date}.9
 # Packaged from git for the time being -- no download URL available
 # git archive --format=tar --prefix sddm-0.11.0-$(date +%Y%m%d)/ HEAD | xz -vf > sddm-0.11.0-$(date +%Y%m%d).tar.xz
 Source0: sddm-%{version}-%{date}.tar.xz
@@ -25,11 +25,11 @@ License: GPLv2
 # (rxu) wait until script exits
 Patch0: sddm-0.12.0-waitForFinished.patch
 Patch1: sddm-0.14.0-by-default-use-plasma-session.patch
-#Patch2: sddm-0.14.0-call-retain-splash-on-plymouth.patch
+Patch2: sddm-0.14.0-call-retain-splash-on-plymouth.patch
 # (tpg) based on this https://github.com/sddm/sddm/pull/525
 Patch3: sddm-0.14.0-add-support-to-QtAccountsService.patch
 # (tpg) based on this https://github.com/sddm/sddm/pull/439
-Patch4: sddm-0.14.0-add-suport-to-plymouth-smooth-transition.patch
+#Patch4: sddm-0.14.0-add-suport-to-plymouth-smooth-transition.patch
 BuildRequires: cmake(ECM)
 BuildRequires: pkgconfig(Qt5Core)
 BuildRequires: pkgconfig(Qt5Gui)
