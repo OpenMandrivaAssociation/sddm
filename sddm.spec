@@ -4,7 +4,7 @@ Name: sddm
 Summary: Lightweight display manager
 Version: 0.14.0
 %if %{date}
-Release: 0.%{date}.10
+Release: 0.%{date}.11
 # Packaged from git for the time being -- no download URL available
 # git archive --format=tar --prefix sddm-0.11.0-$(date +%Y%m%d)/ HEAD | xz -vf > sddm-0.11.0-$(date +%Y%m%d).tar.xz
 Source0: sddm-%{version}-%{date}.tar.xz
@@ -18,7 +18,6 @@ Source2: sddm.conf
 Source3: sddm.pam
 Source4: sddm-autologin.pam
 Source5: tmpfiles-sddm.conf
-Source6: omv-background.png
 URL: https://github.com/sddm
 Group: Graphical desktop/KDE
 License: GPLv2
@@ -53,6 +52,7 @@ Requires: qt5-output-driver-default
 # needed for QtQuick
 Requires: qt5-qtdeclarative
 Requires: qt5-qtimageformats
+Requires: distro-theme-OpenMandriva >= 1.4.37
 
 %description
 Lightweight display manager (login screen).
@@ -91,8 +91,10 @@ install -Dpm 644 %{SOURCE5} %{buildroot}%{_tmpfilesdir}/sddm.conf
 mkdir -p %{buildroot}%{_localstatedir}/lib/%{name}
 
 # use omv-background.png as sddm background for all themes
-install -Dpm 644 %{SOURCE6} %{buildroot}%{_datadir}/%{name}/themes/omv-background.png
-sed -i -e 's,\(^background=\).*,\1%{_datadir}/%{name}/themes/omv-background.png,' %{buildroot}%{_datadir}/sddm/themes/*/theme.conf
+sed -i -e 's,\(^background=\).*,\1%{_datadir}/mdk/backgrounds/OpenMandriva-splash-blurred.png,' %{buildroot}%{_datadir}/sddm/themes/maui/theme.conf
+sed -i -e 's,\(^background=\).*,\1%{_datadir}/mdk/backgrounds/OpenMandriva-splash.png,' %{buildroot}%{_datadir}/sddm/themes/circles/theme.conf
+sed -i -e 's,\(^background=\).*,\1%{_datadir}/mdk/backgrounds/OpenMandriva-splash.png,' %{buildroot}%{_datadir}/sddm/themes/elarun/theme.conf
+sed -i -e 's,\(^background=\).*,\1%{_datadir}/mdk/backgrounds/OpenMandriva-splash.png,' %{buildroot}%{_datadir}/sddm/themes/maldives/theme.conf
 
 %pre
 %_pre_useradd sddm %{_var}/lib/sddm /bin/false
