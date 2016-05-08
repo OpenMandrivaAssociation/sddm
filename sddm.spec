@@ -41,7 +41,7 @@ BuildRequires: pkgconfig(Qt5Test)
 BuildRequires: pkgconfig(systemd)
 BuildRequires: pkgconfig(libsystemd)
 BuildRequires: pkgconfig(libsystemd-journal)
-#BuildRequires: cmake(QtAccountsService)
+BuildRequires: cmake(QtAccountsService)
 BuildRequires: pam-devel
 BuildRequires: qt5-linguist-tools
 # For /etc/X11/Xsession

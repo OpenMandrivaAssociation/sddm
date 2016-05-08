@@ -1,6 +1,6 @@
-diff -Naur sddm-0.14.0-20151218/CMakeLists.txt sddm-0.14.0-20151218.tpg/CMakeLists.txt
---- sddm-0.14.0-20151218/CMakeLists.txt	2015-12-09 13:24:52.000000000 +0000
-+++ sddm-0.14.0-20151218.tpg/CMakeLists.txt	2016-01-09 19:46:12.091819343 +0000
+diff -Naur sddm-0.14.0-20160311/CMakeLists.txt sddm-0.14.0-20160311.tpg/CMakeLists.txt
+--- sddm-0.14.0-20160311/CMakeLists.txt	2016-03-02 19:17:54.000000000 +0000
++++ sddm-0.14.0-20160311.tpg/CMakeLists.txt	2016-05-08 18:36:33.135015089 +0000
 @@ -90,6 +90,20 @@
  find_package(Qt5DBus REQUIRED)
  find_package(Qt5LinguistTools REQUIRED)
@@ -22,10 +22,28 @@ diff -Naur sddm-0.14.0-20151218/CMakeLists.txt sddm-0.14.0-20151218.tpg/CMakeLis
  # find qt5 imports dir
  get_target_property(QMAKE_EXECUTABLE Qt5::qmake LOCATION)
  if(NOT QT_IMPORTS_DIR)
-diff -Naur sddm-0.14.0-20151218/src/greeter/CMakeLists.txt sddm-0.14.0-20151218.tpg/src/greeter/CMakeLists.txt
---- sddm-0.14.0-20151218/src/greeter/CMakeLists.txt	2015-12-09 13:24:52.000000000 +0000
-+++ sddm-0.14.0-20151218.tpg/src/greeter/CMakeLists.txt	2016-01-09 19:48:05.123840371 +0000
-@@ -26,6 +26,10 @@
+diff -Naur sddm-0.14.0-20160311/src/greeter/CMakeLists.txt sddm-0.14.0-20160311.tpg/src/greeter/CMakeLists.txt
+--- sddm-0.14.0-20160311/src/greeter/CMakeLists.txt	2016-03-02 19:17:54.000000000 +0000
++++ sddm-0.14.0-20160311.tpg/src/greeter/CMakeLists.txt	2016-05-08 18:37:29.350527797 +0000
+@@ -1,5 +1,6 @@
+ include_directories("${CMAKE_SOURCE_DIR}/src/common")
+ include_directories("${CMAKE_BINARY_DIR}/src/common")
++include_directories(${QtAccountsService_INCLUDE_DIRS})
+ 
+ set(GREETER_SOURCES
+     ${CMAKE_SOURCE_DIR}/src/common/Configuration.cpp
+@@ -19,13 +20,20 @@
+ )
+ 
+ add_executable(sddm-greeter ${GREETER_SOURCES})
+-target_link_libraries(sddm-greeter ${LIBXCB_LIBRARIES} ${LIBXKB_LIBRARIES})
++target_link_libraries(sddm-greeter
++    ${LIBXCB_LIBRARIES}
++    ${LIBXKB_LIBRARIES}
++    ${QtAccountsService_LIBRARIES})
+ qt5_use_modules(sddm-greeter Quick)
+ 
+ if(JOURNALD_FOUND)
      target_link_libraries(sddm-greeter ${JOURNALD_LIBRARIES})
  endif()
  
@@ -36,9 +54,9 @@ diff -Naur sddm-0.14.0-20151218/src/greeter/CMakeLists.txt sddm-0.14.0-20151218.
  # Translations
  add_dependencies(sddm-greeter components-translation)
  add_dependencies(sddm-greeter themes-translation)
-diff -Naur sddm-0.14.0-20151218/src/greeter/UserModel.cpp sddm-0.14.0-20151218.tpg/src/greeter/UserModel.cpp
---- sddm-0.14.0-20151218/src/greeter/UserModel.cpp	2015-12-09 13:24:52.000000000 +0000
-+++ sddm-0.14.0-20151218.tpg/src/greeter/UserModel.cpp	2016-01-09 19:55:11.292226025 +0000
+diff -Naur sddm-0.14.0-20160311/src/greeter/UserModel.cpp sddm-0.14.0-20160311.tpg/src/greeter/UserModel.cpp
+--- sddm-0.14.0-20160311/src/greeter/UserModel.cpp	2016-03-02 19:17:54.000000000 +0000
++++ sddm-0.14.0-20160311.tpg/src/greeter/UserModel.cpp	2016-05-08 18:39:58.848460297 +0000
 @@ -1,5 +1,7 @@
  /***************************************************************************
  * Copyright (c) 2013 Abdurrahman AVCI <abdurrahmanavci@gmail.com>
@@ -47,41 +65,49 @@ diff -Naur sddm-0.14.0-20151218/src/greeter/UserModel.cpp sddm-0.14.0-20151218.t
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
-@@ -55,6 +57,9 @@
+@@ -54,6 +56,9 @@
+         const QString facesDir = mainConfig.Theme.FacesDir.get();
          const QString defaultFace = QStringLiteral("%1/.face.icon").arg(facesDir);
  
-         struct passwd *current_pw;
 +#if HAVE_QTACCOUNTSSERVICE
-+        asAccountsManager = new QtAccountsService::AccountsManager;
++        asAccountsManager = new AccountsService::AccountsManager;
 +#endif
+         struct passwd *current_pw;
          while ((current_pw = getpwent()) != nullptr) {
  
-             // skip entries with uids smaller than minimum uid
-@@ -79,6 +84,9 @@
+@@ -79,12 +84,27 @@
              user->homeDir = QString::fromLocal8Bit(current_pw->pw_dir);
              user->uid = int(current_pw->pw_uid);
              user->gid = int(current_pw->pw_gid);
 +#if HAVE_QTACCOUNTSSERVICE
-+            QtAccountsService::UserAccount *asUserAccount = asAccountsManager->findUserByName(user->name);
++            AccountsService::UserAccount *asUserAccount = asAccountsManager->findUserById(user->uid);
 +#endif
              // if shadow is used pw_passwd will be 'x' nevertheless, so this
              // will always be true
              user->needsPassword = strcmp(current_pw->pw_passwd, "") != 0;
-@@ -112,6 +120,10 @@
  
-                 if (QFile::exists(userFace))
-                     user->icon = userFace;
+             // search for face icon
+             user->icon = defaultFace;
++            QString userFace = QStringLiteral("%1/.face.icon").arg(user->homeDir);
++            QString systemFace = QStringLiteral("%1/%2.face.icon").arg(mainConfig.Theme.FacesDir.get()).arg(user->name);
++            if (QFile::exists(userFace))
++                user->icon = userFace;
 +#if HAVE_QTACCOUNTSSERVICE
-+		else if (asUserAccount && QFile::exists(asUserAccount->iconFileName()))
-+		    user->icon = asUserAccount->iconFileName();	// accountservice user face
++            else if (asUserAccount && QFile::exists(asUserAccount->iconFileName()))
++                user->icon = asUserAccount->iconFileName();	// accountservice user face
 +#endif
-                 else if (QFile::exists(systemFace))
-                     user->icon = systemFace;
-             }
-@@ -120,6 +132,12 @@
++            else if (QFile::exists(systemFace))
++                user->icon = systemFace;
++            else
++                user->icon = QStringLiteral("%1/default.face.icon").arg(mainConfig.Theme.FacesDir.get());
+ 
+             // add user
+             d->users << user;
+@@ -120,6 +140,13 @@
  
      UserModel::~UserModel() {
          delete d;
++
 +#if HAVE_QTACCOUNTSSERVICE
 +        if (asAccountsManager) {
 +            delete asAccountsManager;
@@ -91,9 +117,9 @@ diff -Naur sddm-0.14.0-20151218/src/greeter/UserModel.cpp sddm-0.14.0-20151218.t
      }
  
      QHash<int, QByteArray> UserModel::roleNames() const {
-diff -Naur sddm-0.14.0-20151218/src/greeter/UserModel.h sddm-0.14.0-20151218.tpg/src/greeter/UserModel.h
---- sddm-0.14.0-20151218/src/greeter/UserModel.h	2015-12-09 13:24:52.000000000 +0000
-+++ sddm-0.14.0-20151218.tpg/src/greeter/UserModel.h	2016-01-09 19:54:06.987508490 +0000
+diff -Naur sddm-0.14.0-20160311/src/greeter/UserModel.h sddm-0.14.0-20160311.tpg/src/greeter/UserModel.h
+--- sddm-0.14.0-20160311/src/greeter/UserModel.h	2016-03-02 19:17:54.000000000 +0000
++++ sddm-0.14.0-20160311.tpg/src/greeter/UserModel.h	2016-05-08 18:40:49.646785083 +0000
 @@ -1,5 +1,7 @@
  /***************************************************************************
  * Copyright (c) 2013 Abdurrahman AVCI <abdurrahmanavci@gmail.com>
@@ -102,22 +128,23 @@ diff -Naur sddm-0.14.0-20151218/src/greeter/UserModel.h sddm-0.14.0-20151218.tpg
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
-@@ -23,6 +25,9 @@
- #include <QAbstractListModel>
+@@ -24,6 +26,10 @@
  
  #include <QHash>
+ 
 +#if HAVE_QTACCOUNTSSERVICE
 +#include <QtAccountsService/AccountsManager>  /* QtAccountsService */
 +#endif
- 
++
  namespace SDDM {
      class UserModelPrivate;
-@@ -57,6 +62,9 @@
+ 
+@@ -57,6 +63,9 @@
          int disableAvatarsThreshold() const;
      private:
          UserModelPrivate *d { nullptr };
 +#if HAVE_QTACCOUNTSSERVICE
-+        QtAccountsService::AccountsManager *asAccountsManager { nullptr };
++        AccountsService::AccountsManager *asAccountsManager { nullptr };
 +#endif
      };
  }
