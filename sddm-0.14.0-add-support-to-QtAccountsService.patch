@@ -70,7 +70,7 @@ diff -Naur sddm-0.14.0-20160311/src/greeter/UserModel.cpp sddm-0.14.0-20160311.t
          const QString defaultFace = QStringLiteral("%1/.face.icon").arg(facesDir);
  
 +#if HAVE_QTACCOUNTSSERVICE
-+        asAccountsManager = new AccountsService::AccountsManager;
++        asAccountsManager = new QtAccountsService::AccountsManager
 +#endif
          struct passwd *current_pw;
          while ((current_pw = getpwent()) != nullptr) {
@@ -80,7 +80,7 @@ diff -Naur sddm-0.14.0-20160311/src/greeter/UserModel.cpp sddm-0.14.0-20160311.t
              user->uid = int(current_pw->pw_uid);
              user->gid = int(current_pw->pw_gid);
 +#if HAVE_QTACCOUNTSSERVICE
-+            AccountsService::UserAccount *asUserAccount = asAccountsManager->findUserById(user->uid);
++            QtAccountsService::UserAccount *asUserAccount = asAccountsManager->findUserById(user->uid);
 +#endif
              // if shadow is used pw_passwd will be 'x' nevertheless, so this
              // will always be true
@@ -144,7 +144,7 @@ diff -Naur sddm-0.14.0-20160311/src/greeter/UserModel.h sddm-0.14.0-20160311.tpg
      private:
          UserModelPrivate *d { nullptr };
 +#if HAVE_QTACCOUNTSSERVICE
-+        QtAccountsService::AccountsManager *asAccountsManager { nullptr };
++        AccountsService::AccountsManager *asAccountsManager { nullptr };
 +#endif
      };
  }
