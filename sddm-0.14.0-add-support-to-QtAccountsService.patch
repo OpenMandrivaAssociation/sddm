@@ -144,7 +144,7 @@ diff -Naur sddm-0.14.0-20160311/src/greeter/UserModel.h sddm-0.14.0-20160311.tpg
      private:
          UserModelPrivate *d { nullptr };
 +#if HAVE_QTACCOUNTSSERVICE
-+        AccountsService::AccountsManager *asAccountsManager { nullptr };
++        QtAccountsService::AccountsManager *asAccountsManager { nullptr };
 +#endif
      };
  }
