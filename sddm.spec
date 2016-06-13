@@ -4,7 +4,7 @@ Name: sddm
 Summary: Lightweight display manager
 Version: 0.14.0
 %if %{date}
-Release: 0.%{date}.16
+Release: 0.%{date}.17
 # Packaged from git for the time being -- no download URL available
 # git archive --format=tar --prefix sddm-0.11.0-$(date +%Y%m%d)/ HEAD | xz -vf > sddm-0.11.0-$(date +%Y%m%d).tar.xz
 Source0: sddm-%{version}-%{date}.tar.xz
@@ -48,7 +48,7 @@ BuildRequires: qt5-linguist-tools
 Requires: xinitrc
 Requires(post,preun): rpm-helper
 # needed to get xcb plugin on Qt platform
-Requires: qt5-output-driver-default
+Requires: %{_lib}qt5-output-driver-default
 # needed for QtQuick
 Requires: qt5-qtdeclarative
 Requires: qt5-qtimageformats
