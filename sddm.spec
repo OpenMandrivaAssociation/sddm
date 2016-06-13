@@ -40,7 +40,6 @@ BuildRequires: pkgconfig(Qt5Qml)
 BuildRequires: pkgconfig(Qt5Test)
 BuildRequires: pkgconfig(systemd)
 BuildRequires: pkgconfig(libsystemd)
-BuildRequires: pkgconfig(libsystemd-journal)
 BuildRequires: cmake(QtAccountsService)
 BuildRequires: pam-devel
 BuildRequires: qt5-linguist-tools
