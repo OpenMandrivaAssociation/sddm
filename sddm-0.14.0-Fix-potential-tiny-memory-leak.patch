@@ -1,0 +1,12 @@
+diff -Naur sddm-0.14.0-20160517/src/greeter/SessionModel.cpp sddm-0.14.0-20160517.tpg/src/greeter/SessionModel.cpp
+--- sddm-0.14.0-20160517/src/greeter/SessionModel.cpp	2016-05-08 10:41:31.000000000 +0000
++++ sddm-0.14.0-20160517.tpg/src/greeter/SessionModel.cpp	2016-06-17 22:22:11.621246313 +0000
+@@ -129,6 +129,8 @@
+             // add to sessions list
+             if (execAllowed)
+                 d->sessions.push_back(si);
++            else
++                delete si;
+         }
+         // find out index of the last session
+         for (int i = 0; i < d->sessions.size(); ++i) {
