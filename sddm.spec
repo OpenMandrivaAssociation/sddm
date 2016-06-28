@@ -4,7 +4,7 @@ Name: sddm
 Summary: Lightweight display manager
 Version: 0.14.0
 %if %{date}
-Release: 0.%{date}.18
+Release: 0.%{date}.19
 # Packaged from git for the time being -- no download URL available
 # git archive --format=tar --prefix sddm-0.11.0-$(date +%Y%m%d)/ HEAD | xz -vf > sddm-0.11.0-$(date +%Y%m%d).tar.xz
 Source0: sddm-%{version}-%{date}.tar.xz
@@ -73,13 +73,13 @@ Lightweight display manager (login screen).
 sed -i -e 's,system-login,system-auth,g' services/*.pam
 
 %cmake_kde5 \
-	-DUSE_QT5:BOOL=ON \
-	-DSESSION_COMMAND:FILEPATH=/etc/X11/Xsession \
-	-DENABLE_JOURNALD=ON \
-	-DENABLE_PAM=ON \
-	-DENABLE_PLYMOUTH=ON \
-	-DUID_MIN="1000" \
-	-DUID_MAX="60000"
+    -DUSE_QT5:BOOL=ON \
+    -DSESSION_COMMAND:FILEPATH=/etc/X11/Xsession \
+    -DENABLE_JOURNALD=ON \
+    -DENABLE_PAM=ON \
+    -DENABLE_PLYMOUTH=ON \
+    -DUID_MIN="1000" \
+    -DUID_MAX="60000"
 
 %build
 %ninja -C build

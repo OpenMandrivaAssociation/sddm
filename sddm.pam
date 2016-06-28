@@ -12,7 +12,6 @@ session    required    pam_namespace.so
 session    include     system-auth
 session    required    pam_loginuid.so
 session    optional    pam_console.so
-session    required    pam_systemd.so
 -session   optional    pam_gnome_keyring.so auto_start
 -session   optional    pam_kwallet5.so
 -session   optional    pam_kwallet.so
