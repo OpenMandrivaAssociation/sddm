@@ -4,7 +4,7 @@ Name: sddm
 Summary: Lightweight display manager
 Version: 0.14.0
 %if %{date}
-Release: 0.%{date}.19
+Release: 0.%{date}.20
 # Packaged from git for the time being -- no download URL available
 # git archive --format=tar --prefix sddm-0.11.0-$(date +%Y%m%d)/ HEAD | xz -vf > sddm-0.11.0-$(date +%Y%m%d).tar.xz
 Source0: sddm-%{version}-%{date}.tar.xz
@@ -53,7 +53,9 @@ Requires: %{_lib}qt5-output-driver-default
 # needed for QtQuick
 Requires: qt5-qtdeclarative
 Requires: qt5-qtimageformats
+%ifnarch %armx
 Requires: distro-theme-OpenMandriva >= 1.4.37
+%endif
 Provides: dm
 # (tpg) fix update from 2014.0
 Provides: kdm = 2:4.11.22-1.1
