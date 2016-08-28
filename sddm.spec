@@ -1,4 +1,4 @@
-%define date %{nil}
+%define date 0
 
 Name: sddm
 Summary: Lightweight display manager
