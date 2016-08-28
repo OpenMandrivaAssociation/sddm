@@ -34,7 +34,9 @@ Patch2: sddm-0.14.0-call-retain-splash-on-plymouth.patch
 BuildRequires: cmake(ECM)
 BuildRequires: pkgconfig(Qt5Core)
 BuildRequires: pkgconfig(Qt5Gui)
+%if %{mdvver} <= 3000000
 BuildRequires: pkgconfig(Qt5Declarative)
+%endif
 BuildRequires: pkgconfig(Qt5DBus)
 BuildRequires: pkgconfig(Qt5Quick)
 BuildRequires: pkgconfig(Qt5Network)
