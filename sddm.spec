@@ -1,4 +1,4 @@
-%define date 20160823
+%define date 0
 
 Name: sddm
 Summary: Lightweight display manager
@@ -10,7 +10,7 @@ Release: 0.%{date}.21
 Source0: sddm-%{version}-%{date}.tar.xz
 %else
 Release: 1
-Source0: https://github.com/sddm/sddm/releases/download/v%{version}/sddm-%{version}.tar.xz
+Source0: https://github.com/sddm/sddm/releases/download/v%{version}/%{name}-%{version}.tar.xz
 %endif
 # Adds sddm to drakedm
 Source1: 11sddm.conf
@@ -25,7 +25,8 @@ License: GPLv2
 Patch0: sddm-0.12.0-waitForFinished.patch
 Patch1: sddm-0.14.0-by-default-use-plasma-session.patch
 Patch2: sddm-0.14.0-call-retain-splash-on-plymouth.patch
-Patch4: sddm-0.14.0-Log-Xorg-server-output-to-the-journal.patch
+# (tpg) seems to be broken
+#Patch4: sddm-0.14.0-Log-Xorg-server-output-to-the-journal.patch
 # (tpg) based on this https://github.com/sddm/sddm/pull/525
 #Patch3: sddm-0.14.0-add-support-to-QtAccountsService.patch
 # (tpg) based on this https://github.com/sddm/sddm/pull/439
@@ -33,7 +34,9 @@ Patch4: sddm-0.14.0-Log-Xorg-server-output-to-the-journal.patch
 BuildRequires: cmake(ECM)
 BuildRequires: pkgconfig(Qt5Core)
 BuildRequires: pkgconfig(Qt5Gui)
+%if %{mdvver} <= 3000000
 BuildRequires: pkgconfig(Qt5Declarative)
+%endif
 BuildRequires: pkgconfig(Qt5DBus)
 BuildRequires: pkgconfig(Qt5Quick)
 BuildRequires: pkgconfig(Qt5Network)
