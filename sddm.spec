@@ -9,7 +9,7 @@ Release: 0.%{date}.21
 # git archive --format=tar --prefix sddm-0.11.0-$(date +%Y%m%d)/ HEAD | xz -vf > sddm-0.11.0-$(date +%Y%m%d).tar.xz
 Source0: sddm-%{version}-%{date}.tar.xz
 %else
-Release: 1
+Release: 2
 Source0: https://github.com/sddm/sddm/releases/download/v%{version}/%{name}-%{version}.tar.xz
 %endif
 # Adds sddm to drakedm
@@ -28,7 +28,7 @@ Patch2: sddm-0.14.0-call-retain-splash-on-plymouth.patch
 # (tpg) seems to be broken
 #Patch4: sddm-0.14.0-Log-Xorg-server-output-to-the-journal.patch
 # (tpg) based on this https://github.com/sddm/sddm/pull/525
-#Patch3: sddm-0.14.0-add-support-to-QtAccountsService.patch
+Patch3: sddm-0.14.0-add-support-to-QtAccountsService.patch
 # (tpg) based on this https://github.com/sddm/sddm/pull/439
 #Patch4: sddm-0.14.0-add-suport-to-plymouth-smooth-transition.patch
 BuildRequires: cmake(ECM)
