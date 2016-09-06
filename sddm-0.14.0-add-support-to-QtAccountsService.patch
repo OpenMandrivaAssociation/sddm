@@ -2,9 +2,9 @@ diff -Naur sddm-0.14.0-20160311/CMakeLists.txt sddm-0.14.0-20160311.tpg/CMakeLis
 --- sddm-0.14.0-20160311/CMakeLists.txt	2016-03-02 19:17:54.000000000 +0000
 +++ sddm-0.14.0-20160311.tpg/CMakeLists.txt	2016-05-08 18:36:33.135015089 +0000
 @@ -90,6 +90,20 @@
- find_package(Qt5DBus REQUIRED)
- find_package(Qt5LinguistTools REQUIRED)
- 
+ # Qt 5
+ find_package(Qt5 5.6.0 CONFIG REQUIRED Core DBus Gui Qml Quick LinguistTools)
+
 +# AccountsService Qt5 binding
 +find_package(QtAccountsService)
 +set_package_properties(QtAccountsService PROPERTIES 
@@ -32,16 +32,13 @@ diff -Naur sddm-0.14.0-20160311/src/greeter/CMakeLists.txt sddm-0.14.0-20160311.
  
  set(GREETER_SOURCES
      ${CMAKE_SOURCE_DIR}/src/common/Configuration.cpp
-@@ -19,13 +20,20 @@
- )
- 
- add_executable(sddm-greeter ${GREETER_SOURCES})
--target_link_libraries(sddm-greeter ${LIBXCB_LIBRARIES} ${LIBXKB_LIBRARIES})
-+target_link_libraries(sddm-greeter
-+    ${LIBXCB_LIBRARIES}
-+    ${LIBXKB_LIBRARIES}
-+    ${QtAccountsService_LIBRARIES})
- qt5_use_modules(sddm-greeter Quick)
+@@ -27,12 +28,17 @@
+ target_link_libraries(sddm-greeter
+                       Qt5::Quick
+                       ${LIBXCB_LIBRARIES}
+-                      ${LIBXKB_LIBRARIES})
++                      ${LIBXKB_LIBRARIES}
++                      ${QtAccountsService_LIBRARIES})
  
  if(JOURNALD_FOUND)
      target_link_libraries(sddm-greeter ${JOURNALD_LIBRARIES})
@@ -67,10 +64,10 @@ diff -Naur sddm-0.14.0-20160311/src/greeter/UserModel.cpp sddm-0.14.0-20160311.t
  * it under the terms of the GNU General Public License as published by
 @@ -54,6 +56,9 @@
          const QString facesDir = mainConfig.Theme.FacesDir.get();
-         const QString defaultFace = QStringLiteral("%1/.face.icon").arg(facesDir);
+         const QString defaultFace = QStringLiteral("file://%1/.face.icon").arg(facesDir);
  
 +#if HAVE_QTACCOUNTSSERVICE
-+        asAccountsManager = new QtAccountsService::AccountsManager
++        asAccountsManager = new QtAccountsService::AccountsManager();
 +#endif
          struct passwd *current_pw;
          while ((current_pw = getpwent()) != nullptr) {
