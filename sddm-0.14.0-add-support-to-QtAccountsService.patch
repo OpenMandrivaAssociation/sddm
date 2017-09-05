@@ -1,10 +1,10 @@
-diff -Naur sddm-0.14.0-20160311/CMakeLists.txt sddm-0.14.0-20160311.tpg/CMakeLists.txt
---- sddm-0.14.0-20160311/CMakeLists.txt	2016-03-02 19:17:54.000000000 +0000
-+++ sddm-0.14.0-20160311.tpg/CMakeLists.txt	2016-05-08 18:36:33.135015089 +0000
-@@ -90,6 +90,20 @@
+diff -Naur sddm-0.15.0/CMakeLists.txt sddm-0.15.0.tpg/CMakeLists.txt
+--- sddm-0.15.0/CMakeLists.txt	2017-08-31 10:54:30.000000000 +0000
++++ sddm-0.15.0.tpg/CMakeLists.txt	2017-09-04 23:49:39.826880587 +0000
+@@ -91,6 +91,20 @@
  # Qt 5
  find_package(Qt5 5.6.0 CONFIG REQUIRED Core DBus Gui Qml Quick LinguistTools)
-
+ 
 +# AccountsService Qt5 binding
 +find_package(QtAccountsService)
 +set_package_properties(QtAccountsService PROPERTIES 
@@ -22,17 +22,18 @@ diff -Naur sddm-0.14.0-20160311/CMakeLists.txt sddm-0.14.0-20160311.tpg/CMakeLis
  # find qt5 imports dir
  get_target_property(QMAKE_EXECUTABLE Qt5::qmake LOCATION)
  if(NOT QT_IMPORTS_DIR)
-diff -Naur sddm-0.14.0-20160311/src/greeter/CMakeLists.txt sddm-0.14.0-20160311.tpg/src/greeter/CMakeLists.txt
---- sddm-0.14.0-20160311/src/greeter/CMakeLists.txt	2016-03-02 19:17:54.000000000 +0000
-+++ sddm-0.14.0-20160311.tpg/src/greeter/CMakeLists.txt	2016-05-08 18:37:29.350527797 +0000
-@@ -1,5 +1,6 @@
- include_directories("${CMAKE_SOURCE_DIR}/src/common")
- include_directories("${CMAKE_BINARY_DIR}/src/common")
-+include_directories(${QtAccountsService_INCLUDE_DIRS})
+diff -Naur sddm-0.15.0/src/greeter/CMakeLists.txt sddm-0.15.0.tpg/src/greeter/CMakeLists.txt
+--- sddm-0.15.0/src/greeter/CMakeLists.txt	2017-08-30 14:23:25.000000000 +0000
++++ sddm-0.15.0.tpg/src/greeter/CMakeLists.txt	2017-09-04 23:51:25.679887970 +0000
+@@ -2,6 +2,7 @@
+     "${CMAKE_SOURCE_DIR}/src/common"
+     "${CMAKE_BINARY_DIR}/src/common"
+     "${LIBXCB_INCLUDE_DIR}"
++    "${QtAccountsService_INCLUDE_DIRS}"
+ )
  
  set(GREETER_SOURCES
-     ${CMAKE_SOURCE_DIR}/src/common/Configuration.cpp
-@@ -27,12 +28,17 @@
+@@ -30,12 +31,17 @@
  target_link_libraries(sddm-greeter
                        Qt5::Quick
                        ${LIBXCB_LIBRARIES}
@@ -51,9 +52,9 @@ diff -Naur sddm-0.14.0-20160311/src/greeter/CMakeLists.txt sddm-0.14.0-20160311.
  # Translations
  add_dependencies(sddm-greeter components-translation)
  add_dependencies(sddm-greeter themes-translation)
-diff -Naur sddm-0.14.0-20160311/src/greeter/UserModel.cpp sddm-0.14.0-20160311.tpg/src/greeter/UserModel.cpp
---- sddm-0.14.0-20160311/src/greeter/UserModel.cpp	2016-03-02 19:17:54.000000000 +0000
-+++ sddm-0.14.0-20160311.tpg/src/greeter/UserModel.cpp	2016-05-08 18:39:58.848460297 +0000
+diff -Naur sddm-0.15.0/src/greeter/UserModel.cpp sddm-0.15.0.tpg/src/greeter/UserModel.cpp
+--- sddm-0.15.0/src/greeter/UserModel.cpp	2017-08-30 14:23:25.000000000 +0000
++++ sddm-0.15.0.tpg/src/greeter/UserModel.cpp	2017-09-04 23:54:14.865899770 +0000
 @@ -1,5 +1,7 @@
  /***************************************************************************
  * Copyright (c) 2013 Abdurrahman AVCI <abdurrahmanavci@gmail.com>
@@ -72,16 +73,7 @@ diff -Naur sddm-0.14.0-20160311/src/greeter/UserModel.cpp sddm-0.14.0-20160311.t
          struct passwd *current_pw;
          while ((current_pw = getpwent()) != nullptr) {
  
-@@ -79,12 +84,27 @@
-             user->homeDir = QString::fromLocal8Bit(current_pw->pw_dir);
-             user->uid = int(current_pw->pw_uid);
-             user->gid = int(current_pw->pw_gid);
-+#if HAVE_QTACCOUNTSSERVICE
-+            QtAccountsService::UserAccount *asUserAccount = asAccountsManager->findUserById(user->uid);
-+#endif
-             // if shadow is used pw_passwd will be 'x' nevertheless, so this
-             // will always be true
-             user->needsPassword = strcmp(current_pw->pw_passwd, "") != 0;
+@@ -92,6 +97,18 @@
  
              // search for face icon
              user->icon = defaultFace;
@@ -91,7 +83,7 @@ diff -Naur sddm-0.14.0-20160311/src/greeter/UserModel.cpp sddm-0.14.0-20160311.t
 +                user->icon = userFace;
 +#if HAVE_QTACCOUNTSSERVICE
 +            else if (asUserAccount && QFile::exists(asUserAccount->iconFileName()))
-+                user->icon = asUserAccount->iconFileName();	// accountservice user face
++                user->icon = asUserAccount->iconFileName();    // accountservice user face
 +#endif
 +            else if (QFile::exists(systemFace))
 +                user->icon = systemFace;
@@ -100,7 +92,7 @@ diff -Naur sddm-0.14.0-20160311/src/greeter/UserModel.cpp sddm-0.14.0-20160311.t
  
              // add user
              d->users << user;
-@@ -120,6 +140,13 @@
+@@ -127,6 +144,13 @@
  
      UserModel::~UserModel() {
          delete d;
@@ -114,9 +106,9 @@ diff -Naur sddm-0.14.0-20160311/src/greeter/UserModel.cpp sddm-0.14.0-20160311.t
      }
  
      QHash<int, QByteArray> UserModel::roleNames() const {
-diff -Naur sddm-0.14.0-20160311/src/greeter/UserModel.h sddm-0.14.0-20160311.tpg/src/greeter/UserModel.h
---- sddm-0.14.0-20160311/src/greeter/UserModel.h	2016-03-02 19:17:54.000000000 +0000
-+++ sddm-0.14.0-20160311.tpg/src/greeter/UserModel.h	2016-05-08 18:40:49.646785083 +0000
+diff -Naur sddm-0.15.0/src/greeter/UserModel.h sddm-0.15.0.tpg/src/greeter/UserModel.h
+--- sddm-0.15.0/src/greeter/UserModel.h	2016-10-12 15:23:39.000000000 +0000
++++ sddm-0.15.0.tpg/src/greeter/UserModel.h	2017-09-04 23:55:13.333903847 +0000
 @@ -1,5 +1,7 @@
  /***************************************************************************
  * Copyright (c) 2013 Abdurrahman AVCI <abdurrahmanavci@gmail.com>
