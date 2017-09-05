@@ -31,6 +31,8 @@ Patch2: sddm-0.14.0-call-retain-splash-on-plymouth.patch
 Patch3: sddm-0.14.0-add-support-to-QtAccountsService.patch
 # (tpg) based on this https://github.com/sddm/sddm/pull/439
 #Patch4: sddm-0.14.0-add-suport-to-plymouth-smooth-transition.patch
+# (tpg) https://github.com/sddm/sddm/pull/817
+Patch5: sddm-0.15.0-Avoid-leaking-sockets-to-user-sessions.patch
 BuildRequires: cmake(ECM)
 BuildRequires: pkgconfig(Qt5Core)
 BuildRequires: pkgconfig(Qt5Gui)
