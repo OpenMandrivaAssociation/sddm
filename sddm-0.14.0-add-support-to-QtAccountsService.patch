@@ -1,6 +1,6 @@
 diff -Naur sddm-0.15.0/CMakeLists.txt sddm-0.15.0.tpg/CMakeLists.txt
 --- sddm-0.15.0/CMakeLists.txt	2017-08-31 10:54:30.000000000 +0000
-+++ sddm-0.15.0.tpg/CMakeLists.txt	2017-09-07 21:19:18.376452222 +0000
++++ sddm-0.15.0.tpg/CMakeLists.txt	2017-09-07 22:22:00.510595595 +0000
 @@ -91,6 +91,20 @@
  # Qt 5
  find_package(Qt5 5.6.0 CONFIG REQUIRED Core DBus Gui Qml Quick LinguistTools)
@@ -24,7 +24,7 @@ diff -Naur sddm-0.15.0/CMakeLists.txt sddm-0.15.0.tpg/CMakeLists.txt
  if(NOT QT_IMPORTS_DIR)
 diff -Naur sddm-0.15.0/src/greeter/CMakeLists.txt sddm-0.15.0.tpg/src/greeter/CMakeLists.txt
 --- sddm-0.15.0/src/greeter/CMakeLists.txt	2017-08-30 14:23:25.000000000 +0000
-+++ sddm-0.15.0.tpg/src/greeter/CMakeLists.txt	2017-09-07 21:20:11.673454253 +0000
++++ sddm-0.15.0.tpg/src/greeter/CMakeLists.txt	2017-09-07 22:22:00.511595595 +0000
 @@ -4,6 +4,8 @@
      "${LIBXCB_INCLUDE_DIR}"
  )
@@ -55,7 +55,7 @@ diff -Naur sddm-0.15.0/src/greeter/CMakeLists.txt sddm-0.15.0.tpg/src/greeter/CM
  add_dependencies(sddm-greeter themes-translation)
 diff -Naur sddm-0.15.0/src/greeter/UserModel.cpp sddm-0.15.0.tpg/src/greeter/UserModel.cpp
 --- sddm-0.15.0/src/greeter/UserModel.cpp	2017-08-30 14:23:25.000000000 +0000
-+++ sddm-0.15.0.tpg/src/greeter/UserModel.cpp	2017-09-07 21:19:18.376452222 +0000
++++ sddm-0.15.0.tpg/src/greeter/UserModel.cpp	2017-09-07 22:26:06.953604987 +0000
 @@ -1,5 +1,7 @@
  /***************************************************************************
  * Copyright (c) 2013 Abdurrahman AVCI <abdurrahmanavci@gmail.com>
@@ -74,7 +74,16 @@ diff -Naur sddm-0.15.0/src/greeter/UserModel.cpp sddm-0.15.0.tpg/src/greeter/Use
          struct passwd *current_pw;
          while ((current_pw = getpwent()) != nullptr) {
  
-@@ -92,6 +97,18 @@
+@@ -86,12 +91,27 @@
+             user->homeDir = QString::fromLocal8Bit(current_pw->pw_dir);
+             user->uid = int(current_pw->pw_uid);
+             user->gid = int(current_pw->pw_gid);
++#if HAVE_QTACCOUNTSSERVICE
++            QtAccountsService::UserAccount *asUserAccount = asAccountsManager->findUserById(user->uid);
++#endif
+             // if shadow is used pw_passwd will be 'x' nevertheless, so this
+             // will always be true
+             user->needsPassword = strcmp(current_pw->pw_passwd, "") != 0;
  
              // search for face icon
              user->icon = defaultFace;
@@ -93,7 +102,7 @@ diff -Naur sddm-0.15.0/src/greeter/UserModel.cpp sddm-0.15.0.tpg/src/greeter/Use
  
              // add user
              d->users << user;
-@@ -127,6 +144,13 @@
+@@ -127,6 +147,13 @@
  
      UserModel::~UserModel() {
          delete d;
@@ -109,7 +118,7 @@ diff -Naur sddm-0.15.0/src/greeter/UserModel.cpp sddm-0.15.0.tpg/src/greeter/Use
      QHash<int, QByteArray> UserModel::roleNames() const {
 diff -Naur sddm-0.15.0/src/greeter/UserModel.h sddm-0.15.0.tpg/src/greeter/UserModel.h
 --- sddm-0.15.0/src/greeter/UserModel.h	2016-10-12 15:23:39.000000000 +0000
-+++ sddm-0.15.0.tpg/src/greeter/UserModel.h	2017-09-07 21:19:18.376452222 +0000
++++ sddm-0.15.0.tpg/src/greeter/UserModel.h	2017-09-07 22:22:00.511595595 +0000
 @@ -1,5 +1,7 @@
  /***************************************************************************
  * Copyright (c) 2013 Abdurrahman AVCI <abdurrahmanavci@gmail.com>
