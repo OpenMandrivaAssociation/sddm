@@ -9,7 +9,7 @@ Release: 0.%{date}.1
 # git archive --format=tar --prefix sddm-0.11.0-$(date +%Y%m%d)/ HEAD | xz -vf > sddm-0.11.0-$(date +%Y%m%d).tar.xz
 Source0: sddm-%{version}-%{date}.tar.xz
 %else
-Release: 1
+Release: 2
 Source0: https://github.com/sddm/sddm/releases/download/v%{version}/%{name}-%{version}.tar.xz
 %endif
 # Adds sddm to drakedm
@@ -33,6 +33,7 @@ Patch3: sddm-0.14.0-add-support-to-QtAccountsService.patch
 #Patch4: sddm-0.14.0-add-suport-to-plymouth-smooth-transition.patch
 # (tpg) https://github.com/sddm/sddm/pull/817
 Patch5: sddm-0.15.0-Avoid-leaking-sockets-to-user-sessions.patch
+Patch6: sddm-0.15.0-remove-elogind-from-pam.patch
 BuildRequires: cmake(ECM)
 BuildRequires: pkgconfig(Qt5Core)
 BuildRequires: pkgconfig(Qt5Gui)
