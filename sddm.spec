@@ -2,14 +2,14 @@
 
 Name: sddm
 Summary: Lightweight display manager
-Version: 0.15.0
+Version: 0.16.0
 %if %{date}
 Release: 0.%{date}.1
 # Packaged from git for the time being -- no download URL available
 # git archive --format=tar --prefix sddm-0.11.0-$(date +%Y%m%d)/ HEAD | xz -vf > sddm-0.11.0-$(date +%Y%m%d).tar.xz
 Source0: sddm-%{version}-%{date}.tar.xz
 %else
-Release: 2
+Release: 1
 Source0: https://github.com/sddm/sddm/releases/download/v%{version}/%{name}-%{version}.tar.xz
 %endif
 # Adds sddm to drakedm
