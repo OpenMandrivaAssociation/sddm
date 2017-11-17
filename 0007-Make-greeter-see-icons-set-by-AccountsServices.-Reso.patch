@@ -1,0 +1,30 @@
+From 6015d10fe771614d38026d37ceb26025dd711a28 Mon Sep 17 00:00:00 2001
+From: Nathaniel Graham <pointedstick@zoho.com>
+Date: Tue, 14 Nov 2017 22:54:18 -0700
+Subject: [PATCH 7/9] Make greeter see icons set by AccountsServices. Resolves
+ #683
+
+---
+ src/greeter/UserModel.cpp | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/src/greeter/UserModel.cpp b/src/greeter/UserModel.cpp
+index 33114d0..ebc1819 100644
+--- a/src/greeter/UserModel.cpp
++++ b/src/greeter/UserModel.cpp
+@@ -116,9 +116,12 @@ namespace SDDM {
+             if (avatarsEnabled) {
+                 const QString userFace = QStringLiteral("%1/.face.icon").arg(user->homeDir);
+                 const QString systemFace = QStringLiteral("%1/%2.face.icon").arg(facesDir).arg(user->name);
++                QString accountsServiceFace = QStringLiteral("/var/lib/AccountsService/icons/%1").arg(user->name);
+ 
+                 if (QFile::exists(userFace))
+                     user->icon = QStringLiteral("file://%1").arg(userFace);
++                else if (QFile::exists(accountsServiceFace))
++                    user->icon = accountsServiceFace;
+                 else if (QFile::exists(systemFace))
+                     user->icon = QStringLiteral("file://%1").arg(systemFace);
+             }
+-- 
+2.8.3
+
