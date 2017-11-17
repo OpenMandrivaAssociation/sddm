@@ -9,7 +9,7 @@ Release: 0.%{date}.1
 # git archive --format=tar --prefix sddm-0.11.0-$(date +%Y%m%d)/ HEAD | xz -vf > sddm-0.11.0-$(date +%Y%m%d).tar.xz
 Source0: sddm-%{version}-%{date}.tar.xz
 %else
-Release: 3
+Release: 4
 Source0: https://github.com/sddm/sddm/releases/download/v%{version}/%{name}-%{version}.tar.xz
 %endif
 # Adds sddm to drakedm
@@ -28,12 +28,16 @@ Patch2: sddm-0.14.0-call-retain-splash-on-plymouth.patch
 # (tpg) seems to be broken
 #Patch4: sddm-0.14.0-Log-Xorg-server-output-to-the-journal.patch
 # (tpg) based on this https://github.com/sddm/sddm/pull/525
-Patch3: sddm-0.14.0-add-support-to-QtAccountsService.patch
+#Patch3: sddm-0.14.0-add-support-to-QtAccountsService.patch
 # (tpg) based on this https://github.com/sddm/sddm/pull/439
 #Patch4: sddm-0.14.0-add-suport-to-plymouth-smooth-transition.patch
 # (tpg) https://github.com/sddm/sddm/pull/817
 Patch5: sddm-0.15.0-Avoid-leaking-sockets-to-user-sessions.patch
 Patch6: 0001-Execute-etc-X11-Xsession.patch
+Patch7: 0002-helper-Declare-dependency-on-Qt5-Qml.patch
+Patch8: 0005-Fix-connection-of-PropertiesChanged-event-for-Logind.patch
+Patch9: 0006-Added-missing-utmp-wtmp-btmp-handling.patch
+Patch10: 0007-Make-greeter-see-icons-set-by-AccountsServices.-Reso.patch
 BuildRequires: cmake(ECM)
 BuildRequires: pkgconfig(Qt5Core)
 BuildRequires: pkgconfig(Qt5Gui)
@@ -46,7 +50,6 @@ BuildRequires: pkgconfig(Qt5Network)
 BuildRequires: pkgconfig(Qt5Qml)
 BuildRequires: pkgconfig(Qt5Test)
 BuildRequires: pkgconfig(libsystemd)
-BuildRequires: cmake(QtAccountsService)
 BuildRequires: pam-devel
 BuildRequires: qt5-linguist-tools
 # For /etc/X11/Xsession
