@@ -1,17 +1,17 @@
 #%PAM-1.0
 auth       required    pam_env.so
 auth       sufficient  pam_succeed_if.so user ingroup nopasswdlogin
-auth       include     system-auth
--auth      optional    pam_gnome_keyring.so
+auth       substack     system-auth
 -auth      optional    pam_kwallet5.so
 -auth      optional    pam_kwallet.so
+-auth      optional    pam_gnome_keyring.so
 account    include     system-auth
 password   include     system-auth
 session    optional    pam_keyinit.so force revoke
 session    required    pam_namespace.so
 session    include     system-auth
 session    required    pam_loginuid.so
-session    optional    pam_console.so
--session   optional    pam_gnome_keyring.so auto_start
 -session   optional    pam_kwallet5.so  auto_start
 -session   optional    pam_kwallet.so   auto_start
+-session   optional    pam_gnome_keyring.so auto_start
+session    optional    pam_console.so
