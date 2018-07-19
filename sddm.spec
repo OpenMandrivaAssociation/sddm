@@ -2,14 +2,14 @@
 
 Name: sddm
 Summary: Lightweight display manager
-Version: 0.17.0
+Version: 0.18.0
 %if %{date}
 Release: 0.%{date}.1
 # Packaged from git for the time being -- no download URL available
 # git archive --format=tar --prefix sddm-0.11.0-$(date +%Y%m%d)/ HEAD | xz -vf > sddm-0.11.0-$(date +%Y%m%d).tar.xz
 Source0: sddm-%{version}-%{date}.tar.xz
 %else
-Release: 6
+Release: 1
 Source0: https://github.com/sddm/sddm/releases/download/v%{version}/%{name}-%{version}.tar.xz
 %endif
 # Adds sddm to drakedm
@@ -32,12 +32,11 @@ Patch2: sddm-0.14.0-call-retain-splash-on-plymouth.patch
 # (tpg) based on this https://github.com/sddm/sddm/pull/439
 #Patch4: sddm-0.14.0-add-suport-to-plymouth-smooth-transition.patch
 # (tpg) https://github.com/sddm/sddm/pull/817
-Patch5: sddm-0.15.0-Avoid-leaking-sockets-to-user-sessions.patch
 Patch6: 0001-Execute-etc-X11-Xsession.patch
 # This patch is IMPORTANT -- don't drop it just because it doesn't apply
 # anymore!!!
 # https://github.com/sddm/sddm/issues/733
-Patch7: https://github.com/FedoraKDE/sddm/commit/4741f7d02a30cf3023dbd287d88a1ee9c9d71d10.patch
+Patch7: https://src.fedoraproject.org/cgit/rpms/sddm.git/plain/0001-Port-from-xauth-to-libXau.patch
 Patch8: sddm-0.17.0-clang.patch
 
 BuildRequires: cmake(ECM)

@@ -1,8 +1,0 @@
-diff -Naur sddm-0.15.0/services/sddm-greeter.pam sddm-0.15.0.tpg/services/sddm-greeter.pam
---- sddm-0.15.0/services/sddm-greeter.pam	2017-08-30 14:23:25.000000000 +0000
-+++ sddm-0.15.0.tpg/services/sddm-greeter.pam	2017-09-08 00:50:15.421934576 +0000
-@@ -15,4 +15,3 @@
- # Setup session
- session		required pam_unix.so
- session		optional pam_systemd.so
--session		optional pam_elogind.so
