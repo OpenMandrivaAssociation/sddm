@@ -1,8 +1,8 @@
-diff -Naur sddm-0.14.0-20160823/services/sddm.service.in sddm-0.14.0-20160823.tpg/services/sddm.service.in
---- sddm-0.14.0-20160823/services/sddm.service.in	2016-08-22 19:37:28.000000000 +0000
-+++ sddm-0.14.0-20160823.tpg/services/sddm.service.in	2016-08-23 17:39:01.358511474 +0000
+diff -Naur sddm-0.18.0/services/sddm.service.in sddm-0.18.0.tpg/services/sddm.service.in
+--- sddm-0.18.0/services/sddm.service.in	2018-07-18 10:31:40.000000000 +0000
++++ sddm-0.18.0.tpg/services/sddm.service.in	2018-07-19 09:17:54.752220767 +0000
 @@ -5,6 +5,7 @@
- After=systemd-user-sessions.service getty@tty1.service plymouth-quit.service
+ After=systemd-user-sessions.service getty@tty1.service plymouth-quit.service systemd-logind.service
  
  [Service]
 +ExecStartPre=-/bin/plymouth quit --retain-splash
