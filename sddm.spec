@@ -110,7 +110,7 @@ sed -i -e 's,\(^background=\).*,\1%{_datadir}/mdk/backgrounds/OpenMandriva-splas
 sed -i -e 's,\(^background=\).*,\1%{_datadir}/mdk/backgrounds/OpenMandriva-splash.png,' %{buildroot}%{_datadir}/sddm/themes/maldives/theme.conf
 
 %pre
-%_pre_useradd sddm %{_var}/lib/sddm /bin/false
+%_pre_useradd sddm 1 sddm %{_var}/lib/sddm /bin/false
 
 %postun
 %_postun_userdel sddm
