@@ -5,9 +5,6 @@ Summary: Lightweight display manager
 Version: 0.18.0
 %if %{date}
 Release: 0.%{date}.1
-URL: https://github.com/sddm
-Group: Graphical desktop/KDE
-License: GPLv2
 # Packaged from git for the time being -- no download URL available
 # git archive --format=tar --prefix sddm-0.11.0-$(date +%Y%m%d)/ HEAD | xz -vf > sddm-0.11.0-$(date +%Y%m%d).tar.xz
 Source0: sddm-%{version}-%{date}.tar.xz
@@ -15,6 +12,9 @@ Source0: sddm-%{version}-%{date}.tar.xz
 Release: 7
 Source0: https://github.com/sddm/sddm/releases/download/v%{version}/%{name}-%{version}.tar.xz
 %endif
+URL: https://github.com/sddm
+Group: Graphical desktop/KDE
+License: GPLv2
 # Adds sddm to drakedm
 Source1: 11sddm.conf
 Source2: sddm.conf
