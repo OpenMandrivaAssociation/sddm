@@ -1,0 +1,2 @@
+g sddm - -
+u sddm - "Lightweight display manager" /var/lib/sddm /bin/false
