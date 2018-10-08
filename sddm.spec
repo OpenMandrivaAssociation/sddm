@@ -21,7 +21,7 @@ Source2: sddm.conf
 Source3: sddm.pam
 Source4: sddm-autologin.pam
 Source5: tmpfiles-sddm.conf
-Source6: sddm.sysconf
+Source6: sddm.sysusers
 # (rxu) wait until script exits
 Patch0: sddm-0.12.0-waitForFinished.patch
 Patch1: sddm-0.14.0-by-default-use-plasma-session.patch
