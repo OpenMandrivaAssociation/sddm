@@ -5,6 +5,9 @@ Summary: Lightweight display manager
 Version: 0.18.0
 %if %{date}
 Release: 0.%{date}.1
+URL: https://github.com/sddm
+Group: Graphical desktop/KDE
+License: GPLv2
 # Packaged from git for the time being -- no download URL available
 # git archive --format=tar --prefix sddm-0.11.0-$(date +%Y%m%d)/ HEAD | xz -vf > sddm-0.11.0-$(date +%Y%m%d).tar.xz
 Source0: sddm-%{version}-%{date}.tar.xz
@@ -18,9 +21,7 @@ Source2: sddm.conf
 Source3: sddm.pam
 Source4: sddm-autologin.pam
 Source5: tmpfiles-sddm.conf
-URL: https://github.com/sddm
-Group: Graphical desktop/KDE
-License: GPLv2
+Source6: %{name}.sysconf
 # (rxu) wait until script exits
 Patch0: sddm-0.12.0-waitForFinished.patch
 Patch1: sddm-0.14.0-by-default-use-plasma-session.patch
@@ -53,7 +54,7 @@ BuildRequires: pkgconfig(Qt5Test)
 BuildRequires: pkgconfig(libsystemd)
 BuildRequires: pam-devel
 BuildRequires: qt5-linguist-tools
-BuildRequires: rpm-helper
+BuildRequires: systemd-macros
 # For /etc/X11/Xsession
 Requires: xinitrc
 Requires(post,preun): rpm-helper
@@ -103,6 +104,7 @@ install -Dpm 644 %{SOURCE2} %{buildroot}%{_sysconfdir}/sddm.conf
 install -Dpm 644 %{SOURCE3} %{buildroot}%{_sysconfdir}/pam.d/sddm
 install -Dpm 644 %{SOURCE4} %{buildroot}%{_sysconfdir}/pam.d/sddm-autologin
 install -Dpm 644 %{SOURCE5} %{buildroot}%{_tmpfilesdir}/sddm.conf
+install -Dpm 644 %{SOURCE6} %{buildroot}%{_sysusersdir}/sddm.conf
 
 mkdir -p %{buildroot}%{_localstatedir}/lib/%{name}
 
@@ -125,6 +127,7 @@ sed -i -e 's,\(^background=\).*,\1%{_datadir}/mdk/backgrounds/OpenMandriva-splas
 %{_sysconfdir}/pam.d/%{name}
 %{_sysconfdir}/pam.d/%{name}-greeter
 %{_sysconfdir}/pam.d/%{name}-autologin
+%{_sysusersdir}/sddm.conf
 %{_tmpfilesdir}/sddm.conf
 %{_libexecdir}/sddm-helper
 %{_unitdir}/%{name}.service
