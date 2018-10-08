@@ -12,7 +12,7 @@ License: GPLv2
 # git archive --format=tar --prefix sddm-0.11.0-$(date +%Y%m%d)/ HEAD | xz -vf > sddm-0.11.0-$(date +%Y%m%d).tar.xz
 Source0: sddm-%{version}-%{date}.tar.xz
 %else
-Release: 6
+Release: 7
 Source0: https://github.com/sddm/sddm/releases/download/v%{version}/%{name}-%{version}.tar.xz
 %endif
 # Adds sddm to drakedm
@@ -21,7 +21,7 @@ Source2: sddm.conf
 Source3: sddm.pam
 Source4: sddm-autologin.pam
 Source5: tmpfiles-sddm.conf
-Source6: %{name}.sysconf
+Source6: sddm.sysconf
 # (rxu) wait until script exits
 Patch0: sddm-0.12.0-waitForFinished.patch
 Patch1: sddm-0.14.0-by-default-use-plasma-session.patch
