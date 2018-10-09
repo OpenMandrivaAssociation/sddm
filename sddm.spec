@@ -9,7 +9,7 @@ Release: 0.%{date}.1
 # git archive --format=tar --prefix sddm-0.11.0-$(date +%Y%m%d)/ HEAD | xz -vf > sddm-0.11.0-$(date +%Y%m%d).tar.xz
 Source0: sddm-%{version}-%{date}.tar.xz
 %else
-Release: 7
+Release: 8
 Source0: https://github.com/sddm/sddm/releases/download/v%{version}/%{name}-%{version}.tar.xz
 %endif
 URL: https://github.com/sddm
@@ -57,7 +57,7 @@ BuildRequires: qt5-linguist-tools
 BuildRequires: systemd-macros
 # For /etc/X11/Xsession
 Requires: xinitrc
-Requires(post,preun): rpm-helper
+Requires(pre,postun): rpm-helper
 # needed to get xcb plugin on Qt platform
 Requires: %{_lib}qt5-output-driver-default
 # needed for QtQuick
@@ -76,11 +76,10 @@ Lightweight display manager (login screen).
 
 %prep
 %if %{date}
-%setup -q -n %{name}-%{version}-%{date}
+%autosetup -n %{name}-%{version}-%{date} -p1
 %else
-%setup -q
+%autosetup -p1
 %endif
-%apply_patches
 
 sed -i -e 's,system-login,system-auth,g' services/*.pam
 
