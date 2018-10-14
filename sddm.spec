@@ -22,8 +22,11 @@ Source3: sddm.pam
 Source4: sddm-autologin.pam
 Source5: tmpfiles-sddm.conf
 Source6: sddm.sysusers
-# (rxu) wait until script exits
-Patch0: sddm-0.12.0-waitForFinished.patch
+## UH that is wrong wrong .. it means waits forever
+## which again means we can deadlock on a displayscript.
+## (rxu) wait until script exits
+##Patch0: sddm-0.12.0-waitForFinished.patch
+## do NOT enable that again - crazy -
 Patch1: sddm-0.14.0-by-default-use-plasma-session.patch
 Patch2: sddm-0.14.0-call-retain-splash-on-plymouth.patch
 # (tpg) seems to be broken
