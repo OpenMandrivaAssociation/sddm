@@ -60,7 +60,7 @@ diff -Naur sddm-0.14.0-20151218/src/daemon/Greeter.cpp sddm-0.14.0-20151218.tpg/
              qDebug() << "Greeter starting...";
  
 +#if HAVE_PLYMOUTH
-+	    qDebug( << "Plymouth quit..."
++            qDebug( << "Plymouth quit..."
 +            system("/bin/plymouth quit --retain-splash")
 +#endif
 +
