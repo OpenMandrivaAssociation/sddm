@@ -9,7 +9,7 @@ Release: 0.%{date}.1
 # git archive --format=tar --prefix sddm-0.11.0-$(date +%Y%m%d)/ HEAD | xz -vf > sddm-0.11.0-$(date +%Y%m%d).tar.xz
 Source0: sddm-%{version}-%{date}.tar.xz
 %else
-Release: 12
+Release: 13
 Source0: https://github.com/sddm/sddm/releases/download/v%{version}/%{name}-%{version}.tar.xz
 %endif
 URL: https://github.com/sddm
@@ -42,7 +42,6 @@ Patch6: 0001-Execute-etc-X11-Xsession.patch
 # https://github.com/sddm/sddm/issues/733
 Patch7: https://src.fedoraproject.org/cgit/rpms/sddm.git/plain/0001-Port-from-xauth-to-libXau.patch
 Patch8: sddm-0.17.0-clang.patch
-Patch9: sddm-0.18.0-QDBusPendingCallWatcher-signal.patch
 
 BuildRequires: cmake(ECM)
 BuildRequires: pkgconfig(Qt5Core)
@@ -88,6 +87,14 @@ Lightweight display manager (login screen).
 
 sed -i -e 's,system-login,system-auth,g' services/*.pam
 
+%ifarch %{aarch64}
+# As of sddm 0.18.0, clang 7.0.1, building sddm with clang
+# on aarch64 results in the login screen not appearing because
+# of a failing signal/slot connection
+# QObject::connect: signal not found in QDBusPendingCallWatcher
+export CC=gcc
+export CXX=g++
+%endif
 %cmake_kde5 \
     -DUSE_QT5:BOOL=ON \
     -DSESSION_COMMAND:FILEPATH=/etc/X11/Xsession \
