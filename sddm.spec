@@ -67,7 +67,7 @@ Requires: %{_lib}qt5-output-driver-default
 # needed for QtQuick
 Requires: qt5-qtdeclarative
 Requires: qt5-qtimageformats
-%ifnarch %armx
+%ifnarch %{armx} %{riscv}
 Requires: distro-theme-OpenMandriva >= 1.4.37
 %endif
 Provides: dm
