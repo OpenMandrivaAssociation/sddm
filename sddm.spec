@@ -1,15 +1,15 @@
-%define date 0
+%define date 20191216
 
 Name: sddm
 Summary: Lightweight display manager
 Version: 0.18.1
 %if %{date}
-Release: 0.%{date}.1
+Release: 4.%{date}.1
 # Packaged from git for the time being -- no download URL available
 # git archive --format=tar --prefix sddm-0.11.0-$(date +%Y%m%d)/ HEAD | xz -vf > sddm-0.11.0-$(date +%Y%m%d).tar.xz
-Source0: sddm-%{version}-%{date}.tar.xz
+Source0: %{name}-%{version}-%{date}.tar.xz
 %else
-Release: 3
+Release: 1
 Source0: https://github.com/sddm/sddm/releases/download/v%{version}/%{name}-%{version}.tar.xz
 %endif
 URL: https://github.com/sddm
@@ -22,6 +22,7 @@ Source3: sddm.pam
 Source4: sddm-autologin.pam
 Source5: tmpfiles-sddm.conf
 Source6: sddm.sysusers
+Source7: sddm.sysconfig
 ## UH that is wrong wrong .. it means waits forever
 ## which again means we can deadlock on a displayscript.
 ## (rxu) wait until script exits
@@ -42,7 +43,7 @@ Patch6: 0001-Execute-etc-X11-Xsession.patch
 # https://github.com/sddm/sddm/issues/733
 Patch7: https://src.fedoraproject.org/cgit/rpms/sddm.git/plain/0001-Port-from-xauth-to-libXau.patch
 Patch8: sddm-0.17.0-clang.patch
-
+Patch9: https://src.fedoraproject.org/rpms/sddm/raw/master/f/sddm-0.18.0-environment_file.patch
 BuildRequires: cmake(ECM)
 BuildRequires: pkgconfig(Qt5Core)
 BuildRequires: pkgconfig(Qt5Gui)
@@ -116,6 +117,7 @@ install -Dpm 644 %{SOURCE3} %{buildroot}%{_sysconfdir}/pam.d/sddm
 install -Dpm 644 %{SOURCE4} %{buildroot}%{_sysconfdir}/pam.d/sddm-autologin
 install -Dpm 644 %{SOURCE5} %{buildroot}%{_tmpfilesdir}/sddm.conf
 install -Dpm 644 %{SOURCE6} %{buildroot}%{_sysusersdir}/sddm.conf
+install -Dpm 644 %{SOURCE7} %{buildroot}%{_sysconfdir}/sysconfig/sddm
 
 mkdir -p %{buildroot}%{_localstatedir}/lib/%{name}
 
@@ -134,6 +136,7 @@ sed -i -e 's,\(^background=\).*,\1%{_datadir}/mdk/backgrounds/OpenMandriva-splas
 %{_bindir}/%{name}-greeter
 %{_datadir}/%{name}
 %config(noreplace) %{_sysconfdir}/sddm.conf
+%config(noreplace) %{_sysconfdir}/sysconfig/sddm
 %{_sysconfdir}/dbus-1/system.d/org.freedesktop.DisplayManager.conf
 %{_sysconfdir}/pam.d/%{name}
 %{_sysconfdir}/pam.d/%{name}-greeter
