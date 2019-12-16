@@ -1,8 +1,8 @@
-diff -Naur sddm-0.18.0/services/sddm.service.in sddm-0.18.0.tpg/services/sddm.service.in
---- sddm-0.18.0/services/sddm.service.in	2018-07-18 10:31:40.000000000 +0000
-+++ sddm-0.18.0.tpg/services/sddm.service.in	2018-07-19 09:17:54.752220767 +0000
-@@ -5,6 +5,7 @@
- After=systemd-user-sessions.service getty@tty1.service plymouth-quit.service systemd-logind.service
+diff -Naur sddm-0.18.1-20191216/services/sddm.service.in sddm-0.18.1-20191216.tpg/services/sddm.service.in
+--- sddm-0.18.1-20191216/services/sddm.service.in	2019-12-16 12:16:35.901032635 +0000
++++ sddm-0.18.1-20191216.tpg/services/sddm.service.in	2019-12-16 12:16:17.934032529 +0000
+@@ -7,6 +7,7 @@
+ StartLimitBurst=2
  
  [Service]
 +ExecStartPre=-/bin/plymouth quit --retain-splash

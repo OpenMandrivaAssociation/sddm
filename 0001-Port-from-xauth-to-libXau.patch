@@ -19,11 +19,10 @@ and make sddm more resilient to hostname changes
  6 files changed, 150 insertions(+), 30 deletions(-)
  create mode 100644 cmake/FindXAU.cmake
 
-diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 8500c65..4e62a4d 100644
---- a/CMakeLists.txt
-+++ b/CMakeLists.txt
-@@ -94,6 +94,9 @@ find_package(XCB REQUIRED)
+diff -Naur sddm-0.18.1-20191216/CMakeLists.txt sddm-0.18.1-20191216.tpg/CMakeLists.txt
+--- sddm-0.18.1-20191216/CMakeLists.txt	2019-12-12 18:06:59.000000000 +0000
++++ sddm-0.18.1-20191216.tpg/CMakeLists.txt	2019-12-16 12:21:52.501034501 +0000
+@@ -94,6 +94,9 @@
  # XKB
  find_package(XKB REQUIRED)
  
@@ -33,11 +32,9 @@ index 8500c65..4e62a4d 100644
  # Qt 5
  find_package(Qt5 5.8.0 CONFIG REQUIRED Core DBus Gui Qml Quick LinguistTools Test)
  
-diff --git a/cmake/FindXAU.cmake b/cmake/FindXAU.cmake
-new file mode 100644
-index 0000000..03cafb7
---- /dev/null
-+++ b/cmake/FindXAU.cmake
+diff -Naur sddm-0.18.1-20191216/cmake/FindXAU.cmake sddm-0.18.1-20191216.tpg/cmake/FindXAU.cmake
+--- sddm-0.18.1-20191216/cmake/FindXAU.cmake	1970-01-01 00:00:00.000000000 +0000
++++ sddm-0.18.1-20191216.tpg/cmake/FindXAU.cmake	2019-12-16 12:23:05.887034934 +0000
 @@ -0,0 +1,54 @@
 +# - Try to find libXau
 +# Once done this will define
@@ -93,11 +90,10 @@ index 0000000..03cafb7
 +
 +  MARK_AS_ADVANCED(LIBXAU_INCLUDE_DIR LIBXAU_LIBRARIES)
 +ENDIF (NOT WIN32)
-diff --git a/src/daemon/CMakeLists.txt b/src/daemon/CMakeLists.txt
-index 5d767c8..befc13d 100644
---- a/src/daemon/CMakeLists.txt
-+++ b/src/daemon/CMakeLists.txt
-@@ -57,7 +57,9 @@ target_link_libraries(sddm
+diff -Naur sddm-0.18.1-20191216/src/daemon/CMakeLists.txt sddm-0.18.1-20191216.tpg/src/daemon/CMakeLists.txt
+--- sddm-0.18.1-20191216/src/daemon/CMakeLists.txt	2019-12-12 18:06:59.000000000 +0000
++++ sddm-0.18.1-20191216.tpg/src/daemon/CMakeLists.txt	2019-12-16 12:24:11.596035321 +0000
+@@ -64,7 +64,9 @@
                        Qt5::DBus
                        Qt5::Network
                        Qt5::Qml
@@ -108,11 +104,10 @@ index 5d767c8..befc13d 100644
  if(PAM_FOUND)
      target_link_libraries(sddm ${PAM_LIBRARIES})
  else()
-diff --git a/src/daemon/XorgDisplayServer.cpp b/src/daemon/XorgDisplayServer.cpp
-index 28ce524..13faf03 100644
---- a/src/daemon/XorgDisplayServer.cpp
-+++ b/src/daemon/XorgDisplayServer.cpp
-@@ -34,6 +34,7 @@
+diff -Naur sddm-0.18.1-20191216/src/daemon/XorgDisplayServer.cpp sddm-0.18.1-20191216.tpg/src/daemon/XorgDisplayServer.cpp
+--- sddm-0.18.1-20191216/src/daemon/XorgDisplayServer.cpp	2019-12-12 18:06:59.000000000 +0000
++++ sddm-0.18.1-20191216.tpg/src/daemon/XorgDisplayServer.cpp	2019-12-16 12:29:58.998037369 +0000
+@@ -35,6 +35,7 @@
  #include <random>
  
  #include <xcb/xcb.h>
@@ -120,7 +115,7 @@ index 28ce524..13faf03 100644
  
  #include <pwd.h>
  #include <unistd.h>
-@@ -88,28 +89,59 @@ namespace SDDM {
+@@ -89,28 +90,59 @@
      }
  
      void XorgDisplayServer::addCookie(const QString &file) {
@@ -137,8 +132,7 @@ index 28ce524..13faf03 100644
 +        if (gethostname(localhost, HOST_NAME_MAX) < 0) {
 +            strcpy(localhost, "localhost");
 +        }
- 
--        QString cmd = QStringLiteral("%1 -f %2 -q").arg(mainConfig.X11.XauthPath.get()).arg(file);
++
 +        // libXau expects binary data, not a string
 +        QByteArray cookieBinary = QByteArray::fromHex(m_cookie.toLatin1());
 +
@@ -167,8 +161,7 @@ index 28ce524..13faf03 100644
 +            return;
 +        }
  
--        // execute xauth
--        FILE *fp = popen(qPrintable(cmd), "w");
+-        QString cmd = QStringLiteral("%1 -f %2 -q").arg(mainConfig.X11.XauthPath.get()).arg(file);
 +        // write the Xauth data
 +        if (!XauWriteAuth (fp, &auth) || fflush (fp) == EOF) {
 +            qWarning() << "Writing the FamilyLocal information to" << file << "failed";
@@ -176,10 +169,12 @@ index 28ce524..13faf03 100644
 +            return;
 +        }
  
+-        // execute xauth
+-        FILE *fp = popen(qPrintable(cmd), "w");
++        auth.family = FamilyWild;
+ 
 -        // check file
 -        if (!fp)
-+        auth.family = FamilyWild;
-+
 +        if (!XauWriteAuth (fp, &auth) || fflush (fp) == EOF) {
 +            qWarning() << "Writing the FamilyWild information to" << file << "failed";
 +            fclose(fp);
@@ -195,34 +190,31 @@ index 28ce524..13faf03 100644
      }
  
      bool XorgDisplayServer::start() {
-diff --git a/src/helper/CMakeLists.txt b/src/helper/CMakeLists.txt
-index ebf4a6e..51d47ef 100644
---- a/src/helper/CMakeLists.txt
-+++ b/src/helper/CMakeLists.txt
-@@ -31,7 +31,7 @@ else()
+diff -Naur sddm-0.18.1-20191216/src/helper/CMakeLists.txt sddm-0.18.1-20191216.tpg/src/helper/CMakeLists.txt
+--- sddm-0.18.1-20191216/src/helper/CMakeLists.txt	2019-12-12 18:06:59.000000000 +0000
++++ sddm-0.18.1-20191216.tpg/src/helper/CMakeLists.txt	2019-12-16 12:31:04.990037758 +0000
+@@ -33,7 +33,7 @@
  endif()
  
  add_executable(sddm-helper ${HELPER_SOURCES})
 -target_link_libraries(sddm-helper Qt5::Network Qt5::DBus Qt5::Qml)
 +target_link_libraries(sddm-helper Qt5::Network Qt5::DBus Qt5::Qml ${LIBXAU_LIBRARIES})
- if(PAM_FOUND)
-     target_link_libraries(sddm-helper ${PAM_LIBRARIES})
- else()
-diff --git a/src/helper/UserSession.cpp b/src/helper/UserSession.cpp
-index d4fd2cf..d597935 100644
---- a/src/helper/UserSession.cpp
-+++ b/src/helper/UserSession.cpp
-@@ -34,6 +34,9 @@
+ if("${CMAKE_SYSTEM_NAME}" STREQUAL "FreeBSD")
+     # On FreeBSD (possibly other BSDs as well), we want to use
+     # setusercontext() to set up the login configuration from login.conf
+diff -Naur sddm-0.18.1-20191216/src/helper/UserSession.cpp sddm-0.18.1-20191216.tpg/src/helper/UserSession.cpp
+--- sddm-0.18.1-20191216/src/helper/UserSession.cpp	2019-12-12 18:06:59.000000000 +0000
++++ sddm-0.18.1-20191216.tpg/src/helper/UserSession.cpp	2019-12-16 12:36:51.093039798 +0000
+@@ -34,6 +34,8 @@
  #include <fcntl.h>
  #include <sched.h>
  
 +#include <X11/Xauth.h>
 +
-+
  namespace SDDM {
      UserSession::UserSession(HelperApp *parent)
              : QProcess(parent) {
-@@ -270,31 +273,57 @@ namespace SDDM {
+@@ -263,31 +265,57 @@
          if (!cookie.isEmpty()) {
              QString file = processEnvironment().value(QStringLiteral("XAUTHORITY"));
              QString display = processEnvironment().value(QStringLiteral("DISPLAY"));
@@ -293,6 +285,5 @@ index d4fd2cf..d597935 100644
          }
      }
  
--- 
+--
 2.17.1
-
