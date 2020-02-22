@@ -120,7 +120,7 @@ install -Dpm 644 %{SOURCE6} %{buildroot}%{_sysusersdir}/sddm.conf
 install -Dpm 644 %{SOURCE7} %{buildroot}%{_sysconfdir}/sysconfig/sddm
 
 mkdir -p %{buildroot}%{_localstatedir}/lib/%{name}
-
+mkdir -p %{buildroot}%{_sysconfdir}/sddm.conf.d
 # use omv-background.png as sddm background for all themes
 sed -i -e 's,\(^background=\).*,\1%{_datadir}/mdk/backgrounds/OpenMandriva-splash.png,' %{buildroot}%{_datadir}/sddm/themes/elarun/theme.conf
 sed -i -e 's,\(^background=\).*,\1%{_datadir}/mdk/backgrounds/OpenMandriva-splash.png,' %{buildroot}%{_datadir}/sddm/themes/maldives/theme.conf
@@ -135,6 +135,7 @@ sed -i -e 's,\(^background=\).*,\1%{_datadir}/mdk/backgrounds/OpenMandriva-splas
 %{_bindir}/%{name}
 %{_bindir}/%{name}-greeter
 %{_datadir}/%{name}
+%dir %{_sysconfdir}/sddm.conf.d
 %config(noreplace) %{_sysconfdir}/sddm.conf
 %config(noreplace) %{_sysconfdir}/sysconfig/sddm
 %{_sysconfdir}/dbus-1/system.d/org.freedesktop.DisplayManager.conf
