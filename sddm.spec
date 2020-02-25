@@ -43,7 +43,7 @@ Patch6: 0001-Execute-etc-X11-Xsession.patch
 # https://github.com/sddm/sddm/issues/733
 # https://github.com/sddm/sddm/pull/1230
 Patch7: https://github.com/sddm/sddm/pull/1230.patch
-Patch8: sddm-0.17.0-clang.patch
+#Patch8: sddm-0.17.0-clang.patch
 Patch9: https://src.fedoraproject.org/rpms/sddm/raw/master/f/sddm-0.18.0-environment_file.patch
 BuildRequires: cmake(ECM)
 BuildRequires: pkgconfig(Qt5Core)
