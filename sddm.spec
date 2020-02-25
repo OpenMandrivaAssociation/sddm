@@ -1,10 +1,10 @@
-%define date 20191216
+%define date 20200225
 
 Name: sddm
 Summary: Lightweight display manager
 Version: 0.18.1
 %if %{date}
-Release: 5.%{date}.1
+Release: 6.%{date}.1
 # Packaged from git for the time being -- no download URL available
 # git archive --format=tar --prefix sddm-0.11.0-$(date +%Y%m%d)/ HEAD | xz -vf > sddm-0.11.0-$(date +%Y%m%d).tar.xz
 Source0: %{name}-%{version}-%{date}.tar.xz
@@ -41,7 +41,8 @@ Patch6: 0001-Execute-etc-X11-Xsession.patch
 # This patch is IMPORTANT -- don't drop it just because it doesn't apply
 # anymore!!!
 # https://github.com/sddm/sddm/issues/733
-Patch7: https://src.fedoraproject.org/cgit/rpms/sddm.git/plain/0001-Port-from-xauth-to-libXau.patch
+# https://github.com/sddm/sddm/pull/1230
+Patch7: https://github.com/sddm/sddm/pull/1230.patch
 Patch8: sddm-0.17.0-clang.patch
 Patch9: https://src.fedoraproject.org/rpms/sddm/raw/master/f/sddm-0.18.0-environment_file.patch
 BuildRequires: cmake(ECM)
