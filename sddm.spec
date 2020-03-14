@@ -24,7 +24,7 @@ Source5: tmpfiles-sddm.conf
 Source6: sddm.sysusers
 Source7: sddm.sysconfig
 Patch1: sddm-0.14.0-by-default-use-plasma-session.patch
-Patch2: ssddm-0.18.1-add-suport-to-plymouth-smooth-transition.patch
+Patch2: sddm-0.18.1-add-suport-to-plymouth-smooth-transition.patch
 # (tpg) seems to be broken
 #Patch4: sddm-0.14.0-Log-Xorg-server-output-to-the-journal.patch
 # (tpg) based on this https://github.com/sddm/sddm/pull/525
