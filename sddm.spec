@@ -23,19 +23,12 @@ Source4: sddm-autologin.pam
 Source5: tmpfiles-sddm.conf
 Source6: sddm.sysusers
 Source7: sddm.sysconfig
-## UH that is wrong wrong .. it means waits forever
-## which again means we can deadlock on a displayscript.
-## (rxu) wait until script exits
-##Patch0: sddm-0.12.0-waitForFinished.patch
-## do NOT enable that again - crazy -
 Patch1: sddm-0.14.0-by-default-use-plasma-session.patch
-Patch2: sddm-0.14.0-call-retain-splash-on-plymouth.patch
+Patch2: ssddm-0.18.1-add-suport-to-plymouth-smooth-transition.patch
 # (tpg) seems to be broken
 #Patch4: sddm-0.14.0-Log-Xorg-server-output-to-the-journal.patch
 # (tpg) based on this https://github.com/sddm/sddm/pull/525
 #Patch3: sddm-0.14.0-add-support-to-QtAccountsService.patch
-# (tpg) based on this https://github.com/sddm/sddm/pull/439
-#Patch4: sddm-0.14.0-add-suport-to-plymouth-smooth-transition.patch
 # (tpg) https://github.com/sddm/sddm/pull/817
 Patch6: 0001-Execute-etc-X11-Xsession.patch
 # This patch is IMPORTANT -- don't drop it just because it doesn't apply
@@ -43,8 +36,6 @@ Patch6: 0001-Execute-etc-X11-Xsession.patch
 # https://github.com/sddm/sddm/issues/733
 # https://github.com/sddm/sddm/pull/1230
 Patch7: https://github.com/sddm/sddm/pull/1230.patch
-#Patch8: sddm-0.17.0-clang.patch
-Patch9: https://src.fedoraproject.org/rpms/sddm/raw/master/f/sddm-0.18.0-environment_file.patch
 BuildRequires: cmake(ECM)
 BuildRequires: pkgconfig(Qt5Core)
 BuildRequires: pkgconfig(Qt5Gui)
