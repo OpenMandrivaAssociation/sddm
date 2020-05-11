@@ -10,7 +10,6 @@ account      include       system-auth
 -password    optional      pam_gnome_keyring.so use_authtok
 password     include       system-auth
 session      required      pam_loginuid.so
-session      optional      pam_console.so
 session      optional      pam_keyinit.so force revoke
 session      required      pam_namespace.so
 -session     optional      pam_gnome_keyring.so auto_start

@@ -8,7 +8,6 @@ auth        required    pam_permit.so
 account     include     system-auth
 password    include     system-auth
 session     required    pam_loginuid.so
-session     optional    pam_console.so
 session     optional    pam_keyinit.so force revoke
 session     required    pam_namespace.so
 session     include     system-auth
