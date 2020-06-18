@@ -1,13 +1,13 @@
-%define date 20200507
+%define date 20200618
 
 Name: sddm
 Summary: Lightweight display manager
 Version: 0.18.1
 %if %{date}
-Release: 6.%{date}.4
+Release: 6.%{date}.1
 # Packaged from git for the time being -- no download URL available
 # git archive --format=tar --prefix sddm-0.18.1-$(date +%Y%m%d)/ HEAD | xz -vf > sddm-0.18.1-$(date +%Y%m%d).tar.xz
-Source0: %{name}-%{version}-%{date}.tar.xz
+Source0: https://github.com/sddm/sddm/archive/develop/%{name}-%{version}-%{date}.tar.gz
 %else
 Release: 1
 Source0: https://github.com/sddm/sddm/releases/download/v%{version}/%{name}-%{version}.tar.xz
@@ -73,7 +73,7 @@ Lightweight display manager (login screen).
 
 %prep
 %if %{date}
-%autosetup -n %{name}-%{version}-%{date} -p1
+%autosetup -n %{name}-develop -p1
 %else
 %autosetup -p1
 %endif
