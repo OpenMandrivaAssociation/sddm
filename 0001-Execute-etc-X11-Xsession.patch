@@ -1,64 +1,17 @@
-From 25ab4c755d347186a394e35776c7df77902f5509 Mon Sep 17 00:00:00 2001
-From: Pier Luigi Fiorini <pierluigi.fiorini@gmail.com>
-Date: Fri, 6 Nov 2015 07:56:16 +0100
-Subject: [PATCH] Execute /etc/X11/Xsession if available
-
-Ubuntu already provides a /etc/X11/Xsession script which executes
-the /etc/X11/Xsession.d scripts.
-
-Those scripts already do the Xresource merge and other actions.
-
-The last script from /etc/X11/Xsession.d executes the session
-command specified by $STARTUP, if that is empty it will try
-to determine it by itself with the risk of executing something
-else.
-
-With this patch we let distros shipping /etc/X11/Xsession to
-execute the designated session command and handle Xresource
-merge and stuff like that by itself.
-
-At least two other major distributions such as Fedora and
-ArchLinux do not have /etc/X11/Xsession, in that case we
-will keep the Xresource merge code path and run the session
-command ourselves.
-
-Fixes #449
----
- data/scripts/Xsession | 24 +++++++-----------------
- 1 file changed, 7 insertions(+), 17 deletions(-)
-
-diff -urN sddm-0.16.0/data/scripts/Xsession sddm-0.16.0-patched/data/scripts/Xsession
---- sddm-0.16.0/data/scripts/Xsession	2017-10-03 15:43:18.000000000 +1000
-+++ sddm-0.16.0-patched/data/scripts/Xsession	2017-10-13 20:20:21.885098074 +1000
-@@ -62,25 +62,14 @@
-   done
+diff -Naur sddm-0.19.0/data/scripts/Xsession sddm-0.19.0.tpg/data/scripts/Xsession
+--- sddm-0.19.0/data/scripts/Xsession	2020-11-03 07:41:06.000000000 +0000
++++ sddm-0.19.0.tpg/data/scripts/Xsession	2020-11-03 17:35:15.811311967 +0000
+@@ -82,6 +82,13 @@
+     done
  fi
  
--# Load Xsession scripts
--# OPTIONFILE, USERXSESSION, USERXSESSIONRC and ALTUSERXSESSION are required
--# by the scripts to work
--xsessionddir="/etc/X11/Xsession.d"
--OPTIONFILE=/etc/X11/Xsession.options
--USERXSESSION=$HOME/.xsession
--USERXSESSIONRC=$HOME/.xsessionrc
--ALTUSERXSESSION=$HOME/.Xsession
--
--if [ -d "$xsessionddir" ]; then
--    for i in `ls $xsessionddir`; do
--        script="$xsessionddir/$i"
--        echo "Loading X session script $script"
--        if [ -r "$script"  -a -f "$script" ] && expr "$i" : '^[[:alnum:]_-]\+$' > /dev/null; then
--            . "$script"
--        fi
--    done
 +# Load Xsession scripts, if any
 +if [ -x /etc/X11/Xsession ]; then
 +    # Let Xsession execute the session for us
 +    export STARTUP=$session
 +    exec /etc/X11/Xsession
- fi
- 
-+# Merge Xresources
++fi
++
  if [ -d /etc/X11/Xresources ]; then
    for i in /etc/X11/Xresources/*; do
      [ -f $i ] && xrdb -merge $i
