@@ -1,4 +1,4 @@
-From 0a22759aa528686c13876a9ad314dce785e67a6c Mon Sep 17 00:00:00 2001
+From 46d7a5333e4aeaa35b7933a34dad2e0ba87938c3 Mon Sep 17 00:00:00 2001
 From: Fabian Vogt <fabian@ritter-vogt.de>
 Date: Wed, 21 Aug 2019 16:32:03 +0200
 Subject: [PATCH] Redesign Xauth handling
@@ -9,35 +9,30 @@ and easier to read. However, we lose the ability to merge the new cookie into
 an existing Xauthority file, so support for using a non-temporary file is
 dropped. Even if merging was implemented manually, use of FamilyWild would
 "infect" such a file and break it for DMs which don't write it.
-
-Unfortunately, a hack in UserSession is required to get XAUTHORITY into
-the process environment. The Xauthority file has to be created as the target
-user, but that's only possible in setupChildProcess(). In there, changes to
-processEnvironment() to set XAUTHORITY to the generated path are not effective,
-so configure the process to inherit the environment instead and use qputenv.
 ---
  CMakeLists.txt                   |  3 ++
  data/man/sddm.conf.rst.in        |  8 ----
+ data/man/sddm.rst.in             |  4 ++
  src/auth/Auth.cpp                |  6 +--
  src/auth/Auth.h                  |  6 +--
  src/common/Configuration.h       |  2 -
- src/common/XauthUtils.cpp        | 78 ++++++++++++++++++++++++++++++++
+ src/common/XauthUtils.cpp        | 82 ++++++++++++++++++++++++++++++++
  src/common/XauthUtils.h          | 16 +++++++
  src/daemon/CMakeLists.txt        |  3 ++
- src/daemon/XorgDisplayServer.cpp | 42 ++---------------
+ src/daemon/XorgDisplayServer.cpp | 42 ++--------------
  src/daemon/XorgDisplayServer.h   |  4 +-
  src/helper/Backend.cpp           |  7 ---
  src/helper/CMakeLists.txt        |  8 +++-
  src/helper/HelperApp.cpp         |  4 +-
  src/helper/HelperApp.h           |  4 +-
- src/helper/UserSession.cpp       | 53 ++++++++++++----------
- src/helper/UserSession.h         |  9 ++++
- 16 files changed, 160 insertions(+), 93 deletions(-)
+ src/helper/UserSession.cpp       | 67 +++++++++++++-------------
+ src/helper/UserSession.h         |  2 +
+ 17 files changed, 165 insertions(+), 103 deletions(-)
  create mode 100644 src/common/XauthUtils.cpp
  create mode 100644 src/common/XauthUtils.h
 
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 47f28605..b6cb61c2 100644
+index 0bb18bff..56cb2c9f 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
 @@ -88,6 +88,9 @@ add_feature_info("PAM" PAM_FOUND "PAM support")
@@ -76,6 +71,21 @@ index bee07681..e91280ac 100644
  `DisplayCommand=`
  	Path of script to execute when starting the display server.
  	Default value is "@DATA_INSTALL_DIR@/scripts/Xsetup".
+diff --git a/data/man/sddm.rst.in b/data/man/sddm.rst.in
+index 6403368a..a542e3bd 100644
+--- a/data/man/sddm.rst.in
++++ b/data/man/sddm.rst.in
+@@ -34,6 +34,10 @@ Distributions without pam and systemd will need to put the **sddm** user
+ into the **video** group, otherwise errors regarding GL and drm devices
+ might be experienced.
+ 
++For X11 sessions, the cookie for X authorization is written into a
++temporary file inside @RUNTIME_DIR@, owned and only accessible by the
++user.
++
+ OPTIONS
+ =======
+ 
 diff --git a/src/auth/Auth.cpp b/src/auth/Auth.cpp
 index caca3146..c2228ae1 100644
 --- a/src/auth/Auth.cpp
@@ -156,11 +166,15 @@ index cf44a629..a7e0585d 100644
              Entry(MinimumVT,           int,         MINIMUM_VT,                                 _S("The lowest virtual terminal number that will be used."));
 diff --git a/src/common/XauthUtils.cpp b/src/common/XauthUtils.cpp
 new file mode 100644
-index 00000000..9764d50a
+index 00000000..da1c6913
 --- /dev/null
 +++ b/src/common/XauthUtils.cpp
-@@ -0,0 +1,78 @@
-+// SPDX-License-Identifier: GPL-2.0-or-later
+@@ -0,0 +1,82 @@
++/****************************************************************************
++ * SPDX-FileCopyrightText: 2020 Fabian Vogt <fvogt@suse.de>
++ *
++ * SPDX-License-Identifier: GPL-2.0-or-later
++ ***************************************************************************/
 +
 +#include <limits.h>
 +#include <unistd.h>
@@ -483,41 +497,77 @@ index 3742df12..d417494c 100644
          /*!
           \brief Write utmp/wtmp/btmp records when a user logs in
 diff --git a/src/helper/UserSession.cpp b/src/helper/UserSession.cpp
-index b3aec356..aba4dcc0 100644
+index b3aec356..fa413694 100644
 --- a/src/helper/UserSession.cpp
 +++ b/src/helper/UserSession.cpp
-@@ -22,6 +22,7 @@
+@@ -20,8 +20,10 @@
+  */
+ 
  #include "Configuration.h"
++#include "Constants.h"
  #include "UserSession.h"
  #include "HelperApp.h"
 +#include "XauthUtils.h"
  
  #include <sys/types.h>
  #include <sys/ioctl.h>
-@@ -34,6 +35,8 @@
- #include <fcntl.h>
- #include <sched.h>
+@@ -44,11 +46,35 @@ namespace SDDM {
+     }
  
-+#include <QStandardPaths>
+     bool UserSession::start() {
+-        QProcessEnvironment env = qobject_cast<HelperApp*>(parent())->session()->processEnvironment();
++        QProcessEnvironment env = processEnvironment();
+ 
+         if (env.value(QStringLiteral("XDG_SESSION_CLASS")) == QLatin1String("greeter")) {
+             QProcess::start(m_path);
+         } else if (env.value(QStringLiteral("XDG_SESSION_TYPE")) == QLatin1String("x11")) {
++            // Create the Xauthority file
++            QByteArray cookie = qobject_cast<HelperApp*>(parent())->cookie();
++            if (cookie.isEmpty())
++                return false;
 +
- namespace SDDM {
-     UserSession::UserSession(HelperApp *parent)
-             : QProcess(parent) {
-@@ -256,38 +259,38 @@ namespace SDDM {
-             qWarning() << "Could not redirect stdout";
++            m_xauthFile.setFileTemplate(QStringLiteral(RUNTIME_DIR "/xauth_XXXXXX"));
++
++            if (!m_xauthFile.open()) {
++                qCritical() << "Could not create the Xauthority file";
++                return false;
++            }
++
++            QString display = processEnvironment().value(QStringLiteral("DISPLAY"));
++            qDebug() << "Adding cookie to" << m_xauthFile.fileName();
++
++            if (!Xauth::writeCookieToFile(m_xauthFile.fileName(), display, cookie)) {
++                qCritical() << "Failed to write the Xauthority file";
++                m_xauthFile.close();
++                return false;
++            }
++
++            env.insert(QStringLiteral("XAUTHORITY"), m_xauthFile.fileName());
++            setProcessEnvironment(env);
++
+             const QString cmd = QStringLiteral("%1 \"%2\"").arg(mainConfig.X11.SessionCommand.get()).arg(m_path);
+             qInfo() << "Starting:" << cmd;
+             QProcess::start(cmd);
+@@ -151,6 +177,11 @@ namespace SDDM {
+             exit(Auth::HELPER_OTHER_ERROR);
          }
  
-+        /* Drop the current environment */
-+        for (QString key : QProcessEnvironment::systemEnvironment().keys())
-+            qunsetenv(qPrintable(key));
-+        /* Apply the new one. This has the nice effect that XDG_RUNTIME_DIR etc.
-+           are effective. */
-+        for (QString key : processEnvironment().keys())
-+            qputenv(qPrintable(key), processEnvironment().value(key).toLocal8Bit());
-+
-         // set X authority for X11 sessions only
-         if (sessionType != QLatin1String("x11"))
-             return;
++        const int xauthHandle = m_xauthFile.handle();
++        if (xauthHandle != -1 && fchown(xauthHandle, pw.pw_uid, pw.pw_gid) != 0) {
++            qCritical() << "fchown failed for" << m_xauthFile.fileName();
++            exit(Auth::HELPER_OTHER_ERROR);
++        }
+ #ifdef USE_PAM
+ 
+         // fetch ambient groups from PAM's environment;
+@@ -255,40 +286,6 @@ namespace SDDM {
+         } else {
+             qWarning() << "Could not redirect stdout";
+         }
+-
+-        // set X authority for X11 sessions only
+-        if (sessionType != QLatin1String("x11"))
+-            return;
 -        QString cookie = qobject_cast<HelperApp*>(parent())->cookie();
 -        if (!cookie.isEmpty()) {
 -            QString file = processEnvironment().value(QStringLiteral("XAUTHORITY"));
@@ -528,47 +578,31 @@ index b3aec356..aba4dcc0 100644
 -            // create the path
 -            QFileInfo finfo(file);
 -            QDir().mkpath(finfo.absolutePath());
- 
+-
 -            QFile file_handler(file);
 -            file_handler.open(QIODevice::Append);
 -            file_handler.close();
 -
 -            QString cmd = QStringLiteral("%1 -f %2 -q").arg(mainConfig.X11.XauthPath.get()).arg(file);
-+        QByteArray cookie = qobject_cast<HelperApp*>(parent())->cookie();
-+        if (cookie.isEmpty())
-+            return;
- 
+-
 -            // execute xauth
 -            FILE *fp = popen(qPrintable(cmd), "w");
-+        QString dir = QStandardPaths::writableLocation(QStandardPaths::RuntimeLocation);
-+        if (!dir.isEmpty()) {
-+            m_xauthFile.setFileTemplate(dir + QStringLiteral("/xauth_XXXXXX"));
-+            m_xauthFile.open();
-+        }
- 
+-
 -            // check file
 -            if (!fp)
 -                return;
 -            fprintf(fp, "remove %s\n", qPrintable(display));
 -            fprintf(fp, "add %s . %s\n", qPrintable(display), qPrintable(cookie));
 -            fprintf(fp, "exit\n");
-+        if (m_xauthFile.fileName().isEmpty())
-+            qWarning() << "Could not create the Xauthority file";
-+        else {
-+            QString display = processEnvironment().value(QStringLiteral("DISPLAY"));
-+            qDebug() << "Adding cookie to" << m_xauthFile.fileName();
- 
+-
 -            // close pipe
 -            pclose(fp);
-+            if (!Xauth::writeCookieToFile(m_xauthFile.fileName(), display, cookie))
-+                qWarning() << "Failed to write the Xauthority file";
-+            else
-+                qputenv("XAUTHORITY", m_xauthFile.fileName().toUtf8());
-         }
+-        }
      }
  
+     void UserSession::setCachedProcessId(qint64 pid) {
 diff --git a/src/helper/UserSession.h b/src/helper/UserSession.h
-index 70690847..23776f4b 100644
+index 70690847..0ae627d7 100644
 --- a/src/helper/UserSession.h
 +++ b/src/helper/UserSession.h
 @@ -25,6 +25,7 @@
@@ -579,23 +613,10 @@ index 70690847..23776f4b 100644
  
  namespace SDDM {
      class HelperApp;
-@@ -53,12 +54,20 @@ namespace SDDM {
-         */
-         qint64 cachedProcessId();
- 
-+        /* Hack! QProcess does not allow changing processEnvironment by
-+           setupChildProcess(), but this is needed for creating XAUTHORITY.
-+           So inherit the caller's environment and apply the assignments manually. */
-+        QProcessEnvironment processEnvironment() { return m_processEnv; }
-+        void setProcessEnvironment(QProcessEnvironment env) { m_processEnv = env; }
-+
-     protected:
-         void setupChildProcess();
- 
+@@ -59,6 +60,7 @@ namespace SDDM {
      private:
          QString m_path { };
          qint64 m_cachedProcessId;
-+        QProcessEnvironment m_processEnv;
 +        QTemporaryFile m_xauthFile;
      };
  }

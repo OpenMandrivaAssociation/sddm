@@ -1,8 +1,8 @@
-%define date 20200618
+%define date 0
 
 Name: sddm
 Summary: Lightweight display manager
-Version: 0.18.1
+Version: 0.19.0
 %if %{date}
 Release: 6.%{date}.3
 # Packaged from git for the time being -- no download URL available
@@ -39,9 +39,6 @@ Patch7: https://github.com/sddm/sddm/pull/1230.patch
 BuildRequires: cmake(ECM)
 BuildRequires: pkgconfig(Qt5Core)
 BuildRequires: pkgconfig(Qt5Gui)
-%if %{mdvver} <= 3000000
-BuildRequires: pkgconfig(Qt5Declarative)
-%endif
 BuildRequires: pkgconfig(Qt5DBus)
 BuildRequires: pkgconfig(Qt5Quick)
 BuildRequires: pkgconfig(Qt5Network)
