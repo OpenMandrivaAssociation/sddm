@@ -36,6 +36,7 @@ Patch6: 0001-Execute-etc-X11-Xsession.patch
 # https://github.com/sddm/sddm/issues/733
 # https://github.com/sddm/sddm/pull/1230
 Patch7: https://github.com/sddm/sddm/pull/1230.patch
+Patch8: https://gitweb.frugalware.org/frugalware-current/raw/master/source/x11/sddm/revert-74394fd1cff26b0516af87539906a31bf2f49825.patch
 BuildRequires: cmake(ECM)
 BuildRequires: pkgconfig(Qt5Core)
 BuildRequires: pkgconfig(Qt5Gui)
