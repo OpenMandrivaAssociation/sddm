@@ -1,9 +1,9 @@
 #%PAM-1.0
-auth         sufficient    pam_succeed_if.so user ingroup nopasswdlogin
+auth         sufficient    pam_succeed_if.so quiet_fail user ingroup nopasswdlogin
+auth         substack      system-auth
 -auth        optional      pam_gnome_keyring.so
 -auth        optional      pam_kwallet5.so
 -auth        optional      pam_kwallet.so
-auth         substack      system-auth
 auth         include       postlogin
 account      required      pam_nologin.so
 account      include       system-auth
