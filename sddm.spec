@@ -9,7 +9,7 @@ Release: 6.%{date}.3
 # git archive --format=tar --prefix sddm-0.18.1-$(date +%Y%m%d)/ HEAD | xz -vf > sddm-0.18.1-$(date +%Y%m%d).tar.xz
 Source0: https://github.com/sddm/sddm/archive/develop/%{name}-%{version}-%{date}.tar.gz
 %else
-Release: 3
+Release: 4
 Source0: https://github.com/sddm/sddm/releases/download/v%{version}/%{name}-%{version}.tar.xz
 %endif
 URL: https://github.com/sddm
@@ -36,7 +36,16 @@ Patch6: 0001-Execute-etc-X11-Xsession.patch
 # https://github.com/sddm/sddm/issues/733
 # https://github.com/sddm/sddm/pull/1230
 Patch7: https://github.com/sddm/sddm/pull/1230.patch
-Patch8: https://gitweb.frugalware.org/frugalware-current/raw/master/source/x11/sddm/revert-74394fd1cff26b0516af87539906a31bf2f49825.patch
+
+# (tpg) patches from upstream git
+Patch100: 0000-Improve-font-config-deserialization.patch
+Patch101: 0001-Only-use-the-base-name-for-DESKTOP_SESSION.patch
+Patch102: 0002-Merge-normal-and-testing-paths-in-XorgDisplayServer-.patch
+Patch103: 0003-Retry-starting-the-display-server.patch
+Patch104: 0004-Explicitly-stop-Xorg-when-starting-fails.patch
+Patch105: 0005-Emit-XorgDisplayServer-started-only-when-the-auth-fi.patch
+Patch106: 0006-Fix-sessions-being-started-as-the-wrong-type-on-auto.patch
+
 BuildRequires: cmake(ECM)
 BuildRequires: pkgconfig(Qt5Core)
 BuildRequires: pkgconfig(Qt5Gui)
