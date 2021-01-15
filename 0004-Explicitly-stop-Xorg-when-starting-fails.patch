@@ -1,0 +1,72 @@
+From 3b00cd06f82837ba85f37c9f632261e7b4c6fd35 Mon Sep 17 00:00:00 2001
+From: Fabian Vogt <fabian@ritter-vogt.de>
+Date: Wed, 9 Dec 2020 19:28:41 +0100
+Subject: [PATCH] Explicitly stop Xorg when starting fails
+
+When Xorg starts but there is an error, stop it explicitly instead of assuming
+that X exits itself. This avoids a possibly lingering Xorg process in the
+XorgDisplayServer instance. Add a check and warning message if Xorg is
+restarted too early (shouldn't happen).
+---
+ src/daemon/XorgDisplayServer.cpp | 11 +++++++++--
+ 1 file changed, 9 insertions(+), 2 deletions(-)
+
+diff -Naur a/src/daemon/XorgDisplayServer.cpp b/src/daemon/XorgDisplayServer.cpp
+--- a/src/daemon/XorgDisplayServer.cpp	2021-01-15 15:17:13.126000000 +0000
++++ b/src/daemon/XorgDisplayServer.cpp	2021-01-15 15:23:33.541000000 +0000
+@@ -84,6 +84,11 @@
+         if (m_started)
+             return false;
+ 
++        if (process) {
++            qCritical() << "Tried to start Xorg before previous instance exited";
++            return false;
++        }
++
+         // create process
+         process = new QProcess(this);
+ 
+@@ -147,6 +152,7 @@
+ 
+             // return fail
+             close(pipeFds[0]);
++            stop();
+             return false;
+         }
+ 
+@@ -160,6 +166,7 @@
+             qCritical("Failed to open pipe to start X Server");
+ 
+             close(pipeFds[0]);
++            stop();
+             return false;
+         }
+         QByteArray displayNumber = readPipe.readLine();
+@@ -168,6 +175,7 @@
+             qCritical("Failed to read display number from pipe");
+ 
+             close(pipeFds[0]);
++            stop();
+             return false;
+         }
+         displayNumber.prepend(QByteArray(":"));
+@@ -184,6 +192,7 @@
+         if(m_display != QStringLiteral(":0")) {
+             if(!Xauth::writeCookieToFile(m_authPath, m_display, m_cookie)) {
+                 qCritical() << "Failed to write xauth file";
++                stop();
+                 return false;
+             }
+         }
+@@ -197,8 +206,7 @@
+     }
+ 
+     void XorgDisplayServer::stop() {
+-        // check flag
+-        if (!m_started)
++        if (!process)
+             return;
+ 
+         // log message
+--
+2.30.0
