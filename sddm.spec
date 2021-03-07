@@ -44,7 +44,7 @@ Patch101: 0001-Only-use-the-base-name-for-DESKTOP_SESSION.patch
 #Patch102: 0002-Merge-normal-and-testing-paths-in-XorgDisplayServer-.patch
 Patch103: 0003-Retry-starting-the-display-server.patch
 #Patch104: 0004-Explicitly-stop-Xorg-when-starting-fails.patch
-Patch105: 0005-Emit-XorgDisplayServer-started-only-when-the-auth-fi.patch
+#Patch105: 0005-Emit-XorgDisplayServer-started-only-when-the-auth-fi.patch
 Patch106: 0006-Fix-sessions-being-started-as-the-wrong-type-on-auto.patch
 Patch107: 0007-wayland-session-Ensure-SHELL-remains-correctly-set.patch
 Patch108: 0008-Clear-VT-before-switching-to-it.patch
