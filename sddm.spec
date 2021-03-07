@@ -145,7 +145,7 @@ sed -i -e 's,\(^background=\).*,\1%{_datadir}/mdk/backgrounds/OpenMandriva-splas
 %{_sysconfdir}/pam.d/%{name}-autologin
 %{_sysusersdir}/sddm.conf
 %{_tmpfilesdir}/sddm.conf
-%{_libexecdir}/sddm-helper
+%{_libexecdir}/sddm-helper*
 %{_unitdir}/%{name}.service
 %{_libdir}/qt5/qml/SddmComponents
 %{_datadir}/X11/dm.d/11sddm.conf
