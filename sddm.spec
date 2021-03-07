@@ -9,7 +9,7 @@ Release: 6.%{date}.3
 # git archive --format=tar --prefix sddm-0.18.1-$(date +%Y%m%d)/ HEAD | xz -vf > sddm-0.18.1-$(date +%Y%m%d).tar.xz
 Source0: https://github.com/sddm/sddm/archive/develop/%{name}-%{version}-%{date}.tar.gz
 %else
-Release: 5
+Release: 6
 Source0: https://github.com/sddm/sddm/releases/download/v%{version}/%{name}-%{version}.tar.xz
 %endif
 URL: https://github.com/sddm
@@ -45,6 +45,8 @@ Patch103: 0003-Retry-starting-the-display-server.patch
 Patch104: 0004-Explicitly-stop-Xorg-when-starting-fails.patch
 Patch105: 0005-Emit-XorgDisplayServer-started-only-when-the-auth-fi.patch
 Patch106: 0006-Fix-sessions-being-started-as-the-wrong-type-on-auto.patch
+Patch107: 0007-wayland-session-Ensure-SHELL-remains-correctly-set.patch
+Patch108: 0008-Clear-VT-before-switching-to-it.patch
 
 BuildRequires: cmake(ECM)
 BuildRequires: pkgconfig(Qt5Core)

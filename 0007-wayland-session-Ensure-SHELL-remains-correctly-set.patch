@@ -1,0 +1,39 @@
+From bc5a18f34c0881929a6b2e5d3993971c4f692f4f Mon Sep 17 00:00:00 2001
+From: Neal Gompa <ngompa13@gmail.com>
+Date: Sun, 17 Jan 2021 11:48:28 -0500
+Subject: [PATCH] wayland-session: Ensure $SHELL remains correctly set
+
+In some circumstances, the effort of setting the environment
+correctly can wind up clobbering the user-specified shell. To
+work around this issue, capture the shell setting in a variable
+and set it back at the end of environment and profile setup.
+---
+ data/scripts/wayland-session | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/data/scripts/wayland-session b/data/scripts/wayland-session
+index de4f519..1f90554 100755
+--- a/data/scripts/wayland-session
++++ b/data/scripts/wayland-session
+@@ -6,6 +6,10 @@
+ # Copyright (C) 2001-2005 Oswald Buddenhagen <ossi@kde.org>
+ 
+ # Note that the respective logout scripts are not sourced.
++
++# Backup the user shell setting into SDDM specific variable
++SDDM_USER_SHELL=$SHELL
++
+ case $SHELL in
+   */bash)
+     [ -z "$BASH" ] && exec $SHELL $0 "$@"
+@@ -50,4 +54,7 @@ case $SHELL in
+     ;;
+ esac
+ 
++# Restore user shell setting that may have been clobbered by setting environment
++export SHELL=$SDDM_USER_SHELL
++
+ exec $@
+-- 
+2.30.1
+
