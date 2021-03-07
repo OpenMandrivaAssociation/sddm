@@ -35,8 +35,8 @@ Patch6: 0001-Execute-etc-X11-Xsession.patch
 # anymore!!!
 # https://github.com/sddm/sddm/issues/733
 # https://github.com/sddm/sddm/pull/1230
-Patch7: https://github.com/sddm/sddm/pull/1230.patch
-Patch8: https://patch-diff.githubusercontent.com/raw/sddm/sddm/pull/1371.patch
+#Patch7: https://github.com/sddm/sddm/pull/1230.patch
+#Patch8: https://patch-diff.githubusercontent.com/raw/sddm/sddm/pull/1371.patch
 Patch9: https://patch-diff.githubusercontent.com/raw/sddm/sddm/pull/1367.patch
 # (tpg) patches from upstream git
 Patch100: 0000-Improve-font-config-deserialization.patch
@@ -48,7 +48,6 @@ Patch105: 0005-Emit-XorgDisplayServer-started-only-when-the-auth-fi.patch
 Patch106: 0006-Fix-sessions-being-started-as-the-wrong-type-on-auto.patch
 Patch107: 0007-wayland-session-Ensure-SHELL-remains-correctly-set.patch
 Patch108: 0008-Clear-VT-before-switching-to-it.patch
-
 BuildRequires: cmake(ECM)
 BuildRequires: pkgconfig(Qt5Core)
 BuildRequires: pkgconfig(Qt5Gui)
