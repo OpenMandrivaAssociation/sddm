@@ -36,7 +36,8 @@ Patch6: 0001-Execute-etc-X11-Xsession.patch
 # https://github.com/sddm/sddm/issues/733
 # https://github.com/sddm/sddm/pull/1230
 Patch7: https://github.com/sddm/sddm/pull/1230.patch
-
+Patch8: https://patch-diff.githubusercontent.com/raw/sddm/sddm/pull/1371.patch
+Patch9: https://patch-diff.githubusercontent.com/raw/sddm/sddm/pull/1367.patch
 # (tpg) patches from upstream git
 Patch100: 0000-Improve-font-config-deserialization.patch
 Patch101: 0001-Only-use-the-base-name-for-DESKTOP_SESSION.patch

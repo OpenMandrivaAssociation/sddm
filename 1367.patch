@@ -1,0 +1,2502 @@
+From 3961d16d5e243e3081819d349f455295f9b5e2be Mon Sep 17 00:00:00 2001
+From: Pier Luigi Fiorini <pierluigi.fiorini@gmail.com>
+Date: Sun, 28 Feb 2016 09:11:31 +0100
+Subject: [PATCH 1/5] Wayland display server
+
+Decide which display server to run based on the configuration, but
+always fallback to X11 if settings are wrong.
+
+Run the greeter according to the display server in use and use xcb
+for keyboard only when appropriate.
+
+While we are here we make sure that the greeter is using the
+correct QPA plugin on X11, as a matter of fact we used to rely
+on the default which usually happens to be xcb.
+
+Since the greeter on Wayland can be started only when the compositor
+is up and running, the helper startup is now asynchronous.
+After the PAM authentication and process execution the helper waits
+for a the sessionStarted(bool) signal from UserSession; it is
+delivered right after the process is executed for X11 sessions,
+while it is delivered as soon as the Wayland socket is created for
+Wayland display server sessions but a timeout make sure the helper
+doesn't get stuck waiting for the socket to be created.
+---
+ src/auth/Auth.cpp                   |  15 ++
+ src/auth/Auth.h                     |  11 ++
+ src/common/Configuration.h          |   3 +
+ src/daemon/CMakeLists.txt           |   1 +
+ src/daemon/Display.cpp              |  13 +-
+ src/daemon/Greeter.cpp              |  22 ++-
+ src/daemon/WaylandDisplayServer.cpp | 234 ++++++++++++++++++++++++++++
+ src/daemon/WaylandDisplayServer.h   |  64 ++++++++
+ src/greeter/KeyboardModel.cpp       |  26 +++-
+ src/greeter/KeyboardModel.h         |   2 +-
+ src/helper/HelperApp.cpp            |  36 ++++-
+ src/helper/HelperApp.h              |   1 +
+ src/helper/UserSession.cpp          | 210 +++++++++++++++++++------
+ src/helper/UserSession.h            |  14 +-
+ 14 files changed, 583 insertions(+), 69 deletions(-)
+ create mode 100644 src/daemon/WaylandDisplayServer.cpp
+ create mode 100644 src/daemon/WaylandDisplayServer.h
+
+diff --git a/src/auth/Auth.cpp b/src/auth/Auth.cpp
+index caca3146..a1b8b87d 100644
+--- a/src/auth/Auth.cpp
++++ b/src/auth/Auth.cpp
+@@ -66,6 +66,7 @@ namespace SDDM {
+         QString user { };
+         QString cookie { };
+         bool autologin { false };
++        bool displayServer { false };
+         bool greeter { false };
+         QProcessEnvironment environment { };
+         qint64 id { 0 };
+@@ -261,6 +262,10 @@ namespace SDDM {
+         return d->autologin;
+     }
+ 
++    bool Auth::isDisplayServer() const {
++        return d->displayServer;
++    }
++
+     bool Auth::isGreeter() const
+     {
+         return d->greeter;
+@@ -319,6 +324,14 @@ namespace SDDM {
+         }
+     }
+ 
++    void Auth::setDisplayServer(bool on)
++    {
++        if (on != d->displayServer) {
++            d->displayServer = on;
++            Q_EMIT displayServerChanged();
++        }
++    }
++
+     void Auth::setGreeter(bool on)
+     {
+         if (on != d->greeter) {
+@@ -354,6 +367,8 @@ namespace SDDM {
+             args << QStringLiteral("--user") << d->user;
+         if (d->autologin)
+             args << QStringLiteral("--autologin");
++        if (d->displayServer)
++            args << QStringLiteral("--display-server");
+         if (d->greeter)
+             args << QStringLiteral("--greeter");
+         d->child->start(QStringLiteral("%1/sddm-helper").arg(QStringLiteral(LIBEXEC_INSTALL_DIR)), args);
+diff --git a/src/auth/Auth.h b/src/auth/Auth.h
+index 434be660..0b6d2ccf 100644
+--- a/src/auth/Auth.h
++++ b/src/auth/Auth.h
+@@ -52,6 +52,7 @@ namespace SDDM {
+         Q_OBJECT
+         // not setting NOTIFY for the properties - they should be set only once before calling start
+         Q_PROPERTY(bool autologin READ autologin WRITE setAutologin NOTIFY autologinChanged)
++        Q_PROPERTY(bool displayServer READ isDisplayServer WRITE setDisplayServer NOTIFY displayServerChanged)
+         Q_PROPERTY(bool greeter READ isGreeter WRITE setGreeter NOTIFY greeterChanged)
+         Q_PROPERTY(bool verbose READ verbose WRITE setVerbose NOTIFY verboseChanged)
+         Q_PROPERTY(QString cookie READ cookie WRITE setCookie NOTIFY cookieChanged)
+@@ -91,6 +92,7 @@ namespace SDDM {
+         static void registerTypes();
+ 
+         bool autologin() const;
++        bool isDisplayServer() const;
+         bool isGreeter() const;
+         bool verbose() const;
+         const QString &cookie() const;
+@@ -124,6 +126,14 @@ namespace SDDM {
+         */
+         void setAutologin(bool on = true);
+ 
++        /**
++         * Set mode to display server
++         * This will bypass authentication checks and will wait
++         * until the display server is actually started, for example
++         * when the Wayland compositor socket is created
++         */
++        void setDisplayServer(bool on = true);
++
+         /**
+          * Set mode to greeter
+          * This will bypass authentication checks
+@@ -163,6 +173,7 @@ namespace SDDM {
+     Q_SIGNALS:
+         void autologinChanged();
+         void greeterChanged();
++        void displayServerChanged();
+         void verboseChanged();
+         void cookieChanged();
+         void userChanged();
+diff --git a/src/common/Configuration.h b/src/common/Configuration.h
+index cf44a629..ff04e4f7 100644
+--- a/src/common/Configuration.h
++++ b/src/common/Configuration.h
+@@ -44,6 +44,9 @@ namespace SDDM {
+                                                                                                    "NOTE: Currently ignored if autologin is enabled."));
+         Entry(InputMethod,         QString,     QStringLiteral("qtvirtualkeyboard"),                   _S("Input method module"));
+         Entry(Namespaces,          QStringList, QStringList(),                                  _S("Comma-separated list of Linux namespaces for user session to enter"));
++        Entry(DisplayServer,       QString,     _S("x11"),                                      _S("Which display server should be used.\n"
++                                                                                                   "NOTE: Wayland support is currently considered experimental.\n"
++                                                                                                   "Valid values are: x11, wayland."));
+         //  Name   Entries (but it's a regular class again)
+         Section(Theme,
+             Entry(ThemeDir,            QString,     _S(DATA_INSTALL_DIR "/themes"),             _S("Theme directory path"));
+diff --git a/src/daemon/CMakeLists.txt b/src/daemon/CMakeLists.txt
+index 86d014be..dedee38b 100644
+--- a/src/daemon/CMakeLists.txt
++++ b/src/daemon/CMakeLists.txt
+@@ -22,6 +22,7 @@ set(DAEMON_SOURCES
+     DisplayManager.cpp
+     DisplayServer.cpp
+     LogindDBusTypes.cpp
++    WaylandDisplayServer.cpp
+     XorgDisplayServer.cpp
+     Greeter.cpp
+     PowerManager.cpp
+diff --git a/src/daemon/Display.cpp b/src/daemon/Display.cpp
+index b95f6e51..4346c998 100644
+--- a/src/daemon/Display.cpp
++++ b/src/daemon/Display.cpp
+@@ -24,6 +24,7 @@
+ #include "Configuration.h"
+ #include "DaemonApp.h"
+ #include "DisplayManager.h"
++#include "WaylandDisplayServer.h"
+ #include "XorgDisplayServer.h"
+ #include "Seat.h"
+ #include "SocketServer.h"
+@@ -51,11 +52,18 @@ namespace SDDM {
+     Display::Display(const int terminalId, Seat *parent) : QObject(parent),
+         m_terminalId(terminalId),
+         m_auth(new Auth(this)),
+-        m_displayServer(new XorgDisplayServer(this)),
+         m_seat(parent),
+         m_socketServer(new SocketServer(this)),
+         m_greeter(new Greeter(this)) {
+ 
++        // create the display server based on the configuration, but
++        // always fallback to X11
++        const QString &displayServerType = mainConfig.DisplayServer.get().toLower();
++        if (displayServerType == QLatin1String("wayland"))
++            m_displayServer = new WaylandDisplayServer(this);
++        else
++            m_displayServer = new XorgDisplayServer(this);
++
+         // respond to authentication requests
+         m_auth->setVerbose(true);
+         connect(m_auth, &Auth::requestChanged, this, &Display::slotRequestChanged);
+@@ -173,7 +181,8 @@ namespace SDDM {
+ 
+         // set greeter params
+         m_greeter->setDisplay(this);
+-        m_greeter->setAuthPath(qobject_cast<XorgDisplayServer *>(m_displayServer)->authPath());
++        if (m_displayServer->sessionType() == QLatin1String("x11"))
++            m_greeter->setAuthPath(qobject_cast<XorgDisplayServer *>(m_displayServer)->authPath());
+         m_greeter->setSocket(m_socketServer->socketAddress());
+         m_greeter->setTheme(findGreeterTheme());
+ 
+diff --git a/src/daemon/Greeter.cpp b/src/daemon/Greeter.cpp
+index 8ef98802..1732b9cc 100644
+--- a/src/daemon/Greeter.cpp
++++ b/src/daemon/Greeter.cpp
+@@ -117,8 +117,15 @@ namespace SDDM {
+ 
+             // set process environment
+             QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
+-            env.insert(QStringLiteral("DISPLAY"), m_display->name());
+-            env.insert(QStringLiteral("XAUTHORITY"), m_authPath);
++            if (m_display->sessionType() == QStringLiteral("x11")) {
++                env.insert(QStringLiteral("DISPLAY"), m_display->name());
++                env.insert(QStringLiteral("XAUTHORITY"), m_authPath);
++                env.insert(QStringLiteral("QT_QPA_PLATFORM"), QStringLiteral("xcb"));
++            } else if (m_display->sessionType() == QStringLiteral("wayland")) {
++                env.insert(QStringLiteral("QT_QPA_PLATFORM"), QStringLiteral("wayland"));
++                env.insert(QStringLiteral("QT_WAYLAND_DISABLE_WINDOWDECORATION"), QStringLiteral("1"));
++                env.insert(QStringLiteral("WAYLAND_DISPLAY"), QStringLiteral("sddm-wayland"));
++            }
+             env.insert(QStringLiteral("XCURSOR_THEME"), xcursorTheme);
+             env.insert(QStringLiteral("QT_IM_MODULE"), mainConfig.InputMethod.get());
+             m_process->setProcessEnvironment(env);
+@@ -176,9 +183,16 @@ namespace SDDM {
+                                    QStringLiteral("XDG_DATA_DIRS")
+             }, sysenv, env);
+ 
++            if (m_display->sessionType() == QStringLiteral("x11")) {
++                env.insert(QStringLiteral("DISPLAY"), m_display->name());
++                env.insert(QStringLiteral("XAUTHORITY"), m_authPath);
++                env.insert(QStringLiteral("QT_QPA_PLATFORM"), QStringLiteral("xcb"));
++            } else if (m_display->sessionType() == QStringLiteral("wayland")) {
++                env.insert(QStringLiteral("QT_QPA_PLATFORM"), QStringLiteral("wayland"));
++                env.insert(QStringLiteral("QT_WAYLAND_DISABLE_WINDOWDECORATION"), QStringLiteral("1"));
++                env.insert(QStringLiteral("WAYLAND_DISPLAY"), QStringLiteral("sddm-wayland"));
++            }
+             env.insert(QStringLiteral("PATH"), mainConfig.Users.DefaultPath.get());
+-            env.insert(QStringLiteral("DISPLAY"), m_display->name());
+-            env.insert(QStringLiteral("XAUTHORITY"), m_authPath);
+             env.insert(QStringLiteral("XCURSOR_THEME"), xcursorTheme);
+             env.insert(QStringLiteral("XDG_SEAT"), m_display->seat()->name());
+             env.insert(QStringLiteral("XDG_SEAT_PATH"), daemonApp->displayManager()->seatPath(m_display->seat()->name()));
+diff --git a/src/daemon/WaylandDisplayServer.cpp b/src/daemon/WaylandDisplayServer.cpp
+new file mode 100644
+index 00000000..7d90a2d0
+--- /dev/null
++++ b/src/daemon/WaylandDisplayServer.cpp
+@@ -0,0 +1,234 @@
++/***************************************************************************
++* Copyright (c) 2016 Pier Luigi Fiorini <pierluigi.fiorini@gmail.com>
++* Copyright (c) 2013 Abdurrahman AVCI <abdurrahmanavci@gmail.com>
++*
++* This program is free software; you can redistribute it and/or modify
++* it under the terms of the GNU General Public License as published by
++* the Free Software Foundation; either version 2 of the License, or
++* (at your option) any later version.
++*
++* This program is distributed in the hope that it will be useful,
++* but WITHOUT ANY WARRANTY; without even the implied warranty of
++* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
++* GNU General Public License for more details.
++*
++* You should have received a copy of the GNU General Public License
++* along with this program; if not, write to the
++* Free Software Foundation, Inc.,
++* 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
++***************************************************************************/
++
++#include "WaylandDisplayServer.h"
++
++#include "Configuration.h"
++#include "DaemonApp.h"
++#include "Display.h"
++#include "DisplayManager.h"
++#include "Seat.h"
++#include "SignalHandler.h"
++#include "VirtualTerminal.h"
++
++#include <QDebug>
++#include <QFile>
++#include <QProcess>
++#include <QUuid>
++
++#include <pwd.h>
++#include <unistd.h>
++
++namespace SDDM
++{
++WaylandDisplayServer::WaylandDisplayServer(Display *parent)
++    : DisplayServer(parent)
++{
++}
++
++WaylandDisplayServer::~WaylandDisplayServer()
++{
++    stop();
++}
++
++const QString &WaylandDisplayServer::display() const
++{
++    return m_display;
++}
++
++QString WaylandDisplayServer::sessionType() const
++{
++    return QStringLiteral("wayland");
++}
++
++bool WaylandDisplayServer::start()
++{
++    // check flag
++    if (m_started)
++        return false;
++
++    // log message
++    qDebug() << "Compositor starting...";
++
++    const QString exe = QStringLiteral("%1/sddm-wayland-compositor").arg(QLatin1String(BIN_INSTALL_DIR));
++    const QStringList args = QStringList() << QLatin1String("--wayland-socket-name") << QLatin1String("sddm-wayland");
++
++    if (daemonApp->testing()) {
++        // create process
++        m_process = new QProcess(this);
++
++        // delete process on finish
++        connect(m_process, SIGNAL(finished(int,QProcess::ExitStatus)), this, SLOT(finished()));
++
++        connect(m_process, SIGNAL(readyReadStandardOutput()), SLOT(onReadyReadStandardOutput()));
++        connect(m_process, SIGNAL(readyReadStandardError()), SLOT(onReadyReadStandardError()));
++
++        qDebug() << "Running:" << qPrintable(exe) << qPrintable(args.join(QLatin1Char(' ')));
++        m_process->start(exe, args);
++
++        // don't block in waitForStarted if we fail to start
++        if (m_process->state() == QProcess::NotRunning) {
++            qCritical() << "Compositor failed to launch.";
++            return false;
++        }
++
++        // wait for the compositor to start
++        if (!m_process->waitForStarted()) {
++            qCritical() << "Failed to start compositor.";
++            return false;
++        }
++
++        qDebug() << "Compositor process started.";
++        m_started = true;
++        emit started();
++    } else {
++        // setup vt
++        VirtualTerminal::jumpToVt(displayPtr()->terminalId(), true);
++
++        // authentication
++        m_auth = new Auth(this);
++        m_auth->setVerbose(true);
++        connect(m_auth, SIGNAL(requestChanged()), this, SLOT(onRequestChanged()));
++        connect(m_auth, SIGNAL(session(bool)), this, SLOT(onSessionStarted(bool)));
++        connect(m_auth, SIGNAL(finished(Auth::HelperExitStatus)), this, SLOT(onHelperFinished(Auth::HelperExitStatus)));
++        connect(m_auth, SIGNAL(info(QString,Auth::Info)), this, SLOT(authInfo(QString,Auth::Info)));
++        connect(m_auth, SIGNAL(error(QString,Auth::Error)), this, SLOT(authError(QString,Auth::Error)));
++
++        // environment
++        QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
++
++        env.insert(QLatin1String("PATH"), mainConfig.Users.DefaultPath.get());
++        env.insert(QLatin1String("XCURSOR_THEME"), mainConfig.Theme.CursorTheme.get());
++        env.insert(QLatin1String("XDG_SEAT"), displayPtr()->seat()->name());
++        env.insert(QLatin1String("XDG_SEAT_PATH"), daemonApp->displayManager()->seatPath(displayPtr()->seat()->name()));
++        env.insert(QLatin1String("XDG_SESSION_PATH"), daemonApp->displayManager()->sessionPath(QStringLiteral("Session%1").arg(daemonApp->newSessionId())));
++        env.insert(QLatin1String("XDG_VTNR"), QString::number(displayPtr()->terminalId()));
++        env.insert(QLatin1String("XDG_SESSION_CLASS"), QLatin1String("greeter"));
++        env.insert(QLatin1String("XDG_SESSION_TYPE"), QLatin1String("wayland"));
++        env.insert(QLatin1String("QT_QPA_PLATFORM"), QStringLiteral("greenisland"));
++
++        m_auth->insertEnvironment(env);
++
++        // start compositor
++        m_auth->setUser(QLatin1String("sddm"));
++        m_auth->setDisplayServer(true);
++        m_auth->setSession(QStringLiteral("%1 %2").arg(exe).arg(args.join(QLatin1Char(' '))));
++        m_auth->start();
++    }
++
++    // return success
++    return true;
++}
++
++void WaylandDisplayServer::stop()
++{
++    // check flag
++    if (!m_started)
++        return;
++
++    // log message
++    qDebug() << "Stopping compositor...";
++
++    // terminate process
++    m_process->terminate();
++
++    // wait for finished
++    if (!m_process->waitForFinished(5000))
++        m_process->kill();
++}
++
++void WaylandDisplayServer::finished()
++{
++    // check flag
++    if (!m_started)
++        return;
++
++    // reset flag
++    m_started = false;
++
++    // log message
++    qDebug() << "Compositor stopped.";
++
++    // clean up
++    m_process->deleteLater();
++    m_process = nullptr;
++
++    // emit signal
++    emit stopped();
++}
++
++void WaylandDisplayServer::setupDisplay()
++{
++}
++
++void WaylandDisplayServer::onRequestChanged() {
++    m_auth->request()->setFinishAutomatically(true);
++}
++
++void WaylandDisplayServer::onSessionStarted(bool success) {
++    // set flag
++    m_started = success;
++
++    // log message
++    if (success)
++        qDebug() << "Compositor successfully started";
++    else
++        qDebug() << "Compositor failed to start";
++
++    if (m_started)
++        emit started();
++}
++
++void WaylandDisplayServer::onHelperFinished(Auth::HelperExitStatus status) {
++    // reset flag
++    m_started = false;
++
++    // log message
++    qDebug() << "Compositor stopped.";
++
++    // clean up
++    m_auth->deleteLater();
++    m_auth = nullptr;
++}
++
++void WaylandDisplayServer::onReadyReadStandardError()
++{
++    if (m_process) {
++        qDebug() << "Compositor errors:" << qPrintable(QString::fromLocal8Bit(m_process->readAllStandardError()));
++    }
++}
++
++void WaylandDisplayServer::onReadyReadStandardOutput()
++{
++    if (m_process) {
++        qDebug() << "Compositor output:" << qPrintable(QString::fromLocal8Bit(m_process->readAllStandardOutput()));
++    }
++}
++
++void WaylandDisplayServer::authInfo(const QString &message, Auth::Info info) {
++    Q_UNUSED(info);
++    qDebug() << "Information from compositor session:" << message;
++}
++
++void WaylandDisplayServer::authError(const QString &message, Auth::Error error) {
++    Q_UNUSED(error);
++    qWarning() << "Error from compositor session:" << message;
++}
++}
+diff --git a/src/daemon/WaylandDisplayServer.h b/src/daemon/WaylandDisplayServer.h
+new file mode 100644
+index 00000000..3f3323cb
+--- /dev/null
++++ b/src/daemon/WaylandDisplayServer.h
+@@ -0,0 +1,64 @@
++/***************************************************************************
++* Copyright (c) 2016 Pier Luigi Fiorini <pierluigi.fiorini@gmail.com>
++* Copyright (c) 2013 Abdurrahman AVCI <abdurrahmanavci@gmail.com>
++*
++* This program is free software; you can redistribute it and/or modify
++* it under the terms of the GNU General Public License as published by
++* the Free Software Foundation; either version 2 of the License, or
++* (at your option) any later version.
++*
++* This program is distributed in the hope that it will be useful,
++* but WITHOUT ANY WARRANTY; without even the implied warranty of
++* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
++* GNU General Public License for more details.
++*
++* You should have received a copy of the GNU General Public License
++* along with this program; if not, write to the
++* Free Software Foundation, Inc.,
++* 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
++***************************************************************************/
++
++#ifndef SDDM_WAYLANDDISPLAYSERVER_H
++#define SDDM_WAYLANDDISPLAYSERVER_H
++
++#include "Auth.h"
++#include "DisplayServer.h"
++
++class QProcess;
++
++namespace SDDM
++{
++    class WaylandDisplayServer : public DisplayServer
++    {
++        Q_OBJECT
++        Q_DISABLE_COPY(WaylandDisplayServer)
++    public:
++        explicit WaylandDisplayServer(Display *parent);
++        ~WaylandDisplayServer();
++
++        const QString &display() const;
++
++        QString sessionType() const;
++
++    public slots:
++        bool start();
++        void stop();
++        void finished();
++        void setupDisplay();
++
++    private slots:
++        void onRequestChanged();
++        void onSessionStarted(bool success);
++        void onHelperFinished(Auth::HelperExitStatus status);
++        void onReadyReadStandardOutput();
++        void onReadyReadStandardError();
++        void authInfo(const QString &message, Auth::Info info);
++        void authError(const QString &message, Auth::Error error);
++
++    private:
++        QProcess *m_process { nullptr };
++        Auth *m_auth { nullptr };
++    };
++}
++
++#endif // SDDM_WAYLANDDISPLAYSERVER_H
+diff --git a/src/greeter/KeyboardModel.cpp b/src/greeter/KeyboardModel.cpp
+index 7d40441e..0383ae60 100644
+--- a/src/greeter/KeyboardModel.cpp
++++ b/src/greeter/KeyboardModel.cpp
+@@ -1,4 +1,5 @@
+ /***************************************************************************
++* Copyright (c) 2016 Pier Luigi Fiorini <pierluigi.fiorini@gmail.com>
+ * Copyright (c) 2013 Nikita Mikhaylov <nslqqq@gmail.com>
+ *
+ * This program is free software; you can redistribute it and/or modify
+@@ -17,6 +18,8 @@
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ ***************************************************************************/
+ 
++#include <QtGui/QGuiApplication>
++
+ #include "KeyboardModel.h"
+ #include "KeyboardModel_p.h"
+ #include "XcbKeyboardBackend.h"
+@@ -27,13 +30,16 @@ namespace SDDM {
+     /**********************************************/
+ 
+     KeyboardModel::KeyboardModel() : d(new KeyboardModelPrivate) {
+-        m_backend = new XcbKeyboardBackend(d);
+-        m_backend->init();
+-        m_backend->connectEventsDispatcher(this);
++        if (QGuiApplication::platformName() == QLatin1String("xcb")) {
++            m_backend = new XcbKeyboardBackend(d);
++            m_backend->init();
++            m_backend->connectEventsDispatcher(this);
++        }
+     }
+ 
+     KeyboardModel::~KeyboardModel() {
+-        m_backend->disconnect();
++        if (m_backend)
++            m_backend->disconnect();
+         delete m_backend;
+ 
+         for (QObject *layout: d->layouts) {
+@@ -49,7 +55,8 @@ namespace SDDM {
+     void KeyboardModel::setNumLockState(bool state) {
+         if (d->numlock.enabled != state) {
+             d->numlock.enabled = state;
+-            m_backend->sendChanges();
++            if (m_backend)
++                m_backend->sendChanges();
+ 
+             emit numLockStateChanged();
+         }
+@@ -62,7 +69,8 @@ namespace SDDM {
+     void KeyboardModel::setCapsLockState(bool state) {
+         if (d->capslock.enabled != state) {
+             d->capslock.enabled = state;
+-            m_backend->sendChanges();
++            if (m_backend)
++                m_backend->sendChanges();
+ 
+             emit capsLockStateChanged();
+         }
+@@ -79,7 +87,8 @@ namespace SDDM {
+     void KeyboardModel::setCurrentLayout(int id) {
+         if (d->layout_id != id) {
+             d->layout_id = id;
+-            m_backend->sendChanges();
++            if (m_backend)
++                m_backend->sendChanges();
+ 
+             emit currentLayoutChanged();
+         }
+@@ -96,7 +105,8 @@ namespace SDDM {
+         QList<QObject*> layouts_old = d->layouts;
+ 
+         // Process events
+-        m_backend->dispatchEvents();
++        if (m_backend)
++            m_backend->dispatchEvents();
+ 
+         // Send updates
+         if (caps_old != d->capslock.enabled)
+diff --git a/src/greeter/KeyboardModel.h b/src/greeter/KeyboardModel.h
+index ca57849c..ae2aeb12 100644
+--- a/src/greeter/KeyboardModel.h
++++ b/src/greeter/KeyboardModel.h
+@@ -71,7 +71,7 @@ namespace SDDM {
+ 
+     private:
+         KeyboardModelPrivate * d { nullptr };
+-        KeyboardBackend * m_backend;
++        KeyboardBackend * m_backend { nullptr };
+     };
+ }
+ 
+diff --git a/src/helper/HelperApp.cpp b/src/helper/HelperApp.cpp
+index 672359ae..17a8ea8f 100644
+--- a/src/helper/HelperApp.cpp
++++ b/src/helper/HelperApp.cpp
+@@ -98,6 +98,11 @@ namespace SDDM {
+             m_backend->setAutologin(true);
+         }
+ 
++        if ((pos = args.indexOf(QStringLiteral("--display-server"))) >= 0) {
++            m_backend->setGreeter(true);
++            m_session->setDisplayServer(true);
++        }
++
+         if ((pos = args.indexOf(QStringLiteral("--greeter"))) >= 0) {
+             m_backend->setGreeter(true);
+         }
+@@ -110,6 +115,7 @@ namespace SDDM {
+ 
+         connect(m_socket, &QLocalSocket::connected, this, &HelperApp::doAuth);
+         connect(m_session, QOverload<int>::of(&QProcess::finished), this, &HelperApp::sessionFinished);
++        connect(m_session, &UserSession::sessionStarted, this, &HelperApp::sessionStarted);
+         m_socket->connectToServer(server, QIODevice::ReadWrite | QIODevice::Unbuffered);
+     }
+ 
+@@ -157,13 +163,26 @@ namespace SDDM {
+                 env.insert(QStringLiteral("XDG_VTNR"), QString::number(vtNumber));
+             }
+             m_session->setProcessEnvironment(env);
++        }
+ 
+-            if (!m_backend->openSession()) {
+-                sessionOpened(false);
+-                exit(Auth::HELPER_SESSION_ERROR);
+-                return;
+-            }
++        if (m_session->path().isEmpty()) {
++            exit(Auth::HELPER_SUCCESS);
++            return;
++        }
++
++        env.insert(m_session->processEnvironment());
++        m_session->setProcessEnvironment(env);
+ 
++        if (!m_backend->openSession()) {
++            sessionOpened(false);
++            exit(Auth::HELPER_SESSION_ERROR);
++            return;
++        }
++    }
++
++    void HelperApp::sessionStarted(bool success) {
++        if (success) {
++            qInfo() << "Session ready";
+             sessionOpened(true);
+ 
+             // write successful login to utmp/wtmp
+@@ -175,10 +194,11 @@ namespace SDDM {
+                 m_session->setCachedProcessId(m_session->processId());
+                 utmpLogin(vt, displayId, m_user, m_session->processId(), true);
+             }
++        } else {
++            qWarning() << "Session failed to start";
++            sessionOpened(false);
++            exit(Auth::HELPER_SESSION_ERROR);
+         }
+-        else
+-            exit(Auth::HELPER_SUCCESS);
+-        return;
+     }
+ 
+     void HelperApp::sessionFinished(int status) {
+diff --git a/src/helper/HelperApp.h b/src/helper/HelperApp.h
+index 3742df12..f57404fe 100644
+--- a/src/helper/HelperApp.h
++++ b/src/helper/HelperApp.h
+@@ -53,6 +53,7 @@ namespace SDDM {
+         void setUp();
+         void doAuth();
+ 
++        void sessionStarted(bool success);
+         void sessionFinished(int status);
+ 
+     private:
+diff --git a/src/helper/UserSession.cpp b/src/helper/UserSession.cpp
+index c9a8a20f..0f3abf16 100644
+--- a/src/helper/UserSession.cpp
++++ b/src/helper/UserSession.cpp
+@@ -1,6 +1,6 @@
+ /*
+  * Session process wrapper
+- * Copyright (C) 2015 Pier Luigi Fiorini <pierluigi.fiorini@gmail.com>
++ * Copyright (C) 2015-2016 Pier Luigi Fiorini <pierluigi.fiorini@gmail.com>
+  * Copyright (C) 2014 Martin Bříza <mbriza@redhat.com>
+  *
+  * This program is free software; you can redistribute it and/or modify
+@@ -61,7 +61,101 @@ namespace SDDM {
+             qCritical() << "Unable to run user session: unknown session type";
+         }
+ 
+-        return waitForStarted();
++        // wait until the Wayland socket is ready
++        if (env.value(QLatin1String("XDG_SESSION_TYPE")) == QLatin1String("wayland") && m_displayServer) {
++            const QString runtimeDir = env.value(QLatin1String("XDG_RUNTIME_DIR"));
++            //const QString socketName = env.value(QLatin1String("WAYLAND_DISPLAY"));
++            const QString socketName = QLatin1String("sddm-wayland");
++
++            // if the socket name is not specified we are not sure how it is called,
++            // it could be the default "wayland-0" or another name hence we don't
++            // even want to fallback to the default because if turns out to be the
++            // wrong name we'd have to rely on the timeout and delay the session startup
++            if (socketName.isEmpty()) {
++                // just return without even warning
++                if (!waitForStarted())
++                    return false;
++                emit sessionStarted(true);
++                return true;
++            }
++
++            // if we don't know the runtime directory just wait for the process to start
++            if (runtimeDir.isEmpty()) {
++                qWarning() << "XDG_RUNTIME_DIR is empty, do not wait for Wayland socket";
++                if (!waitForStarted())
++                    return false;
++                emit sessionStarted(true);
++                return true;
++            }
++
++            const QString socketFileName = QDir(runtimeDir).absoluteFilePath(socketName);
++
++            m_watcher = new QFileSystemWatcher(this);
++
++            // give the compositor some time to start, if after that there is
++            // no socket the session is considered failed
++            m_timer.setSingleShot(true);
++            m_timer.setInterval(15000);
++            connect(&m_timer, &QTimer::timeout, this, [this, socketFileName] {
++                if (!m_watcher.isNull())
++                    m_watcher->deleteLater();
++                qWarning() << "Wayland socket watcher timed out, checking for" << socketFileName;
++                emit sessionStarted(QFile::exists(socketFileName));
++            });
++
++            connect(m_watcher, &QFileSystemWatcher::directoryChanged, this,
++                    [this, socketFileName](const QString &path) {
++                qDebug() << "Directory" << path << "changed, checking for" << socketFileName;
++
++                if (QFile::exists(socketFileName)) {
++                    // kill the timer
++                    m_timer.stop();
++
++                    // tell HelperApp we have the socket and delete the watcher
++                    qInfo() << "Wayland socket ready";
++                    emit sessionStarted(true);
++
++                    // kill the watcher
++                    if (!m_watcher.isNull())
++                        m_watcher->deleteLater();
++                }
++            });
++
++            // if can't watch the runtime directory for any reason delete the
++            // watcher and continue
++            if (!m_watcher->addPath(runtimeDir)) {
++                qWarning("Cannot watch \"%s\" for Wayland socket", qPrintable(runtimeDir));
++                m_watcher->deleteLater();
++            }
++
++            // start the timer
++            m_timer.start();
++
++            // wait for the process to start
++            if (!waitForStarted()) {
++                // if fails, the Wayland socket won't be created
++                m_timer.stop();
++                if (!m_watcher.isNull())
++                    m_watcher->deleteLater();
++                return false;
++            }
++
++            return true;
++        }
++
++        // Wayland socket doesn't apply here
++        if (!waitForStarted())
++            return false;
++        emit sessionStarted(true);
++        return true;
++    }
++
++    bool UserSession::isDisplayServer() const {
++        return m_displayServer;
++    }
++
++    void UserSession::setDisplayServer(bool value) {
++        m_displayServer = value;
+     }
+ 
+     void UserSession::setPath(const QString& path) {
+@@ -75,6 +169,7 @@ namespace SDDM {
+     void UserSession::setupChildProcess() {
+         // Session type
+         QString sessionType = processEnvironment().value(QStringLiteral("XDG_SESSION_TYPE"));
++        QString sessionClass = processEnvironment().value(QStringLiteral("XDG_SESSION_CLASS"));
+ 
+         // For Wayland sessions we leak the VT into the session as stdin so
+         // that it stays open without races
+@@ -88,27 +183,27 @@ namespace SDDM {
+             bool takeControl = false;
+ 
+             if (vtFd > 0) {
+-                dup2(vtFd, STDIN_FILENO);
++                ::dup2(vtFd, STDIN_FILENO);
+                 ::close(vtFd);
+-                takeControl = true;
++                takeControl = sessionClass == QLatin1String("user");
+             } else {
+                 int stdinFd = ::open("/dev/null", O_RDWR);
+-                dup2(stdinFd, STDIN_FILENO);
++                ::dup2(stdinFd, STDIN_FILENO);
+                 ::close(stdinFd);
+             }
+ 
+             // set this process as session leader
+-            if (setsid() < 0) {
++            if (::setsid() < 0) {
+                 qCritical("Failed to set pid %lld as leader of the new session and process group: %s",
+                           QCoreApplication::applicationPid(), strerror(errno));
+-                exit(Auth::HELPER_OTHER_ERROR);
++                ::exit(Auth::HELPER_OTHER_ERROR);
+             }
+ 
+             // take control of the tty
+             if (takeControl) {
+-                if (ioctl(STDIN_FILENO, TIOCSCTTY) < 0) {
++                if (::ioctl(STDIN_FILENO, TIOCSCTTY) < 0) {
+                     qCritical("Failed to take control of the tty: %s", strerror(errno));
+-                    exit(Auth::HELPER_OTHER_ERROR);
++                    ::exit(Auth::HELPER_OTHER_ERROR);
+                 }
+             }
+ 
+@@ -222,7 +317,7 @@ namespace SDDM {
+         if (chdir(pw.pw_dir) != 0) {
+             qCritical() << "chdir(" << pw.pw_dir << ") failed for user: " << username;
+             qCritical() << "verify directory exist and has sufficient permissions";
+-            exit(Auth::HELPER_OTHER_ERROR);
++            ::exit(Auth::HELPER_OTHER_ERROR);
+         }
+         const QString homeDir = QString::fromLocal8Bit(pw.pw_dir);
+ 
+@@ -250,49 +345,74 @@ namespace SDDM {
+             qWarning() << "Could not open stderr to" << sessionLog;
+         }
+ 
+-        //redirect any stdout to /dev/null
+-        fd = ::open("/dev/null", O_WRONLY);
+-        if (fd >= 0)
+-        {
+-            dup2 (fd, STDOUT_FILENO);
+-            ::close(fd);
+-        } else {
+-            qWarning() << "Could not redirect stdout";
+-        }
+-
+-        // set X authority for X11 sessions only
+-        if (sessionType != QLatin1String("x11"))
+-            return;
+-        QString cookie = qobject_cast<HelperApp*>(parent())->cookie();
+-        if (!cookie.isEmpty()) {
+-            QString file = processEnvironment().value(QStringLiteral("XAUTHORITY"));
+-            QString display = processEnvironment().value(QStringLiteral("DISPLAY"));
+-            qDebug() << "Adding cookie to" << file;
++        if (sessionClass == QLatin1String("user")) {
++            //we cannot use setStandardError file as this code is run in the child process
++            //we want to redirect after we setuid so that the log file is owned by the user
+ 
++            // determine stderr log file based on session type
++            QString sessionLog = QStringLiteral("%1/%2")
++                    .arg(QString::fromLocal8Bit(pw.pw_dir))
++                    .arg(sessionType == QStringLiteral("x11")
++                         ? mainConfig.X11.SessionLogFile.get()
++                         : mainConfig.Wayland.SessionLogFile.get());
+ 
+             // create the path
+-            QFileInfo finfo(file);
++            QFileInfo finfo(sessionLog);
+             QDir().mkpath(finfo.absolutePath());
+ 
+-            QFile file_handler(file);
+-            file_handler.open(QIODevice::Append);
+-            file_handler.close();
+-
+-            QString cmd = QStringLiteral("%1 -f %2 -q").arg(mainConfig.X11.XauthPath.get()).arg(file);
+-
+-            // execute xauth
+-            FILE *fp = popen(qPrintable(cmd), "w");
++            //swap the stderr pipe of this subprcess into a file
++            int fd = ::open(qPrintable(sessionLog), O_WRONLY | O_CREAT | O_TRUNC, 0600);
++            if (fd >= 0) {
++                ::dup2 (fd, STDERR_FILENO);
++                ::close(fd);
++            } else {
++                qWarning() << "Could not open stderr to" << sessionLog;
++            }
+ 
+-            // check file
+-            if (!fp)
+-                return;
+-            fprintf(fp, "remove %s\n", qPrintable(display));
+-            fprintf(fp, "add %s . %s\n", qPrintable(display), qPrintable(cookie));
+-            fprintf(fp, "exit\n");
++            //redirect any stdout to /dev/null
++            fd = ::open("/dev/null", O_WRONLY);
++            if (fd >= 0) {
++                ::dup2 (fd, STDOUT_FILENO);
++                ::close(fd);
++            } else {
++                qWarning() << "Could not redirect stdout";
++            }
++        }
+ 
+-            // close pipe
+-            pclose(fp);
++        // set X authority for X11 sessions only
++        if (sessionType == QLatin1String("x11")) {
++            QString cookie = qobject_cast<HelperApp*>(parent())->cookie();
++            if (!cookie.isEmpty()) {
++                QString file = processEnvironment().value(QStringLiteral("XAUTHORITY"));
++                QString display = processEnvironment().value(QStringLiteral("DISPLAY"));
++                qDebug() << "Adding cookie to" << file;
++
++                // create the path
++                QFileInfo finfo(file);
++                QDir().mkpath(finfo.absolutePath());
++
++                QFile file_handler(file);
++                file_handler.open(QIODevice::Append);
++                file_handler.close();
++
++                QString cmd = QStringLiteral("%1 -f %2 -q").arg(mainConfig.X11.XauthPath.get()).arg(file);
++
++                // execute xauth
++                FILE *fp = popen(qPrintable(cmd), "w");
++
++                // check file
++                if (!fp)
++                    return;
++                fprintf(fp, "remove %s\n", qPrintable(display));
++                fprintf(fp, "add %s . %s\n", qPrintable(display), qPrintable(cookie));
++                fprintf(fp, "exit\n");
++
++                // close pipe
++                pclose(fp);
++            }
+         }
++
++        qDebug() << "Ready to take off";
+     }
+ 
+     void UserSession::setCachedProcessId(qint64 pid) {
+diff --git a/src/helper/UserSession.h b/src/helper/UserSession.h
+index 70690847..0013619a 100644
+--- a/src/helper/UserSession.h
++++ b/src/helper/UserSession.h
+@@ -1,6 +1,6 @@
+ /*
+  * Session process wrapper
+- * Copyright (C) 2015 Pier Luigi Fiorini <pierluigi.fiorini@gmail.com>
++ * Copyright (C) 2015-2016 Pier Luigi Fiorini <pierluigi.fiorini@gmail.com>
+  * Copyright (C) 2014 Martin Bříza <mbriza@redhat.com>
+  *
+  * This program is free software; you can redistribute it and/or modify
+@@ -24,7 +24,10 @@
+ 
+ #include <QtCore/QObject>
+ #include <QtCore/QString>
++#include <QtCore/QFileSystemWatcher>
++#include <QtCore/QPointer>
+ #include <QtCore/QProcess>
++#include <QtCore/QTimer>
+ 
+ namespace SDDM {
+     class HelperApp;
+@@ -37,6 +40,9 @@ namespace SDDM {
+ 
+         bool start();
+ 
++        bool isDisplayServer() const;
++        void setDisplayServer(bool value);
++
+         void setPath(const QString &path);
+         QString path() const;
+ 
+@@ -53,12 +59,18 @@ namespace SDDM {
+         */
+         qint64 cachedProcessId();
+ 
++    signals:
++        void sessionStarted(bool success);
++
+     protected:
+         void setupChildProcess();
+ 
+     private:
++        bool m_displayServer { false };
+         QString m_path { };
+         qint64 m_cachedProcessId;
++        QTimer m_timer;
++        QPointer<QFileSystemWatcher> m_watcher;
+     };
+ }
+ 
+
+From 90072223958328810b93ad1d8c1d47e4b1a64b5b Mon Sep 17 00:00:00 2001
+From: Pier Luigi Fiorini <pierluigi.fiorini@gmail.com>
+Date: Thu, 18 Aug 2016 02:21:44 +0200
+Subject: [PATCH 2/5] daemon: Switch to Wayland session vt after the
+ authentication
+
+Try to make a smoother transition to the Wayland session.
+---
+ src/common/Session.cpp              | 10 ++++++++++
+ src/common/Session.h                |  4 ++++
+ src/daemon/Display.cpp              | 13 ++++++++++++-
+ src/daemon/WaylandDisplayServer.cpp | 10 +++++-----
+ src/helper/UserSession.cpp          | 13 ++-----------
+ 5 files changed, 33 insertions(+), 17 deletions(-)
+
+diff --git a/src/common/Session.cpp b/src/common/Session.cpp
+index 2d7b04f1..6fe3a31d 100644
+--- a/src/common/Session.cpp
++++ b/src/common/Session.cpp
+@@ -52,6 +52,16 @@ namespace SDDM {
+         return m_type;
+     }
+ 
++    int Session::vt() const
++    {
++        return m_vt;
++    }
++
++    void Session::setVt(int vt)
++    {
++        m_vt = vt;
++    }
++
+     QString Session::xdgSessionType() const
+     {
+         return m_xdgSessionType;
+diff --git a/src/common/Session.h b/src/common/Session.h
+index 9fd86cd0..d285a3f5 100644
+--- a/src/common/Session.h
++++ b/src/common/Session.h
+@@ -42,6 +42,9 @@ namespace SDDM {
+ 
+         Type type() const;
+ 
++        int vt() const;
++        void setVt(int vt);
++
+         QString xdgSessionType() const;
+ 
+         QDir directory() const;
+@@ -66,6 +69,7 @@ namespace SDDM {
+     private:
+         bool m_valid;
+         Type m_type;
++        int m_vt;
+         QDir m_dir;
+         QString m_name;
+         QString m_fileName;
+diff --git a/src/daemon/Display.cpp b/src/daemon/Display.cpp
+index 4346c998..11fdfb34 100644
+--- a/src/daemon/Display.cpp
++++ b/src/daemon/Display.cpp
+@@ -46,6 +46,7 @@
+ 
+ #include "Login1Manager.h"
+ #include "Login1Session.h"
++#include "VirtualTerminal.h"
+ 
+ 
+ namespace SDDM {
+@@ -322,6 +323,11 @@ namespace SDDM {
+             // Use the greeter VT, for wayland sessions the helper overwrites this
+             env.insert(QStringLiteral("XDG_VTNR"), QString::number(terminalId()));
+         }
++        // create new VT for Wayland sessions otherwise use greeter vt
++        int vt = terminalId();
++        if (session.xdgSessionType() == QLatin1String("wayland"))
++            vt = VirtualTerminal::setUpNewVt();
++        m_lastSession.setVt(vt);
+ 
+         env.insert(QStringLiteral("PATH"), mainConfig.Users.DefaultPath.get());
+         if (session.xdgSessionType() == QLatin1String("x11"))
+@@ -367,8 +373,13 @@ namespace SDDM {
+                 stateConfig.Last.Session.setDefault();
+             stateConfig.save();
+ 
+-            if (m_socket)
++            if (m_socket) {
++                // switch to the new VT for Wayland sessions
++                if (m_lastSession.xdgSessionType() == QLatin1String("wayland"))
++                    VirtualTerminal::jumpToVt(m_lastSession.vt(), true);
++
+                 emit loginSucceeded(m_socket);
++            }
+         } else if (m_socket) {
+             qDebug() << "Authentication failure";
+             emit loginFailed(m_socket);
+diff --git a/src/daemon/WaylandDisplayServer.cpp b/src/daemon/WaylandDisplayServer.cpp
+index 7d90a2d0..016c7d78 100644
+--- a/src/daemon/WaylandDisplayServer.cpp
++++ b/src/daemon/WaylandDisplayServer.cpp
+@@ -85,17 +85,17 @@ bool WaylandDisplayServer::start()
+ 
+         // don't block in waitForStarted if we fail to start
+         if (m_process->state() == QProcess::NotRunning) {
+-            qCritical() << "Compositor failed to launch.";
++            qCritical() << "Compositor failed to launch";
+             return false;
+         }
+ 
+         // wait for the compositor to start
+         if (!m_process->waitForStarted()) {
+-            qCritical() << "Failed to start compositor.";
++            qCritical() << "Failed to start compositor";
+             return false;
+         }
+ 
+-        qDebug() << "Compositor process started.";
++        qDebug() << "Compositor process started";
+         m_started = true;
+         emit started();
+     } else {
+@@ -164,7 +164,7 @@ void WaylandDisplayServer::finished()
+     m_started = false;
+ 
+     // log message
+-    qDebug() << "Compositor stopped.";
++    qDebug() << "Compositor stopped";
+ 
+     // clean up
+     m_process->deleteLater();
+@@ -201,7 +201,7 @@ void WaylandDisplayServer::onHelperFinished(Auth::HelperExitStatus status) {
+     m_started = false;
+ 
+     // log message
+-    qDebug() << "Compositor stopped.";
++    qDebug() << "Compositor stopped";
+ 
+     // clean up
+     m_auth->deleteLater();
+diff --git a/src/helper/UserSession.cpp b/src/helper/UserSession.cpp
+index 0f3abf16..d80607ee 100644
+--- a/src/helper/UserSession.cpp
++++ b/src/helper/UserSession.cpp
+@@ -48,6 +48,7 @@ namespace SDDM {
+         QProcessEnvironment env = qobject_cast<HelperApp*>(parent())->session()->processEnvironment();
+ 
+         if (env.value(QStringLiteral("XDG_SESSION_CLASS")) == QLatin1String("greeter")) {
++            qDebug() << "Starting greeter session:" << m_path;
+             QProcess::start(m_path);
+         } else if (env.value(QStringLiteral("XDG_SESSION_TYPE")) == QLatin1String("x11")) {
+             const QString cmd = QStringLiteral("%1 \"%2\"").arg(mainConfig.X11.SessionCommand.get()).arg(m_path);
+@@ -64,7 +65,6 @@ namespace SDDM {
+         // wait until the Wayland socket is ready
+         if (env.value(QLatin1String("XDG_SESSION_TYPE")) == QLatin1String("wayland") && m_displayServer) {
+             const QString runtimeDir = env.value(QLatin1String("XDG_RUNTIME_DIR"));
+-            //const QString socketName = env.value(QLatin1String("WAYLAND_DISPLAY"));
+             const QString socketName = QLatin1String("sddm-wayland");
+ 
+             // if the socket name is not specified we are not sure how it is called,
+@@ -79,15 +79,6 @@ namespace SDDM {
+                 return true;
+             }
+ 
+-            // if we don't know the runtime directory just wait for the process to start
+-            if (runtimeDir.isEmpty()) {
+-                qWarning() << "XDG_RUNTIME_DIR is empty, do not wait for Wayland socket";
+-                if (!waitForStarted())
+-                    return false;
+-                emit sessionStarted(true);
+-                return true;
+-            }
+-
+             const QString socketFileName = QDir(runtimeDir).absoluteFilePath(socketName);
+ 
+             m_watcher = new QFileSystemWatcher(this);
+@@ -105,7 +96,7 @@ namespace SDDM {
+ 
+             connect(m_watcher, &QFileSystemWatcher::directoryChanged, this,
+                     [this, socketFileName](const QString &path) {
+-                qDebug() << "Directory" << path << "changed, checking for" << socketFileName;
++                qDebug() << "Directory" << path << "has changed, checking for" << socketFileName;
+ 
+                 if (QFile::exists(socketFileName)) {
+                     // kill the timer
+
+From b9f35b42f84121d337cf7ad25da1ab7edcc67676 Mon Sep 17 00:00:00 2001
+From: Aleix Pol <aleixpol@kde.org>
+Date: Wed, 3 Feb 2021 01:33:38 +0100
+Subject: [PATCH 3/5] Have both compositor and client be run from the same
+ process
+
+Otherwise the first logind session gets closed as the second gets
+started and the session crumbles.
+
+We also make which compositor being run configurable so we are not bound
+to a specific implementation.
+---
+ data/man/sddm.conf.rst.in           |   8 ++
+ src/auth/Auth.cpp                   |  36 ++++---
+ src/auth/Auth.h                     |  23 ++---
+ src/common/Configuration.h          |   2 +
+ src/daemon/Display.cpp              |   2 +-
+ src/daemon/Greeter.cpp              |  23 ++++-
+ src/daemon/Greeter.h                |   2 +
+ src/daemon/WaylandDisplayServer.cpp | 149 ++--------------------------
+ src/daemon/WaylandDisplayServer.h   |  23 +----
+ src/helper/CMakeLists.txt           |   5 +
+ src/helper/HelperApp.cpp            |  24 +++--
+ src/helper/HelperApp.h              |   2 +-
+ src/helper/HelperStartWayland.cpp   |  96 ++++++++++++++++++
+ src/helper/UserSession.cpp          |  95 ++++--------------
+ src/helper/UserSession.h            |  10 +-
+ src/helper/WaylandSocketWatcher.cpp |  91 +++++++++++++++++
+ src/helper/WaylandSocketWatcher.h   |  55 ++++++++++
+ 17 files changed, 357 insertions(+), 289 deletions(-)
+ create mode 100644 src/helper/HelperStartWayland.cpp
+ create mode 100644 src/helper/WaylandSocketWatcher.cpp
+ create mode 100644 src/helper/WaylandSocketWatcher.h
+
+diff --git a/data/man/sddm.conf.rst.in b/data/man/sddm.conf.rst.in
+index bee07681..6bc693f2 100644
+--- a/data/man/sddm.conf.rst.in
++++ b/data/man/sddm.conf.rst.in
+@@ -172,6 +172,14 @@ OPTIONS
+ 	Can be either "true" or "false".
+ 	Default value is "false".
+ 
++`CompositorCommand=`
++	Chooses which command to issue to start a wayland compositor.
++	Default value is "weston".
++
++`CompositorEnvironment=`
++	Semi-colon separed list of NAME=VALUE;NAME2=VALUE2 entries for the environment to use
++	Default value is empty
++
+ [Users] section:
+ 
+ `DefaultPath=`
+diff --git a/src/auth/Auth.cpp b/src/auth/Auth.cpp
+index a1b8b87d..c2e5c47b 100644
+--- a/src/auth/Auth.cpp
++++ b/src/auth/Auth.cpp
+@@ -65,8 +65,8 @@ namespace SDDM {
+         QString sessionPath { };
+         QString user { };
+         QString cookie { };
++        QString compositor { };
+         bool autologin { false };
+-        bool displayServer { false };
+         bool greeter { false };
+         QProcessEnvironment environment { };
+         qint64 id { 0 };
+@@ -215,7 +215,7 @@ namespace SDDM {
+         if (exitCode == HELPER_SUCCESS)
+             qDebug() << "Auth: sddm-helper exited successfully";
+         else
+-            qWarning("Auth: sddm-helper exited with %d", exitCode);
++            qWarning() << "Auth: sddm-helper ("<< qPrintable(child->arguments().join(QLatin1Char(' '))) << ") exited with" << HelperExitStatus(exitCode);
+ 
+         Q_EMIT qobject_cast<Auth*>(parent())->finished((Auth::HelperExitStatus)exitCode);
+     }
+@@ -262,10 +262,6 @@ namespace SDDM {
+         return d->autologin;
+     }
+ 
+-    bool Auth::isDisplayServer() const {
+-        return d->displayServer;
+-    }
+-
+     bool Auth::isGreeter() const
+     {
+         return d->greeter;
+@@ -324,14 +320,6 @@ namespace SDDM {
+         }
+     }
+ 
+-    void Auth::setDisplayServer(bool on)
+-    {
+-        if (on != d->displayServer) {
+-            d->displayServer = on;
+-            Q_EMIT displayServerChanged();
+-        }
+-    }
+-
+     void Auth::setGreeter(bool on)
+     {
+         if (on != d->greeter) {
+@@ -347,6 +335,13 @@ namespace SDDM {
+         }
+     }
+ 
++    void Auth::setCompositor(const QString& command) {
++        if (command != d->compositor) {
++            d->compositor = command;
++            Q_EMIT compositorChanged();
++        }
++    }
++
+     void Auth::setVerbose(bool on) {
+         if (on != verbose()) {
+             if (on)
+@@ -367,12 +362,21 @@ namespace SDDM {
+             args << QStringLiteral("--user") << d->user;
+         if (d->autologin)
+             args << QStringLiteral("--autologin");
+-        if (d->displayServer)
+-            args << QStringLiteral("--display-server");
++        if (!d->compositor.isEmpty())
++            args << QStringLiteral("--compositor") << d->compositor;
+         if (d->greeter)
+             args << QStringLiteral("--greeter");
+         d->child->start(QStringLiteral("%1/sddm-helper").arg(QStringLiteral(LIBEXEC_INSTALL_DIR)), args);
+     }
++
++    void Auth::stop() {
++        if (d->child->state() != QProcess::NotRunning) {
++            d->child->terminate();
++            if (!d->child->waitForFinished(2000)) {
++                d->child->kill();
++            }
++        }
++    }
+ }
+ 
+ #include "Auth.moc"
+diff --git a/src/auth/Auth.h b/src/auth/Auth.h
+index 0b6d2ccf..ee35a23b 100644
+--- a/src/auth/Auth.h
++++ b/src/auth/Auth.h
+@@ -52,7 +52,6 @@ namespace SDDM {
+         Q_OBJECT
+         // not setting NOTIFY for the properties - they should be set only once before calling start
+         Q_PROPERTY(bool autologin READ autologin WRITE setAutologin NOTIFY autologinChanged)
+-        Q_PROPERTY(bool displayServer READ isDisplayServer WRITE setDisplayServer NOTIFY displayServerChanged)
+         Q_PROPERTY(bool greeter READ isGreeter WRITE setGreeter NOTIFY greeterChanged)
+         Q_PROPERTY(bool verbose READ verbose WRITE setVerbose NOTIFY verboseChanged)
+         Q_PROPERTY(QString cookie READ cookie WRITE setCookie NOTIFY cookieChanged)
+@@ -92,7 +91,6 @@ namespace SDDM {
+         static void registerTypes();
+ 
+         bool autologin() const;
+-        bool isDisplayServer() const;
+         bool isGreeter() const;
+         bool verbose() const;
+         const QString &cookie() const;
+@@ -126,14 +124,6 @@ namespace SDDM {
+         */
+         void setAutologin(bool on = true);
+ 
+-        /**
+-         * Set mode to display server
+-         * This will bypass authentication checks and will wait
+-         * until the display server is actually started, for example
+-         * when the Wayland compositor socket is created
+-         */
+-        void setDisplayServer(bool on = true);
+-
+         /**
+          * Set mode to greeter
+          * This will bypass authentication checks
+@@ -154,9 +144,14 @@ namespace SDDM {
+ 
+         /**
+         * Set the session to be started after authenticating.
+-        * @param path Path of the session executable to be started
++        * @param command Path of the session executable to be started
+         */
+-        void setSession(const QString &path);
++        void setSession(const QString &command);
++
++        /**
++         * Set the @p command to be executed before launching the greeter
++         */
++        void setCompositor(const QString &command);
+ 
+         /**
+          * Set the display server cookie, to be inserted into the user's $XAUTHORITY
+@@ -170,15 +165,17 @@ namespace SDDM {
+         */
+         void start();
+ 
++        void stop();
++
+     Q_SIGNALS:
+         void autologinChanged();
+         void greeterChanged();
+-        void displayServerChanged();
+         void verboseChanged();
+         void cookieChanged();
+         void userChanged();
+         void sessionChanged();
+         void requestChanged();
++        void compositorChanged();
+ 
+         /**
+         * Emitted when authentication phase finishes
+diff --git a/src/common/Configuration.h b/src/common/Configuration.h
+index ff04e4f7..3b894ad0 100644
+--- a/src/common/Configuration.h
++++ b/src/common/Configuration.h
+@@ -82,6 +82,8 @@ namespace SDDM {
+             Entry(SessionCommand,      QString,     _S(WAYLAND_SESSION_COMMAND),                _S("Path to a script to execute when starting the desktop session"));
+ 	    Entry(SessionLogFile,      QString,     _S(".local/share/sddm/wayland-session.log"),_S("Path to the user session log file"));
+             Entry(EnableHiDPI,         bool,        false,                                      _S("Enable Qt's automatic high-DPI scaling"));
++            Entry(CompositorCommand,   QString,     _S("weston --shell=fullscreen-shell.so"),   _S("Choose which Wayland compositor we will be starting"));
++            Entry(CompositorEnvironment, QString,   _S("QT_WAYLAND_SHELL_INTEGRATION=fullscreen-shell-v1"), _S("Semi-colon separed list of NAME=VALUE;NAME2=VALUE2 entries for the environment to use"));
+         );
+ 
+         Section(Users,
+diff --git a/src/daemon/Display.cpp b/src/daemon/Display.cpp
+index 11fdfb34..6c18c166 100644
+--- a/src/daemon/Display.cpp
++++ b/src/daemon/Display.cpp
+@@ -186,6 +186,7 @@ namespace SDDM {
+             m_greeter->setAuthPath(qobject_cast<XorgDisplayServer *>(m_displayServer)->authPath());
+         m_greeter->setSocket(m_socketServer->socketAddress());
+         m_greeter->setTheme(findGreeterTheme());
++        m_greeter->setCompositor(mainConfig.Wayland.CompositorCommand.get());
+ 
+         // start greeter
+         m_greeter->start();
+@@ -295,7 +296,6 @@ namespace SDDM {
+             auto reply = manager.ListSessions();
+             reply.waitForFinished();
+ 
+-            const auto info = reply.value();
+             for(const SessionInfo &s : reply.value()) {
+                 if (s.userName == user) {
+                     OrgFreedesktopLogin1SessionInterface session(Logind::serviceName(), s.sessionPath.path(), QDBusConnection::systemBus());
+diff --git a/src/daemon/Greeter.cpp b/src/daemon/Greeter.cpp
+index 1732b9cc..4287beda 100644
+--- a/src/daemon/Greeter.cpp
++++ b/src/daemon/Greeter.cpp
+@@ -99,6 +99,8 @@ namespace SDDM {
+             args << QLatin1String("-style") << style;
+ 
+         if (daemonApp->testing()) {
++            Q_ASSERT(!m_compositor.isEmpty());
++
+             // create process
+             m_process = new QProcess(this);
+ 
+@@ -124,16 +126,14 @@ namespace SDDM {
+             } else if (m_display->sessionType() == QStringLiteral("wayland")) {
+                 env.insert(QStringLiteral("QT_QPA_PLATFORM"), QStringLiteral("wayland"));
+                 env.insert(QStringLiteral("QT_WAYLAND_DISABLE_WINDOWDECORATION"), QStringLiteral("1"));
+-                env.insert(QStringLiteral("WAYLAND_DISPLAY"), QStringLiteral("sddm-wayland"));
+             }
+             env.insert(QStringLiteral("XCURSOR_THEME"), xcursorTheme);
+             env.insert(QStringLiteral("QT_IM_MODULE"), mainConfig.InputMethod.get());
+             m_process->setProcessEnvironment(env);
+ 
+             // start greeter
+-            if (daemonApp->testing())
+-                args << QStringLiteral("--test-mode");
+-            m_process->start(QStringLiteral("%1/sddm-greeter").arg(QStringLiteral(BIN_INSTALL_DIR)), args);
++            const QString greeter = QStringLiteral(BIN_INSTALL_DIR"/sddm-greeter --test-mode ") + args.join(QLatin1Char(' '));
++            m_process->start(QStringLiteral(LIBEXEC_INSTALL_DIR "/sddm-helper-start-wayland"), {m_compositor, greeter});
+ 
+             //if we fail to start bail immediately, and don't block in waitForStarted
+             if (m_process->state() == QProcess::NotRunning) {
+@@ -158,6 +158,7 @@ namespace SDDM {
+             // authentication
+             m_auth = new Auth(this);
+             m_auth->setVerbose(true);
++            m_auth->setCompositor(m_compositor);
+             connect(m_auth, &Auth::requestChanged, this, &Greeter::onRequestChanged);
+             connect(m_auth, &Auth::sessionStarted, this, &Greeter::onSessionStarted);
+             connect(m_auth, &Auth::finished, this, &Greeter::onHelperFinished);
+@@ -190,7 +191,6 @@ namespace SDDM {
+             } else if (m_display->sessionType() == QStringLiteral("wayland")) {
+                 env.insert(QStringLiteral("QT_QPA_PLATFORM"), QStringLiteral("wayland"));
+                 env.insert(QStringLiteral("QT_WAYLAND_DISABLE_WINDOWDECORATION"), QStringLiteral("1"));
+-                env.insert(QStringLiteral("WAYLAND_DISPLAY"), QStringLiteral("sddm-wayland"));
+             }
+             env.insert(QStringLiteral("PATH"), mainConfig.Users.DefaultPath.get());
+             env.insert(QStringLiteral("XCURSOR_THEME"), xcursorTheme);
+@@ -203,6 +203,15 @@ namespace SDDM {
+             env.insert(QStringLiteral("XDG_SESSION_TYPE"), m_display->sessionType());
+             env.insert(QStringLiteral("QT_IM_MODULE"), mainConfig.InputMethod.get());
+ 
++            const QString settingsEnv = mainConfig.Wayland.CompositorEnvironment.get();
++            const auto settingsEnvSplit = settingsEnv.splitRef(QLatin1Char(';'));
++            for (const auto &settings : settingsEnvSplit) {
++                const auto nameValue = settings.split(QLatin1Char('='));
++                if (nameValue.count() != 2)
++                    continue;
++                env.insert(nameValue.first().toString(), nameValue.last().toString());
++            }
++
+             //some themes may use KDE components and that will automatically load KDE's crash handler which we don't want
+             //counterintuitively setting this env disables that handler
+             env.insert(QStringLiteral("KDE_DEBUG"), QStringLiteral("1"));
+@@ -298,4 +307,8 @@ namespace SDDM {
+         Q_UNUSED(error);
+         qWarning() << "Error from greeter session:" << message;
+     }
++
++    void Greeter::setCompositor(const QString& command) {
++        m_compositor = command;
++    }
+ }
+diff --git a/src/daemon/Greeter.h b/src/daemon/Greeter.h
+index 6daa1b9c..1819d9a2 100644
+--- a/src/daemon/Greeter.h
++++ b/src/daemon/Greeter.h
+@@ -42,6 +42,7 @@ namespace SDDM {
+         void setAuthPath(const QString &authPath);
+         void setSocket(const QString &socket);
+         void setTheme(const QString &theme);
++        void setCompositor(const QString &command);
+ 
+     public slots:
+         bool start();
+@@ -60,6 +61,7 @@ namespace SDDM {
+ 
+         Display *m_display { nullptr };
+         QString m_authPath;
++        QString m_compositor;
+         QString m_socket;
+         QString m_themePath;
+         ThemeMetadata *m_metadata { nullptr };
+diff --git a/src/daemon/WaylandDisplayServer.cpp b/src/daemon/WaylandDisplayServer.cpp
+index 016c7d78..8f749df1 100644
+--- a/src/daemon/WaylandDisplayServer.cpp
++++ b/src/daemon/WaylandDisplayServer.cpp
+@@ -41,6 +41,7 @@ namespace SDDM
+ WaylandDisplayServer::WaylandDisplayServer(Display *parent)
+     : DisplayServer(parent)
+ {
++    m_display = QStringLiteral("wayland");
+ }
+ 
+ WaylandDisplayServer::~WaylandDisplayServer()
+@@ -64,97 +65,18 @@ bool WaylandDisplayServer::start()
+     if (m_started)
+         return false;
+ 
+-    // log message
+-    qDebug() << "Compositor starting...";
+-
+-    const QString exe = QStringLiteral("%1/sddm-wayland-compositor").arg(QLatin1String(BIN_INSTALL_DIR));
+-    const QStringList args = QStringList() << QLatin1String("--wayland-socket-name") << QLatin1String("sddm-wayland");
+-
+-    if (daemonApp->testing()) {
+-        // create process
+-        m_process = new QProcess(this);
+-
+-        // delete process on finish
+-        connect(m_process, SIGNAL(finished(int,QProcess::ExitStatus)), this, SLOT(finished()));
+-
+-        connect(m_process, SIGNAL(readyReadStandardOutput()), SLOT(onReadyReadStandardOutput()));
+-        connect(m_process, SIGNAL(readyReadStandardError()), SLOT(onReadyReadStandardError()));
+-
+-        qDebug() << "Running:" << qPrintable(exe) << qPrintable(args.join(QLatin1Char(' ')));
+-        m_process->start(exe, args);
+-
+-        // don't block in waitForStarted if we fail to start
+-        if (m_process->state() == QProcess::NotRunning) {
+-            qCritical() << "Compositor failed to launch";
+-            return false;
+-        }
+-
+-        // wait for the compositor to start
+-        if (!m_process->waitForStarted()) {
+-            qCritical() << "Failed to start compositor";
+-            return false;
+-        }
+-
+-        qDebug() << "Compositor process started";
+-        m_started = true;
+-        emit started();
+-    } else {
++    if (!daemonApp->testing()) {
+         // setup vt
+         VirtualTerminal::jumpToVt(displayPtr()->terminalId(), true);
+-
+-        // authentication
+-        m_auth = new Auth(this);
+-        m_auth->setVerbose(true);
+-        connect(m_auth, SIGNAL(requestChanged()), this, SLOT(onRequestChanged()));
+-        connect(m_auth, SIGNAL(session(bool)), this, SLOT(onSessionStarted(bool)));
+-        connect(m_auth, SIGNAL(finished(Auth::HelperExitStatus)), this, SLOT(onHelperFinished(Auth::HelperExitStatus)));
+-        connect(m_auth, SIGNAL(info(QString,Auth::Info)), this, SLOT(authInfo(QString,Auth::Info)));
+-        connect(m_auth, SIGNAL(error(QString,Auth::Error)), this, SLOT(authError(QString,Auth::Error)));
+-
+-        // environment
+-        QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
+-
+-        env.insert(QLatin1String("PATH"), mainConfig.Users.DefaultPath.get());
+-        env.insert(QLatin1String("XCURSOR_THEME"), mainConfig.Theme.CursorTheme.get());
+-        env.insert(QLatin1String("XDG_SEAT"), displayPtr()->seat()->name());
+-        env.insert(QLatin1String("XDG_SEAT_PATH"), daemonApp->displayManager()->seatPath(displayPtr()->seat()->name()));
+-        env.insert(QLatin1String("XDG_SESSION_PATH"), daemonApp->displayManager()->sessionPath(QStringLiteral("Session%1").arg(daemonApp->newSessionId())));
+-        env.insert(QLatin1String("XDG_VTNR"), QString::number(displayPtr()->terminalId()));
+-        env.insert(QLatin1String("XDG_SESSION_CLASS"), QLatin1String("greeter"));
+-        env.insert(QLatin1String("XDG_SESSION_TYPE"), QLatin1String("wayland"));
+-        env.insert(QLatin1String("QT_QPA_PLATFORM"), QStringLiteral("greenisland"));
+-
+-        m_auth->insertEnvironment(env);
+-
+-        // start compositor
+-        m_auth->setUser(QLatin1String("sddm"));
+-        m_auth->setDisplayServer(true);
+-        m_auth->setSession(QStringLiteral("%1 %2").arg(exe).arg(args.join(QLatin1Char(' '))));
+-        m_auth->start();
+     }
++    // set flag
++    m_started = true;
++    emit started();
+ 
+-    // return success
+     return true;
+ }
+ 
+ void WaylandDisplayServer::stop()
+-{
+-    // check flag
+-    if (!m_started)
+-        return;
+-
+-    // log message
+-    qDebug() << "Stopping compositor...";
+-
+-    // terminate process
+-    m_process->terminate();
+-
+-    // wait for finished
+-    if (!m_process->waitForFinished(5000))
+-        m_process->kill();
+-}
+-
+-void WaylandDisplayServer::finished()
+ {
+     // check flag
+     if (!m_started)
+@@ -163,72 +85,13 @@ void WaylandDisplayServer::finished()
+     // reset flag
+     m_started = false;
+ 
+-    // log message
+-    qDebug() << "Compositor stopped";
+-
+-    // clean up
+-    m_process->deleteLater();
+-    m_process = nullptr;
+-
+     // emit signal
+     emit stopped();
+ }
+ 
+-void WaylandDisplayServer::setupDisplay()
+-{
+-}
+-
+-void WaylandDisplayServer::onRequestChanged() {
+-    m_auth->request()->setFinishAutomatically(true);
+-}
+-
+-void WaylandDisplayServer::onSessionStarted(bool success) {
+-    // set flag
+-    m_started = success;
+-
+-    // log message
+-    if (success)
+-        qDebug() << "Compositor successfully started";
+-    else
+-        qDebug() << "Compositor failed to start";
+-
+-    if (m_started)
+-        emit started();
+-}
+-
+-void WaylandDisplayServer::onHelperFinished(Auth::HelperExitStatus status) {
+-    // reset flag
+-    m_started = false;
+-
+-    // log message
+-    qDebug() << "Compositor stopped";
+-
+-    // clean up
+-    m_auth->deleteLater();
+-    m_auth = nullptr;
+-}
+-
+-void WaylandDisplayServer::onReadyReadStandardError()
+-{
+-    if (m_process) {
+-        qDebug() << "Compositor errors:" << qPrintable(QString::fromLocal8Bit(m_process->readAllStandardError()));
+-    }
+-}
+-
+-void WaylandDisplayServer::onReadyReadStandardOutput()
++void WaylandDisplayServer::finished()
+ {
+-    if (m_process) {
+-        qDebug() << "Compositor output:" << qPrintable(QString::fromLocal8Bit(m_process->readAllStandardOutput()));
+-    }
+ }
+ 
+-void WaylandDisplayServer::authInfo(const QString &message, Auth::Info info) {
+-    Q_UNUSED(info);
+-    qDebug() << "Information from compositor session:" << message;
+ }
+ 
+-void WaylandDisplayServer::authError(const QString &message, Auth::Error error) {
+-    Q_UNUSED(error);
+-    qWarning() << "Error from compositor session:" << message;
+-}
+-}
+diff --git a/src/daemon/WaylandDisplayServer.h b/src/daemon/WaylandDisplayServer.h
+index 3f3323cb..b962be76 100644
+--- a/src/daemon/WaylandDisplayServer.h
++++ b/src/daemon/WaylandDisplayServer.h
+@@ -38,26 +38,13 @@ namespace SDDM
+ 
+         const QString &display() const;
+ 
+-        QString sessionType() const;
++        QString sessionType() const override;
+ 
+     public slots:
+-        bool start();
+-        void stop();
+-        void finished();
+-        void setupDisplay();
+-
+-    private slots:
+-        void onRequestChanged();
+-        void onSessionStarted(bool success);
+-        void onHelperFinished(Auth::HelperExitStatus status);
+-        void onReadyReadStandardOutput();
+-        void onReadyReadStandardError();
+-        void authInfo(const QString &message, Auth::Info info);
+-        void authError(const QString &message, Auth::Error error);
+-
+-    private:
+-        QProcess *m_process { nullptr };
+-        Auth *m_auth { nullptr };
++        bool start() override;
++        void stop() override;
++        void finished() override;
++        void setupDisplay() override {}
+     };
+ }
+ 
+diff --git a/src/helper/CMakeLists.txt b/src/helper/CMakeLists.txt
+index 8914ea75..28c76c02 100644
+--- a/src/helper/CMakeLists.txt
++++ b/src/helper/CMakeLists.txt
+@@ -13,6 +13,7 @@ set(HELPER_SOURCES
+     Backend.cpp
+     HelperApp.cpp
+     UserSession.cpp
++    WaylandSocketWatcher.cpp
+ )
+ 
+ # Different implementations of the VT switching code
+@@ -65,3 +66,7 @@ if(JOURNALD_FOUND)
+ endif()
+ 
+ install(TARGETS sddm-helper RUNTIME DESTINATION "${CMAKE_INSTALL_LIBEXECDIR}")
++
++add_executable(sddm-helper-start-wayland HelperStartWayland.cpp WaylandSocketWatcher.cpp)
++target_link_libraries(sddm-helper-start-wayland Qt5::Core)
++install(TARGETS sddm-helper-start-wayland RUNTIME DESTINATION "${CMAKE_INSTALL_LIBEXECDIR}")
+diff --git a/src/helper/HelperApp.cpp b/src/helper/HelperApp.cpp
+index 17a8ea8f..5ba9a9f3 100644
+--- a/src/helper/HelperApp.cpp
++++ b/src/helper/HelperApp.cpp
+@@ -94,13 +94,17 @@ namespace SDDM {
+             m_user = args[pos + 1];
+         }
+ 
+-        if ((pos = args.indexOf(QStringLiteral("--autologin"))) >= 0) {
+-            m_backend->setAutologin(true);
++        if ((pos = args.indexOf(QStringLiteral("--compositor"))) >= 0) {
++            if (pos >= args.length() - 1) {
++                qCritical() << "This application is not supposed to be executed manually";
++                exit(Auth::HELPER_OTHER_ERROR);
++                return;
++            }
++            m_session->setCompositor(args[pos + 1]);
+         }
+ 
+-        if ((pos = args.indexOf(QStringLiteral("--display-server"))) >= 0) {
+-            m_backend->setGreeter(true);
+-            m_session->setDisplayServer(true);
++        if ((pos = args.indexOf(QStringLiteral("--autologin"))) >= 0) {
++            m_backend->setAutologin(true);
+         }
+ 
+         if ((pos = args.indexOf(QStringLiteral("--greeter"))) >= 0) {
+@@ -114,7 +118,7 @@ namespace SDDM {
+         }
+ 
+         connect(m_socket, &QLocalSocket::connected, this, &HelperApp::doAuth);
+-        connect(m_session, QOverload<int>::of(&QProcess::finished), this, &HelperApp::sessionFinished);
++        connect(m_session, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished), this, &HelperApp::sessionFinished);
+         connect(m_session, &UserSession::sessionStarted, this, &HelperApp::sessionStarted);
+         m_socket->connectToServer(server, QIODevice::ReadWrite | QIODevice::Unbuffered);
+     }
+@@ -158,7 +162,7 @@ namespace SDDM {
+         if (!m_session->path().isEmpty()) {
+             env.insert(m_session->processEnvironment());
+             // Allocate a new VT for the wayland session
+-            if(env.value(QStringLiteral("XDG_SESSION_TYPE")) == QLatin1String("wayland")) {
++            if(env.value(QStringLiteral("XDG_SESSION_TYPE")) == QLatin1String("wayland") && env.value(QStringLiteral("XDG_SESSION_CLASS")) == QLatin1String("user")) {
+                 int vtNumber = VirtualTerminal::setUpNewVt();
+                 env.insert(QStringLiteral("XDG_VTNR"), QString::number(vtNumber));
+             }
+@@ -174,6 +178,7 @@ namespace SDDM {
+         m_session->setProcessEnvironment(env);
+ 
+         if (!m_backend->openSession()) {
++            qDebug() << "failed to open session";
+             sessionOpened(false);
+             exit(Auth::HELPER_SESSION_ERROR);
+             return;
+@@ -201,7 +206,7 @@ namespace SDDM {
+         }
+     }
+ 
+-    void HelperApp::sessionFinished(int status) {
++    void HelperApp::sessionFinished(int exitCode, QProcess::ExitStatus exitStatus) {
+         m_backend->closeSession();
+ 
+         // write logout to utmp/wtmp
+@@ -212,8 +217,7 @@ namespace SDDM {
+             QString displayId = env.value(QStringLiteral("DISPLAY"));
+             utmpLogout(vt, displayId, pid);
+         }
+-
+-        exit(status);
++        exit(exitCode);
+     }
+ 
+     void HelperApp::info(const QString& message, Auth::Info type) {
+diff --git a/src/helper/HelperApp.h b/src/helper/HelperApp.h
+index f57404fe..9a0e5d52 100644
+--- a/src/helper/HelperApp.h
++++ b/src/helper/HelperApp.h
+@@ -54,7 +54,7 @@ namespace SDDM {
+         void doAuth();
+ 
+         void sessionStarted(bool success);
+-        void sessionFinished(int status);
++        void sessionFinished(int exitCode, QProcess::ExitStatus exitStatus);
+ 
+     private:
+         qint64 m_id { -1 };
+diff --git a/src/helper/HelperStartWayland.cpp b/src/helper/HelperStartWayland.cpp
+new file mode 100644
+index 00000000..4b4c0fef
+--- /dev/null
++++ b/src/helper/HelperStartWayland.cpp
+@@ -0,0 +1,96 @@
++/*
++ * Session process wrapper
++ * Copyright (C) 2021 Aleix Pol Gonzalez <aleixpol@kde.org>
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation; either version 2 of the License, or
++ * (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License along
++ * with this program; if not, write to the Free Software Foundation, Inc.,
++ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ */
++
++/**
++ * This application sole purpose is to launch a wayland compositor (first
++ * argument) and as soon as it's set up to launch a client (second argument)
++ */
++
++#include <QCoreApplication>
++#include <QTextStream>
++#include <QProcess>
++#include "WaylandSocketWatcher.h"
++
++bool startProcess(const QString &cmd, QProcess** process = nullptr)
++{
++    QStringList args = QProcess::splitCommand(cmd);
++    const QString program = args.takeFirst();
++
++    auto app = QCoreApplication::instance();
++    QProcess* p = new QProcess(app);
++    p->setProcessChannelMode(QProcess::ForwardedChannels);
++    QObject::connect(app, &QCoreApplication::aboutToQuit, p, [p] {
++        p->terminate();
++        if (!p->waitForFinished(5000)) {
++            p->kill();
++        }
++    });
++    p->start(program, args);
++    if (!p->waitForStarted(10000)) {
++        QTextStream(stderr) << "Failed to start: " << cmd << ". " << p->errorString() << Qt::endl;
++        return false;
++    }
++    if (process) {
++        *process = p;
++    }
++    return true;
++}
++
++int main(int argc, char** argv)
++{
++    QCoreApplication app(argc, argv);
++    QObject::connect(&app, &QCoreApplication::aboutToQuit, [] {
++        qDebug("quitting helper-start-wayland");
++    });
++    if (argc != 3) {
++        QTextStream(stderr) << "Wrong number of arguments\n";
++        return 33;
++    }
++    const QString compositor = app.arguments()[1];
++    const QString client = app.arguments()[2];
++
++    auto watcher = new SDDM::WaylandSocketWatcher(&app, QProcessEnvironment::systemEnvironment());
++    QObject::connect(watcher, &SDDM::WaylandSocketWatcher::sessionStarted, &app, [client, &app] (bool started) {
++        if (!started) {
++            QTextStream(stderr) << "Failed to start session: " << client << Qt::endl;
++            app.exit(35);
++            return;
++        }
++
++        QTextStream(stdout) << "Starting client: " << client << Qt::endl;
++        QProcess* clientProcess;
++        if (!startProcess(client, &clientProcess)) {
++            app.exit(36);
++            return;
++        }
++        QObject::connect(clientProcess, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished), &app, [] (int exitCode, QProcess::ExitStatus exitStatus) {
++            QTextStream(exitStatus == QProcess::NormalExit ? stdout : stderr) << "Greeter finished with code: " << exitCode << Qt::endl;
++            QCoreApplication::instance()->exit(exitCode);
++        });
++    });
++    watcher->start();
++
++    QTextStream(stdout) << "Starting compositor: " << compositor << Qt::endl;
++    if (!startProcess(compositor)) {
++        return 34;
++    }
++
++    return app.exec();
++}
+diff --git a/src/helper/UserSession.cpp b/src/helper/UserSession.cpp
+index d80607ee..d13c9039 100644
+--- a/src/helper/UserSession.cpp
++++ b/src/helper/UserSession.cpp
+@@ -23,6 +23,7 @@
+ #include "UserSession.h"
+ #include "HelperApp.h"
+ #include "VirtualTerminal.h"
++#include "WaylandSocketWatcher.h"
+ 
+ #include <sys/types.h>
+ #include <sys/ioctl.h>
+@@ -36,6 +37,7 @@
+ #include <sched.h>
+ 
+ namespace SDDM {
++
+     UserSession::UserSession(HelperApp *parent)
+             : QProcess(parent) {
+     }
+@@ -46,10 +48,9 @@ namespace SDDM {
+ 
+     bool UserSession::start() {
+         QProcessEnvironment env = qobject_cast<HelperApp*>(parent())->session()->processEnvironment();
+-
+         if (env.value(QStringLiteral("XDG_SESSION_CLASS")) == QLatin1String("greeter")) {
+-            qDebug() << "Starting greeter session:" << m_path;
+-            QProcess::start(m_path);
++            qDebug() << "Starting greeter session:" << m_path << m_compositor;
++            QProcess::start(QStringLiteral(LIBEXEC_INSTALL_DIR "/sddm-helper-start-wayland"), {m_compositor, m_path});
+         } else if (env.value(QStringLiteral("XDG_SESSION_TYPE")) == QLatin1String("x11")) {
+             const QString cmd = QStringLiteral("%1 \"%2\"").arg(mainConfig.X11.SessionCommand.get()).arg(m_path);
+             qInfo() << "Starting:" << cmd;
+@@ -63,95 +64,35 @@ namespace SDDM {
+         }
+ 
+         // wait until the Wayland socket is ready
+-        if (env.value(QLatin1String("XDG_SESSION_TYPE")) == QLatin1String("wayland") && m_displayServer) {
+-            const QString runtimeDir = env.value(QLatin1String("XDG_RUNTIME_DIR"));
+-            const QString socketName = QLatin1String("sddm-wayland");
+-
+-            // if the socket name is not specified we are not sure how it is called,
+-            // it could be the default "wayland-0" or another name hence we don't
+-            // even want to fallback to the default because if turns out to be the
+-            // wrong name we'd have to rely on the timeout and delay the session startup
+-            if (socketName.isEmpty()) {
+-                // just return without even warning
+-                if (!waitForStarted())
+-                    return false;
+-                emit sessionStarted(true);
+-                return true;
+-            }
+-
+-            const QString socketFileName = QDir(runtimeDir).absoluteFilePath(socketName);
+-
+-            m_watcher = new QFileSystemWatcher(this);
+-
+-            // give the compositor some time to start, if after that there is
+-            // no socket the session is considered failed
+-            m_timer.setSingleShot(true);
+-            m_timer.setInterval(15000);
+-            connect(&m_timer, &QTimer::timeout, this, [this, socketFileName] {
+-                if (!m_watcher.isNull())
+-                    m_watcher->deleteLater();
+-                qWarning() << "Wayland socket watcher timed out, checking for" << socketFileName;
+-                emit sessionStarted(QFile::exists(socketFileName));
+-            });
+-
+-            connect(m_watcher, &QFileSystemWatcher::directoryChanged, this,
+-                    [this, socketFileName](const QString &path) {
+-                qDebug() << "Directory" << path << "has changed, checking for" << socketFileName;
+-
+-                if (QFile::exists(socketFileName)) {
+-                    // kill the timer
+-                    m_timer.stop();
+-
+-                    // tell HelperApp we have the socket and delete the watcher
+-                    qInfo() << "Wayland socket ready";
+-                    emit sessionStarted(true);
+-
+-                    // kill the watcher
+-                    if (!m_watcher.isNull())
+-                        m_watcher->deleteLater();
+-                }
+-            });
+-
+-            // if can't watch the runtime directory for any reason delete the
+-            // watcher and continue
+-            if (!m_watcher->addPath(runtimeDir)) {
+-                qWarning("Cannot watch \"%s\" for Wayland socket", qPrintable(runtimeDir));
+-                m_watcher->deleteLater();
+-            }
+-
+-            // start the timer
+-            m_timer.start();
++        if (env.value(QLatin1String("XDG_SESSION_TYPE")) == QLatin1String("wayland")) {
++            auto watcher = new WaylandSocketWatcher(this, env);
++            connect(watcher, &WaylandSocketWatcher::sessionStarted, this, &UserSession::sessionStarted);
++            watcher->start();
+ 
+             // wait for the process to start
+             if (!waitForStarted()) {
++                qDebug() << "Could not start process" << program() << errorString();
+                 // if fails, the Wayland socket won't be created
+-                m_timer.stop();
+-                if (!m_watcher.isNull())
+-                    m_watcher->deleteLater();
++                watcher->stop();
+                 return false;
+             }
+-
+-            return true;
+         }
+ 
+         // Wayland socket doesn't apply here
+-        if (!waitForStarted())
++        if (!waitForStarted()) {
++            qDebug() << "Could not start process" << program() << errorString();
+             return false;
++        }
+         emit sessionStarted(true);
+         return true;
+     }
+ 
+-    bool UserSession::isDisplayServer() const {
+-        return m_displayServer;
+-    }
+-
+-    void UserSession::setDisplayServer(bool value) {
+-        m_displayServer = value;
+-    }
+-
+     void UserSession::setPath(const QString& path) {
+         m_path = path;
+     }
++    void UserSession::setCompositor(const QString& command) {
++        m_compositor = command;
++    }
+ 
+     QString UserSession::path() const {
+         return m_path;
+@@ -164,6 +105,7 @@ namespace SDDM {
+ 
+         // For Wayland sessions we leak the VT into the session as stdin so
+         // that it stays open without races
++        qCritical("Starting a %s session (%s)", sessionType.toUtf8().constData(), qPrintable(program()));
+         if (sessionType == QLatin1String("wayland")) {
+             // open VT and get the fd
+             int vtNumber = processEnvironment().value(QStringLiteral("XDG_VTNR")).toInt();
+@@ -330,6 +272,7 @@ namespace SDDM {
+         int fd = ::open(qPrintable(sessionLog), O_WRONLY | O_CREAT | O_TRUNC, 0600);
+         if (fd >= 0)
+         {
++            dup2 (fd, STDOUT_FILENO);
+             dup2 (fd, STDERR_FILENO);
+             ::close(fd);
+         } else {
+@@ -403,7 +346,7 @@ namespace SDDM {
+             }
+         }
+ 
+-        qDebug() << "Ready to take off";
++        qDebug() << "See logs for" << program() << "in" << sessionLog;
+     }
+ 
+     void UserSession::setCachedProcessId(qint64 pid) {
+diff --git a/src/helper/UserSession.h b/src/helper/UserSession.h
+index 0013619a..fc917319 100644
+--- a/src/helper/UserSession.h
++++ b/src/helper/UserSession.h
+@@ -40,9 +40,7 @@ namespace SDDM {
+ 
+         bool start();
+ 
+-        bool isDisplayServer() const;
+-        void setDisplayServer(bool value);
+-
++        void setCompositor(const QString &command);
+         void setPath(const QString &path);
+         QString path() const;
+ 
+@@ -66,11 +64,11 @@ namespace SDDM {
+         void setupChildProcess();
+ 
+     private:
+-        bool m_displayServer { false };
++        void startGreeter();
++
+         QString m_path { };
++        QString m_compositor { };
+         qint64 m_cachedProcessId;
+-        QTimer m_timer;
+-        QPointer<QFileSystemWatcher> m_watcher;
+     };
+ }
+ 
+diff --git a/src/helper/WaylandSocketWatcher.cpp b/src/helper/WaylandSocketWatcher.cpp
+new file mode 100644
+index 00000000..fd31753c
+--- /dev/null
++++ b/src/helper/WaylandSocketWatcher.cpp
+@@ -0,0 +1,91 @@
++/*
++ * Session process wrapper
++ * Copyright (C) 2015-2016 Pier Luigi Fiorini <pierluigi.fiorini@gmail.com>
++ * Copyright (C) 2014 Martin Bříza <mbriza@redhat.com>
++ * Copyright (C) 2021 Aleix Pol Gonzalez <aleixpol@kde.org>
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation; either version 2 of the License, or
++ * (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License along
++ * with this program; if not, write to the Free Software Foundation, Inc.,
++ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ */
++
++#include "WaylandSocketWatcher.h"
++#include <QDebug>
++#include <QDir>
++#include <QFile>
++#include <QFileSystemWatcher>
++#include <QProcess>
++
++namespace SDDM {
++
++WaylandSocketWatcher::WaylandSocketWatcher(QObject* parent, const QProcessEnvironment& env)
++    : QObject(parent)
++    , m_watcher(new QFileSystemWatcher(this))
++    , m_runtimeDir(env.value(QLatin1String("XDG_RUNTIME_DIR")))
++    , m_socketFileName(QDir(m_runtimeDir).absoluteFilePath(QLatin1String("wayland-0")))
++{
++}
++
++
++void WaylandSocketWatcher::start()
++{
++    // give the compositor some time to start, if after that there is
++    // no socket the session is considered failed
++    m_timer.setSingleShot(true);
++    m_timer.setInterval(15000);
++    connect(&m_timer, &QTimer::timeout, this, [this] {
++        if (!m_watcher.isNull())
++            m_watcher->deleteLater();
++        qWarning() << "Wayland socket watcher timed out, checking for" << m_socketFileName << QFile::exists(m_socketFileName);
++        emit sessionStarted(QFile::exists(m_socketFileName));
++    });
++
++    connect(m_watcher, &QFileSystemWatcher::directoryChanged, this,
++            [this](const QString &path) {
++        qDebug() << "Directory" << path << "has changed, checking for" << m_socketFileName;
++
++        if (QFile::exists(m_socketFileName)) {
++            // kill the timer
++            m_timer.stop();
++
++            // tell HelperApp we have the socket and delete the watcher
++            qInfo() << "Wayland socket ready";
++            emit sessionStarted(true);
++
++            // kill the watcher
++            if (!m_watcher.isNull())
++                m_watcher->deleteLater();
++        }
++    });
++
++    // if can't watch the runtime directory for any reason delete the
++    // watcher and continue
++    if (m_runtimeDir.isEmpty() || !m_watcher->addPath(m_runtimeDir)) {
++        qWarning("Cannot watch \"%s\" for Wayland socket", qPrintable(m_runtimeDir));
++        m_watcher->deleteLater();
++    }
++
++    // start the timer
++    m_timer.start();
++}
++
++void WaylandSocketWatcher::stop()
++{
++    m_timer.stop();
++    if (!m_watcher.isNull())
++        m_watcher->deleteLater();
++}
++
++}
++
+diff --git a/src/helper/WaylandSocketWatcher.h b/src/helper/WaylandSocketWatcher.h
+new file mode 100644
+index 00000000..2cb64e61
+--- /dev/null
++++ b/src/helper/WaylandSocketWatcher.h
+@@ -0,0 +1,55 @@
++/*
++ * Session process wrapper
++ * Copyright (C) 2015-2016 Pier Luigi Fiorini <pierluigi.fiorini@gmail.com>
++ * Copyright (C) 2014 Martin Bříza <mbriza@redhat.com>
++ * Copyright (C) 2021 Aleix Pol Gonzalez <aleixpol@kde.org>
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation; either version 2 of the License, or
++ * (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License along
++ * with this program; if not, write to the Free Software Foundation, Inc.,
++ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ */
++
++#ifndef SDDM_WAYLAND_SESSION_WATCHER_H
++#define SDDM_WAYLAND_SESSION_WATCHER_H
++
++#include <QObject>
++#include <QTimer>
++#include <QPointer>
++
++class QFileSystemWatcher;
++class QProcessEnvironment;
++
++namespace SDDM {
++
++    class WaylandSocketWatcher : public QObject
++    {
++        Q_OBJECT
++    public:
++        WaylandSocketWatcher(QObject* parent, const QProcessEnvironment &env);
++
++        void start();
++        void stop();
++
++    Q_SIGNALS:
++        void sessionStarted(bool started);
++
++    private:
++        QPointer<QFileSystemWatcher> m_watcher;
++        QTimer m_timer;
++        QString m_runtimeDir;
++        QString m_socketFileName;
++    };
++}
++
++#endif
+
+From e803e30f468c9900482c7f3aedc1ca5cbb51a643 Mon Sep 17 00:00:00 2001
+From: Aleix Pol <aleixpol@kde.org>
+Date: Tue, 16 Feb 2021 18:40:46 +0100
+Subject: [PATCH 4/5] Prevent crash
+
+---
+ src/daemon/Display.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/daemon/Display.cpp b/src/daemon/Display.cpp
+index 6c18c166..203afc9f 100644
+--- a/src/daemon/Display.cpp
++++ b/src/daemon/Display.cpp
+@@ -358,7 +358,7 @@ namespace SDDM {
+                 OrgFreedesktopLogin1ManagerInterface manager(Logind::serviceName(), Logind::managerPath(), QDBusConnection::systemBus());
+                 manager.UnlockSession(m_reuseSessionId);
+                 manager.ActivateSession(m_reuseSessionId);
+-            } else {
++            } else if (qobject_cast<XorgDisplayServer *>(m_displayServer)) {
+                 m_auth->setCookie(qobject_cast<XorgDisplayServer *>(m_displayServer)->cookie());
+             }
+ 
+
+From f59d5c699dfe4694eb12ef5edd01e4d2eb3e9a84 Mon Sep 17 00:00:00 2001
+From: Aleix Pol <aleixpol@kde.org>
+Date: Wed, 17 Feb 2021 02:39:27 +0100
+Subject: [PATCH 5/5] Launch an X.org server when we launch an X11 session
+
+---
+ src/daemon/Display.cpp           | 24 ++++++++++++++++++------
+ src/daemon/Display.h             |  4 ++++
+ src/daemon/XorgDisplayServer.cpp |  1 +
+ 3 files changed, 23 insertions(+), 6 deletions(-)
+
+diff --git a/src/daemon/Display.cpp b/src/daemon/Display.cpp
+index 203afc9f..72cc46ef 100644
+--- a/src/daemon/Display.cpp
++++ b/src/daemon/Display.cpp
+@@ -48,7 +48,6 @@
+ #include "Login1Session.h"
+ #include "VirtualTerminal.h"
+ 
+-
+ namespace SDDM {
+     Display::Display(const int terminalId, Seat *parent) : QObject(parent),
+         m_terminalId(terminalId),
+@@ -62,8 +61,10 @@ namespace SDDM {
+         const QString &displayServerType = mainConfig.DisplayServer.get().toLower();
+         if (displayServerType == QLatin1String("wayland"))
+             m_displayServer = new WaylandDisplayServer(this);
+-        else
+-            m_displayServer = new XorgDisplayServer(this);
++        else {
++            m_xorgDisplayServer = new XorgDisplayServer(this);
++            m_displayServer = m_xorgDisplayServer;
++        }
+ 
+         // respond to authentication requests
+         m_auth->setVerbose(true);
+@@ -183,7 +184,7 @@ namespace SDDM {
+         // set greeter params
+         m_greeter->setDisplay(this);
+         if (m_displayServer->sessionType() == QLatin1String("x11"))
+-            m_greeter->setAuthPath(qobject_cast<XorgDisplayServer *>(m_displayServer)->authPath());
++            m_greeter->setAuthPath(xorgServer()->authPath());
+         m_greeter->setSocket(m_socketServer->socketAddress());
+         m_greeter->setTheme(findGreeterTheme());
+         m_greeter->setCompositor(mainConfig.Wayland.CompositorCommand.get());
+@@ -358,8 +359,8 @@ namespace SDDM {
+                 OrgFreedesktopLogin1ManagerInterface manager(Logind::serviceName(), Logind::managerPath(), QDBusConnection::systemBus());
+                 manager.UnlockSession(m_reuseSessionId);
+                 manager.ActivateSession(m_reuseSessionId);
+-            } else if (qobject_cast<XorgDisplayServer *>(m_displayServer)) {
+-                m_auth->setCookie(qobject_cast<XorgDisplayServer *>(m_displayServer)->cookie());
++            } else if (m_lastSession.xdgSessionType() == QLatin1String("x11")) {
++                m_auth->setCookie(xorgServer()->cookie());
+             }
+ 
+             // save last user and last session
+@@ -428,4 +429,15 @@ namespace SDDM {
+     void Display::slotSessionStarted(bool success) {
+         qDebug() << "Session started";
+     }
++
++    XorgDisplayServer* Display::xorgServer()
++    {
++        if (!m_xorgDisplayServer) {
++            m_xorgDisplayServer = new XorgDisplayServer(this);
++            m_xorgDisplayServer->start();
++            connect(m_xorgDisplayServer, &DisplayServer::started, m_xorgDisplayServer, &DisplayServer::setupDisplay);
++            connect(this, &Display::stopped, m_xorgDisplayServer, &XorgDisplayServer::stop);
++        }
++        return m_xorgDisplayServer;
++    }
+ }
+diff --git a/src/daemon/Display.h b/src/daemon/Display.h
+index e68bc128..025ac27a 100644
+--- a/src/daemon/Display.h
++++ b/src/daemon/Display.h
+@@ -33,6 +33,7 @@ class QLocalSocket;
+ namespace SDDM {
+     class Authenticator;
+     class DisplayServer;
++    class XorgDisplayServer;
+     class Seat;
+     class SocketServer;
+     class Greeter;
+@@ -75,6 +76,8 @@ namespace SDDM {
+ 
+         void startAuth(const QString &user, const QString &password,
+                        const Session &session);
++        /// Provides the greeter's X.Org server or creates one if the greeter uses something else
++        XorgDisplayServer *xorgServer();
+ 
+         bool m_relogin { true };
+         bool m_started { false };
+@@ -89,6 +92,7 @@ namespace SDDM {
+ 
+         Auth *m_auth { nullptr };
+         DisplayServer *m_displayServer { nullptr };
++        XorgDisplayServer *m_xorgDisplayServer { nullptr };
+         Seat *m_seat { nullptr };
+         SocketServer *m_socketServer { nullptr };
+         QLocalSocket *m_socket { nullptr };
+diff --git a/src/daemon/XorgDisplayServer.cpp b/src/daemon/XorgDisplayServer.cpp
+index 5f93a1b3..e7eb342c 100644
+--- a/src/daemon/XorgDisplayServer.cpp
++++ b/src/daemon/XorgDisplayServer.cpp
+@@ -162,6 +162,7 @@ namespace SDDM {
+             QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
+             env.insert(QStringLiteral("XCURSOR_THEME"), mainConfig.Theme.CursorTheme.get());
+             process->setProcessEnvironment(env);
++            process->setProcessChannelMode(QProcess::ForwardedChannels);
+ 
+             //create pipe for communicating with X server
+             //0 == read from X, 1== write to from X
