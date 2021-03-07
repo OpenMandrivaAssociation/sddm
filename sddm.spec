@@ -41,7 +41,7 @@ Patch9: https://patch-diff.githubusercontent.com/raw/sddm/sddm/pull/1367.patch
 # (tpg) patches from upstream git
 Patch100: 0000-Improve-font-config-deserialization.patch
 Patch101: 0001-Only-use-the-base-name-for-DESKTOP_SESSION.patch
-Patch102: 0002-Merge-normal-and-testing-paths-in-XorgDisplayServer-.patch
+#Patch102: 0002-Merge-normal-and-testing-paths-in-XorgDisplayServer-.patch
 Patch103: 0003-Retry-starting-the-display-server.patch
 Patch104: 0004-Explicitly-stop-Xorg-when-starting-fails.patch
 Patch105: 0005-Emit-XorgDisplayServer-started-only-when-the-auth-fi.patch
