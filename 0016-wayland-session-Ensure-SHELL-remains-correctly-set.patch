@@ -1,7 +1,7 @@
 From bc5a18f34c0881929a6b2e5d3993971c4f692f4f Mon Sep 17 00:00:00 2001
 From: Neal Gompa <ngompa13@gmail.com>
 Date: Sun, 17 Jan 2021 11:48:28 -0500
-Subject: [PATCH] wayland-session: Ensure $SHELL remains correctly set
+Subject: [PATCH 16/26] wayland-session: Ensure $SHELL remains correctly set
 
 In some circumstances, the effort of setting the environment
 correctly can wind up clobbering the user-specified shell. To

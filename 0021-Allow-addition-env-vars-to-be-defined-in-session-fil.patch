@@ -1,0 +1,125 @@
+From 093e8e54c7de33c2d7332cc3a126041263e1aa71 Mon Sep 17 00:00:00 2001
+From: davidedmundson <kde@davidedmundson.co.uk>
+Date: Mon, 8 Mar 2021 07:35:55 +0000
+Subject: [PATCH 21/26] Allow addition env vars to be defined in session files
+ (#1370)
+
+We have a continual problem with developers using Plasma in custom
+prefixes. We need to set mulitple additional envs and it is a constant
+pain point.
+
+Setting XDG_DATA_DIRS and alike in a script in the Exec line of the
+desktop file doesn't work properly, as this is after systemd and dbus
+have already been started during pam_logind. It is currently very bodged
+with more manual steps.
+
+Things will work much better if we can set the env before pam_logind is
+run.
+
+Using pam_env or profile.d doesn't work as that affects all the
+sessions.
+
+It is not intended to be used for anything other than dev setups.
+---
+ src/common/Session.cpp | 24 ++++++++++++++++++++++++
+ src/common/Session.h   |  5 +++++
+ src/daemon/Display.cpp |  1 +
+ 3 files changed, 30 insertions(+)
+
+diff --git a/src/common/Session.cpp b/src/common/Session.cpp
+index 3de28ef..0aa5402 100644
+--- a/src/common/Session.cpp
++++ b/src/common/Session.cpp
+@@ -107,6 +107,10 @@ namespace SDDM {
+         return m_isNoDisplay;
+     }
+ 
++    QProcessEnvironment Session::additionalEnv() const {
++        return m_additionalEnv;
++    }
++
+     void Session::setTo(Type type, const QString &_fileName)
+     {
+         QString fileName(_fileName);
+@@ -178,6 +182,8 @@ namespace SDDM {
+                 m_isHidden = line.mid(7).toLower() == QLatin1String("true");
+             if (line.startsWith(QLatin1String("NoDisplay=")))
+                 m_isNoDisplay = line.mid(10).toLower() == QLatin1String("true");
++            if (line.startsWith(QLatin1String("X-SDDM-Env=")))
++                m_additionalEnv = parseEnv(line.mid(strlen("X-SDDM-Env=")));
+         }
+ 
+         file.close();
+@@ -191,4 +197,22 @@ namespace SDDM {
+         setTo(other.type(), other.fileName());
+         return *this;
+     }
++
++    QProcessEnvironment SDDM::Session::parseEnv(const QString &list)
++    {
++        QProcessEnvironment env;
++
++        const QVector<QStringRef> entryList = list.splitRef(QLatin1Char(','));
++        for (const auto &entry: entryList) {
++            int midPoint = entry.indexOf(QLatin1Char('='));
++            if (midPoint < 0) {
++                qWarning() << "Malformed entry in" << fileName() << ":" << entry;
++                continue;
++            }
++            env.insert(entry.left(midPoint).toString(), entry.mid(midPoint+1).toString());
++        }
++        return env;
++    }
++
++
+ }
+diff --git a/src/common/Session.h b/src/common/Session.h
+index 9fd86cd..aa196e9 100644
+--- a/src/common/Session.h
++++ b/src/common/Session.h
+@@ -23,6 +23,7 @@
+ #include <QDataStream>
+ #include <QDir>
+ #include <QSharedPointer>
++#include <QProcessEnvironment>
+ 
+ namespace SDDM {
+     class SessionModel;
+@@ -59,11 +60,14 @@ namespace SDDM {
+         bool isHidden() const;
+         bool isNoDisplay() const;
+ 
++        QProcessEnvironment additionalEnv() const;
++
+         void setTo(Type type, const QString &name);
+ 
+         Session &operator=(const Session &other);
+ 
+     private:
++        QProcessEnvironment parseEnv(const QString &list);
+         bool m_valid;
+         Type m_type;
+         QDir m_dir;
+@@ -75,6 +79,7 @@ namespace SDDM {
+         QString m_tryExec;
+         QString m_xdgSessionType;
+         QString m_desktopNames;
++        QProcessEnvironment m_additionalEnv;
+         bool m_isHidden;
+         bool m_isNoDisplay;
+ 
+diff --git a/src/daemon/Display.cpp b/src/daemon/Display.cpp
+index 9f1fabc..a65df3f 100644
+--- a/src/daemon/Display.cpp
++++ b/src/daemon/Display.cpp
+@@ -313,6 +313,7 @@ namespace SDDM {
+         qDebug() << "Session" << m_sessionName << "selected, command:" << session.exec();
+ 
+         QProcessEnvironment env;
++        env.insert(session.additionalEnv());
+ 
+         if (seat()->name() == QLatin1String("seat0")) {
+             // Use the greeter VT, for wayland sessions the helper overwrites this
+-- 
+2.30.1
+

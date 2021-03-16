@@ -1,7 +1,7 @@
 From 93e0d5d2433ac10f92aaa22bc280750059bb7fee Mon Sep 17 00:00:00 2001
 From: Fabian Vogt <fabian@ritter-vogt.de>
 Date: Wed, 4 Nov 2020 17:40:13 +0100
-Subject: [PATCH] Improve font config deserialization
+Subject: [PATCH 00/26] Improve font config deserialization
 
 Going from QString -> QVariant -> QFont isn't ideal and means that it tries
 to create a QFont from a null/empty QString as well, resulting in a warning:
@@ -34,5 +34,5 @@ index bbce512..01f53fa 100644
          // Set session model on proxy
          m_proxy->setSessionModel(m_sessionModel);
 -- 
-2.30.0
+2.30.1
 

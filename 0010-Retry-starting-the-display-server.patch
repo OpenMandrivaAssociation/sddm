@@ -1,7 +1,7 @@
 From 42c51761cc82edbaa50d702a4614e179ad4bcd63 Mon Sep 17 00:00:00 2001
 From: Fabian Vogt <fabian@ritter-vogt.de>
 Date: Thu, 12 Nov 2020 20:30:55 +0100
-Subject: [PATCH] Retry starting the display server
+Subject: [PATCH 10/26] Retry starting the display server
 
 Even if the CanGraphical property of a Seat is true, it's possible that it's
 still too early for X to start, as it might need some driver or device which
@@ -114,5 +114,5 @@ index e60c022..5f40fe8 100644
          QFile::remove(m_authPath);
  
 -- 
-2.30.0
+2.30.1
 

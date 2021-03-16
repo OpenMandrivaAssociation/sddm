@@ -1,7 +1,8 @@
 From e81dfcd6913c4fbd1801597168291b1e396633d8 Mon Sep 17 00:00:00 2001
 From: Fabian Vogt <fabian@ritter-vogt.de>
 Date: Wed, 6 Jan 2021 16:00:34 +0100
-Subject: [PATCH] Fix sessions being started as the wrong type on autologin
+Subject: [PATCH 14/26] Fix sessions being started as the wrong type on
+ autologin
 
 For autologin, the last session is used, which contains a full path.
 Display::findSessionEntry didn't handle that correctly, which led to
@@ -30,5 +31,5 @@ index b95f6e5..9f1fabc 100644
  
          // append extension
 -- 
-2.30.0
+2.30.1
 

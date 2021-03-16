@@ -1,8 +1,8 @@
 From b2520c9fdeff081b1ac66a4a15289cedfa6944b9 Mon Sep 17 00:00:00 2001
 From: Fabian Vogt <fabian@ritter-vogt.de>
 Date: Wed, 9 Dec 2020 19:33:08 +0100
-Subject: [PATCH] Emit XorgDisplayServer::started only when the auth file is
- ready
+Subject: [PATCH 12/26] Emit XorgDisplayServer::started only when the auth file
+ is ready
 
 ---
  src/daemon/XorgDisplayServer.cpp | 4 ++--
@@ -31,5 +31,5 @@ index 3a7bee0..331adcd 100644
          m_started = true;
  
 -- 
-2.30.0
+2.30.1
 

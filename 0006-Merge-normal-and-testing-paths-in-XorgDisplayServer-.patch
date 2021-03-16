@@ -1,7 +1,8 @@
 From 68cc9e31d1a4c4609f42114782fc485cb07353a4 Mon Sep 17 00:00:00 2001
 From: Fabian Vogt <fabian@ritter-vogt.de>
 Date: Fri, 9 Oct 2020 21:06:01 +0200
-Subject: [PATCH] Merge normal and testing paths in XorgDisplayServer::start
+Subject: [PATCH 06/26] Merge normal and testing paths in
+ XorgDisplayServer::start
 
 They have much in common and this means that Xephyr can also make use use
 of -displayfd now.
@@ -170,5 +171,5 @@ index d5f29a9..e60c022 100644
          // The file is also used by the greeter, which does care about the
          // display number. Write the proper entry, if it's different.
 -- 
-2.30.0
+2.30.1
 

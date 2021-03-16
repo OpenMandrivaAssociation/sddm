@@ -25,10 +25,6 @@ Source6: sddm.sysusers
 Source7: sddm.sysconfig
 Patch1: sddm-0.14.0-by-default-use-plasma-session.patch
 Patch2: sddm-0.18.1-add-suport-to-plymouth-smooth-transition.patch
-# (tpg) seems to be broken
-#Patch4: sddm-0.14.0-Log-Xorg-server-output-to-the-journal.patch
-# (tpg) based on this https://github.com/sddm/sddm/pull/525
-#Patch3: sddm-0.14.0-add-support-to-QtAccountsService.patch
 # (tpg) https://github.com/sddm/sddm/pull/817
 Patch6: 0001-Execute-etc-X11-Xsession.patch
 # This patch is IMPORTANT -- don't drop it just because it doesn't apply
@@ -36,18 +32,30 @@ Patch6: 0001-Execute-etc-X11-Xsession.patch
 # https://github.com/sddm/sddm/issues/733
 # https://github.com/sddm/sddm/pull/1230
 #Patch7: https://github.com/sddm/sddm/pull/1230.patch
-#Patch8: https://patch-diff.githubusercontent.com/raw/sddm/sddm/pull/1371.patch
-Patch9: https://patch-diff.githubusercontent.com/raw/sddm/sddm/pull/1379.patch
+
 # (tpg) patches from upstream git
-Patch100: 0000-Improve-font-config-deserialization.patch
-Patch101: 0001-Only-use-the-base-name-for-DESKTOP_SESSION.patch
-#Patch102: 0002-Merge-normal-and-testing-paths-in-XorgDisplayServer-.patch
-Patch103: 0003-Retry-starting-the-display-server.patch
-#Patch104: 0004-Explicitly-stop-Xorg-when-starting-fails.patch
-#Patch105: 0005-Emit-XorgDisplayServer-started-only-when-the-auth-fi.patch
-Patch106: 0006-Fix-sessions-being-started-as-the-wrong-type-on-auto.patch
-Patch107: 0007-wayland-session-Ensure-SHELL-remains-correctly-set.patch
-Patch108: 0008-Clear-VT-before-switching-to-it.patch
+Patch101: 0000-Improve-font-config-deserialization.patch
+Patch102: 0001-Use-PAM-s-username.patch
+Patch103: 0004-Only-use-the-base-name-for-DESKTOP_SESSION.patch
+Patch104: 0005-Fix-compilation-once-QTBUG-88431-gets-fixed.patch
+Patch105: 0006-Merge-normal-and-testing-paths-in-XorgDisplayServer-.patch
+Patch106: 0010-Retry-starting-the-display-server.patch
+Patch107: 0011-Explicitly-stop-Xorg-when-starting-fails.patch
+Patch108: 0012-Emit-XorgDisplayServer-started-only-when-the-auth-fi.patch
+Patch110: 0014-Fix-sessions-being-started-as-the-wrong-type-on-auto.patch
+Patch112: 0016-wayland-session-Ensure-SHELL-remains-correctly-set.patch
+Patch114: 0018-Update-sv.ts-1342.patch
+Patch115: 0019-Clear-VT-before-switching-to-it.patch
+Patch116: 0020-Prevent-potential-crash-when-not-in-testing-mode.patch
+Patch117: 0021-Allow-addition-env-vars-to-be-defined-in-session-fil.patch
+Patch118: 0022-Add-fish-etc-profile-and-HOME-.profile-sourcing-1331.patch
+Patch119: 0023-Error-in-elarun-theme-1336.patch
+Patch120: 0024-Use-avatars-in-FacesDir-first-and-if-not-found-searc.patch
+Patch121: 0025-Remove-suffix-for-Wayland-session-997.patch
+Patch122: 0026-Fix-warning-from-SDDM-generateName.patch
+Patch200: https://patch-diff.githubusercontent.com/raw/sddm/sddm/pull/1379.patch
+
+
 BuildRequires: cmake(ECM)
 BuildRequires: pkgconfig(Qt5Core)
 BuildRequires: pkgconfig(Qt5Gui)

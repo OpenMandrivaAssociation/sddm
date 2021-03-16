@@ -1,7 +1,7 @@
 From 3b00cd06f82837ba85f37c9f632261e7b4c6fd35 Mon Sep 17 00:00:00 2001
 From: Fabian Vogt <fabian@ritter-vogt.de>
 Date: Wed, 9 Dec 2020 19:28:41 +0100
-Subject: [PATCH] Explicitly stop Xorg when starting fails
+Subject: [PATCH 11/26] Explicitly stop Xorg when starting fails
 
 When Xorg starts but there is an error, stop it explicitly instead of assuming
 that X exits itself. This avoids a possibly lingering Xorg process in the
@@ -11,10 +11,11 @@ restarted too early (shouldn't happen).
  src/daemon/XorgDisplayServer.cpp | 11 +++++++++--
  1 file changed, 9 insertions(+), 2 deletions(-)
 
-diff -Naur a/src/daemon/XorgDisplayServer.cpp b/src/daemon/XorgDisplayServer.cpp
---- a/src/daemon/XorgDisplayServer.cpp	2021-01-15 15:17:13.126000000 +0000
-+++ b/src/daemon/XorgDisplayServer.cpp	2021-01-15 15:23:33.541000000 +0000
-@@ -84,6 +84,11 @@
+diff --git a/src/daemon/XorgDisplayServer.cpp b/src/daemon/XorgDisplayServer.cpp
+index 5f40fe8..3a7bee0 100644
+--- a/src/daemon/XorgDisplayServer.cpp
++++ b/src/daemon/XorgDisplayServer.cpp
+@@ -118,6 +118,11 @@ namespace SDDM {
          if (m_started)
              return false;
  
@@ -26,15 +27,7 @@ diff -Naur a/src/daemon/XorgDisplayServer.cpp b/src/daemon/XorgDisplayServer.cpp
          // create process
          process = new QProcess(this);
  
-@@ -147,6 +152,7 @@
- 
-             // return fail
-             close(pipeFds[0]);
-+            stop();
-             return false;
-         }
- 
-@@ -160,6 +166,7 @@
+@@ -195,6 +200,7 @@ namespace SDDM {
              qCritical("Failed to open pipe to start X Server");
  
              close(pipeFds[0]);
@@ -42,7 +35,7 @@ diff -Naur a/src/daemon/XorgDisplayServer.cpp b/src/daemon/XorgDisplayServer.cpp
              return false;
          }
          QByteArray displayNumber = readPipe.readLine();
-@@ -168,6 +175,7 @@
+@@ -203,6 +209,7 @@ namespace SDDM {
              qCritical("Failed to read display number from pipe");
  
              close(pipeFds[0]);
@@ -50,15 +43,15 @@ diff -Naur a/src/daemon/XorgDisplayServer.cpp b/src/daemon/XorgDisplayServer.cpp
              return false;
          }
          displayNumber.prepend(QByteArray(":"));
-@@ -184,6 +192,7 @@
+@@ -219,6 +226,7 @@ namespace SDDM {
          if(m_display != QStringLiteral(":0")) {
-             if(!Xauth::writeCookieToFile(m_authPath, m_display, m_cookie)) {
+             if(!addCookie(m_authPath)) {
                  qCritical() << "Failed to write xauth file";
 +                stop();
                  return false;
              }
          }
-@@ -197,8 +206,7 @@
+@@ -232,8 +240,7 @@ namespace SDDM {
      }
  
      void XorgDisplayServer::stop() {
@@ -68,5 +61,6 @@ diff -Naur a/src/daemon/XorgDisplayServer.cpp b/src/daemon/XorgDisplayServer.cpp
              return;
  
          // log message
---
-2.30.0
+-- 
+2.30.1
+

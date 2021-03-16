@@ -1,0 +1,97 @@
+From ec92b49019eff689a7b0cc1c91355ce0f2588368 Mon Sep 17 00:00:00 2001
+From: Pier Luigi Fiorini <pierluigi.fiorini@liri.io>
+Date: Sun, 14 Mar 2021 10:29:11 +0100
+Subject: [PATCH 25/26] Remove suffix for Wayland session (#997)
+
+Some desktops like GNOME specify which windowing system is in use
+with the Name entry of their desktop file.
+
+Plasma is also headed in that direction.
+
+For Wayland-only desktops such as Liri this information is
+redundant and so is for X11-only window managers.
+
+Do not append the Wayland suffix and let desktops handle it
+themeselves.
+
+However if two sessions has the same display name we deduplicate
+appending an indicator to the Wayland counterpart, this helps
+Plasma during the transition to removing the session type from
+their display name.
+
+[ChangeLog][Greeter] Remove suffix for Wayland sessions and
+deduplicate display names.
+---
+ src/common/Session.cpp       | 11 ++---------
+ src/greeter/SessionModel.cpp | 10 ++++++++--
+ 2 files changed, 10 insertions(+), 11 deletions(-)
+
+diff --git a/src/common/Session.cpp b/src/common/Session.cpp
+index 0aa5402..a026c1f 100644
+--- a/src/common/Session.cpp
++++ b/src/common/Session.cpp
+@@ -161,15 +161,8 @@ namespace SDDM {
+             if (current_section != QLatin1String("Desktop Entry"))
+                 continue; // We are only interested in the "Desktop Entry" section
+ 
+-            if (line.startsWith(QLatin1String("Name="))) {
+-                if (type == WaylandSession)
+-                    if (line.mid(5).endsWith(QLatin1String(" (Wayland)")))
+-                        m_displayName = QObject::tr("%1").arg(line.mid(5));
+-                    else
+-                        m_displayName = QObject::tr("%1 (Wayland)").arg(line.mid(5));
+-                else
+-                    m_displayName = line.mid(5);
+-            }
++            if (line.startsWith(QLatin1String("Name=")))
++                m_displayName = line.mid(5);
+             if (line.startsWith(QLatin1String("Comment=")))
+                 m_comment = line.mid(8);
+             if (line.startsWith(QLatin1String("Exec=")))
+diff --git a/src/greeter/SessionModel.cpp b/src/greeter/SessionModel.cpp
+index 1953c76..a0eb3b1 100644
+--- a/src/greeter/SessionModel.cpp
++++ b/src/greeter/SessionModel.cpp
+@@ -35,6 +35,7 @@ namespace SDDM {
+         }
+ 
+         int lastIndex { 0 };
++        QStringList displayNames;
+         QVector<Session *> sessions;
+     };
+ 
+@@ -50,6 +51,7 @@ namespace SDDM {
+         connect(watcher, &QFileSystemWatcher::directoryChanged, [this](const QString &path) {
+             beginResetModel();
+             d->sessions.clear();
++            d->displayNames.clear();
+             populate(Session::WaylandSession, mainConfig.Wayland.SessionDir.get());
+             populate(Session::X11Session, mainConfig.X11.SessionDir.get());
+             endResetModel();
+@@ -99,6 +101,8 @@ namespace SDDM {
+         case TypeRole:
+             return session->type();
+         case NameRole:
++            if (d->displayNames.count(session->displayName()) > 1 && session->type() == Session::WaylandSession)
++                return tr("%1 (Wayland)").arg(session->displayName());
+             return session->displayName();
+         case ExecRole:
+             return session->exec();
+@@ -144,10 +148,12 @@ namespace SDDM {
+                 }
+             }
+             // add to sessions list
+-            if (!si->isHidden() && !si->isNoDisplay() && execAllowed)
++            if (!si->isHidden() && !si->isNoDisplay() && execAllowed) {
++                d->displayNames.append(si->displayName());
+                 d->sessions.push_back(si);
+-            else
++            } else {
+                 delete si;
++            }
+         }
+         // find out index of the last session
+         for (int i = 0; i < d->sessions.size(); ++i) {
+-- 
+2.30.1
+

@@ -1,7 +1,7 @@
 From 8b371572ab6cf5f4652b7f95c700b13a89c9f109 Mon Sep 17 00:00:00 2001
 From: Pier Luigi Fiorini <pierluigi.fiorini@liri.io>
 Date: Sun, 28 Feb 2021 12:18:31 +0100
-Subject: [PATCH] Clear VT before switching to it
+Subject: [PATCH 19/26] Clear VT before switching to it
 
 Make sure the VT is clean.
 ---
