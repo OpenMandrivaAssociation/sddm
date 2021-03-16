@@ -62,6 +62,7 @@ BuildRequires: qt5-linguist-tools
 BuildRequires: systemd-macros
 # For /etc/X11/Xsession
 Requires: xinitrc
+Requires: weston
 BuildRequires: rpm-helper
 Requires(pre,postun): rpm-helper
 # needed to get xcb plugin on Qt platform
@@ -125,12 +126,6 @@ mkdir -p %{buildroot}%{_sysconfdir}/sddm.conf.d
 # use omv-background.png as sddm background for all themes
 sed -i -e 's,\(^background=\).*,\1%{_datadir}/mdk/backgrounds/OpenMandriva-splash.png,' %{buildroot}%{_datadir}/sddm/themes/elarun/theme.conf
 sed -i -e 's,\(^background=\).*,\1%{_datadir}/mdk/backgrounds/OpenMandriva-splash.png,' %{buildroot}%{_datadir}/sddm/themes/maldives/theme.conf
-
-%pre
-%_pre_useradd sddm %{_var}/lib/sddm /bin/false
-
-%postun
-%_postun_userdel sddm
 
 %files
 %{_bindir}/%{name}
