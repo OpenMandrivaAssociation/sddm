@@ -9,7 +9,7 @@ Release: 6.%{date}.3
 # git archive --format=tar --prefix sddm-0.18.1-$(date +%Y%m%d)/ HEAD | xz -vf > sddm-0.18.1-$(date +%Y%m%d).tar.xz
 Source0: https://github.com/sddm/sddm/archive/develop/%{name}-%{version}-%{date}.tar.gz
 %else
-Release: 6
+Release: 7
 Source0: https://github.com/sddm/sddm/releases/download/v%{version}/%{name}-%{version}.tar.xz
 %endif
 URL: https://github.com/sddm
@@ -37,7 +37,7 @@ Patch6: 0001-Execute-etc-X11-Xsession.patch
 # https://github.com/sddm/sddm/pull/1230
 #Patch7: https://github.com/sddm/sddm/pull/1230.patch
 #Patch8: https://patch-diff.githubusercontent.com/raw/sddm/sddm/pull/1371.patch
-Patch9: https://patch-diff.githubusercontent.com/raw/sddm/sddm/pull/1367.patch
+Patch9: https://patch-diff.githubusercontent.com/raw/sddm/sddm/pull/1379.patch
 # (tpg) patches from upstream git
 Patch100: 0000-Improve-font-config-deserialization.patch
 Patch101: 0001-Only-use-the-base-name-for-DESKTOP_SESSION.patch
