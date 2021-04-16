@@ -15,12 +15,10 @@ Source0: https://github.com/sddm/sddm/releases/download/v%{version}/%{name}-%{ve
 URL: https://github.com/sddm
 Group: Graphical desktop/KDE
 License: GPLv2
-# Adds sddm to drakedm
-Source1: 11sddm.conf
 Source2: sddm.conf
 Source3: sddm.pam
 Source4: sddm-autologin.pam
-Source5: tmpfiles-sddm.conf
+Source5: sddm.tmpfiles
 Source6: sddm.sysusers
 Source7: sddm.sysconfig
 Patch1: sddm-0.14.0-by-default-use-plasma-session.patch
@@ -76,6 +74,7 @@ Provides: dm
 # (tpg) fix update from 2014.0
 Provides: kdm = 2:4.11.22-1.1
 Obsoletes: kdm < 2:4.11.22-1.1
+%systemd_requires
 
 %description
 Lightweight display manager (login screen).
@@ -112,7 +111,6 @@ export CXX=g++
 %install
 %ninja_install -C build
 
-install -Dpm 644 %{SOURCE1} %{buildroot}%{_datadir}/X11/dm.d/11sddm.conf
 install -Dpm 644 %{SOURCE2} %{buildroot}%{_sysconfdir}/sddm.conf
 install -Dpm 644 %{SOURCE3} %{buildroot}%{_sysconfdir}/pam.d/sddm
 install -Dpm 644 %{SOURCE4} %{buildroot}%{_sysconfdir}/pam.d/sddm-autologin
@@ -126,11 +124,18 @@ mkdir -p %{buildroot}%{_sysconfdir}/sddm.conf.d
 sed -i -e 's,\(^background=\).*,\1%{_datadir}/mdk/backgrounds/OpenMandriva-splash.png,' %{buildroot}%{_datadir}/sddm/themes/elarun/theme.conf
 sed -i -e 's,\(^background=\).*,\1%{_datadir}/mdk/backgrounds/OpenMandriva-splash.png,' %{buildroot}%{_datadir}/sddm/themes/maldives/theme.conf
 
-%pre
-%_pre_useradd sddm %{_var}/lib/sddm /bin/false
+# (tpg) generate "default" config
+install -d %{buildroot}%{_prefix}/lib/%{name}/%{name}.conf.d
+%{buildroot}%{_bindir}/%{name} --example-config > %{buildroot}%{_prefix}/lib/%{name}/%{name}.conf.d/default.conf
+
+%post
+%systemd_post sddm.service
+
+%preun
+%systemd_preun sddm.service
 
 %postun
-%_postun_userdel sddm
+%systemd_postun sddm.service
 
 %files
 %{_bindir}/%{name}
@@ -139,6 +144,8 @@ sed -i -e 's,\(^background=\).*,\1%{_datadir}/mdk/backgrounds/OpenMandriva-splas
 %dir %{_sysconfdir}/sddm.conf.d
 %config(noreplace) %{_sysconfdir}/sddm.conf
 %config(noreplace) %{_sysconfdir}/sysconfig/sddm
+%dir %{_prefix}/lib/%{name}/%{name}.conf.d
+%{_prefix}/lib/%{name}/%{name}.conf.d/default.conf
 %{_sysconfdir}/dbus-1/system.d/org.freedesktop.DisplayManager.conf
 %{_sysconfdir}/pam.d/%{name}
 %{_sysconfdir}/pam.d/%{name}-greeter
