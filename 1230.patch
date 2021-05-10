@@ -31,11 +31,10 @@ dropped. Even if merging was implemented manually, use of FamilyWild would
  create mode 100644 src/common/XauthUtils.cpp
  create mode 100644 src/common/XauthUtils.h
 
-diff --git a/CMakeLists.txt b/CMakeLists.txt
-index e52e0e90..fc3f2cec 100644
---- a/CMakeLists.txt
-+++ b/CMakeLists.txt
-@@ -88,6 +88,9 @@ add_feature_info("PAM" PAM_FOUND "PAM support")
+diff -Naur a/CMakeLists.txt b/CMakeLists.txt
+--- a/CMakeLists.txt	2020-11-03 09:55:24.000000000 +0000
++++ b/CMakeLists.txt	2021-05-10 19:28:19.522501872 +0000
+@@ -88,6 +88,9 @@
  include(CheckFunctionExists)
  check_function_exists(getspnam HAVE_GETSPNAM)
  
@@ -45,11 +44,10 @@ index e52e0e90..fc3f2cec 100644
  # XCB
  find_package(XCB REQUIRED)
  
-diff --git a/data/man/sddm.conf.rst.in b/data/man/sddm.conf.rst.in
-index bee07681..e91280ac 100644
---- a/data/man/sddm.conf.rst.in
-+++ b/data/man/sddm.conf.rst.in
-@@ -110,10 +110,6 @@ OPTIONS
+diff -Naur a/data/man/sddm.conf.rst.in b/data/man/sddm.conf.rst.in
+--- a/data/man/sddm.conf.rst.in	2020-11-02 10:03:22.000000000 +0000
++++ b/data/man/sddm.conf.rst.in	2021-05-10 19:28:19.522501872 +0000
+@@ -110,10 +110,6 @@
  	Path of the Xephyr.
  	Default value is "/usr/bin/Xephyr".
  
@@ -60,7 +58,7 @@ index bee07681..e91280ac 100644
  `SessionDir=`
  	Path of the directory containing session files.
  	Default value is "/usr/share/xsessions".
-@@ -128,10 +124,6 @@ OPTIONS
+@@ -128,10 +124,6 @@
          Path to the user session log file, relative to the home directory.
          Default value is ".local/share/sddm/xorg-session.log".
  
@@ -71,11 +69,10 @@ index bee07681..e91280ac 100644
  `DisplayCommand=`
  	Path of script to execute when starting the display server.
  	Default value is "@DATA_INSTALL_DIR@/scripts/Xsetup".
-diff --git a/data/man/sddm.rst.in b/data/man/sddm.rst.in
-index 6403368a..a542e3bd 100644
---- a/data/man/sddm.rst.in
-+++ b/data/man/sddm.rst.in
-@@ -34,6 +34,10 @@ Distributions without pam and systemd will need to put the **sddm** user
+diff -Naur a/data/man/sddm.rst.in b/data/man/sddm.rst.in
+--- a/data/man/sddm.rst.in	2020-11-02 10:03:22.000000000 +0000
++++ b/data/man/sddm.rst.in	2021-05-10 19:28:19.522501872 +0000
+@@ -34,6 +34,10 @@
  into the **video** group, otherwise errors regarding GL and drm devices
  might be experienced.
  
@@ -86,11 +83,10 @@ index 6403368a..a542e3bd 100644
  OPTIONS
  =======
  
-diff --git a/src/auth/Auth.cpp b/src/auth/Auth.cpp
-index caca3146..c2228ae1 100644
---- a/src/auth/Auth.cpp
-+++ b/src/auth/Auth.cpp
-@@ -64,7 +64,7 @@ namespace SDDM {
+diff -Naur a/src/auth/Auth.cpp b/src/auth/Auth.cpp
+--- a/src/auth/Auth.cpp	2020-11-02 10:03:22.000000000 +0000
++++ b/src/auth/Auth.cpp	2021-05-10 19:28:19.532501837 +0000
+@@ -64,7 +64,7 @@
          QLocalSocket *socket { nullptr };
          QString sessionPath { };
          QString user { };
@@ -99,7 +95,7 @@ index caca3146..c2228ae1 100644
          bool autologin { false };
          bool greeter { false };
          QProcessEnvironment environment { };
-@@ -266,7 +266,7 @@ namespace SDDM {
+@@ -266,7 +266,7 @@
          return d->greeter;
      }
  
@@ -108,7 +104,7 @@ index caca3146..c2228ae1 100644
          return d->cookie;
      }
  
-@@ -298,7 +298,7 @@ namespace SDDM {
+@@ -298,7 +298,7 @@
          d->environment.insert(key, value);
      }
  
@@ -117,11 +113,10 @@ index caca3146..c2228ae1 100644
          if (cookie != d->cookie) {
              d->cookie = cookie;
              Q_EMIT cookieChanged();
-diff --git a/src/auth/Auth.h b/src/auth/Auth.h
-index 87f5f440..38d63fcd 100644
---- a/src/auth/Auth.h
-+++ b/src/auth/Auth.h
-@@ -54,7 +54,7 @@ namespace SDDM {
+diff -Naur a/src/auth/Auth.h b/src/auth/Auth.h
+--- a/src/auth/Auth.h	2020-11-02 10:03:22.000000000 +0000
++++ b/src/auth/Auth.h	2021-05-10 19:28:19.532501837 +0000
+@@ -54,7 +54,7 @@
          Q_PROPERTY(bool autologin READ autologin WRITE setAutologin NOTIFY autologinChanged)
          Q_PROPERTY(bool greeter READ isGreeter WRITE setGreeter NOTIFY greeterChanged)
          Q_PROPERTY(bool verbose READ verbose WRITE setVerbose NOTIFY verboseChanged)
@@ -130,7 +125,7 @@ index 87f5f440..38d63fcd 100644
          Q_PROPERTY(QString user READ user WRITE setUser NOTIFY userChanged)
          Q_PROPERTY(QString session READ session WRITE setSession NOTIFY sessionChanged)
          Q_PROPERTY(AuthRequest* request READ request NOTIFY requestChanged)
-@@ -90,7 +90,7 @@ namespace SDDM {
+@@ -90,7 +90,7 @@
          bool autologin() const;
          bool isGreeter() const;
          bool verbose() const;
@@ -139,7 +134,7 @@ index 87f5f440..38d63fcd 100644
          const QString &user() const;
          const QString &session() const;
          AuthRequest *request();
-@@ -149,7 +149,7 @@ namespace SDDM {
+@@ -149,7 +149,7 @@
           * Set the display server cookie, to be inserted into the user's $XAUTHORITY
           * @param cookie cookie data
           */
@@ -148,11 +143,10 @@ index 87f5f440..38d63fcd 100644
  
      public Q_SLOTS:
          /**
-diff --git a/src/common/Configuration.h b/src/common/Configuration.h
-index cf44a629..a7e0585d 100644
---- a/src/common/Configuration.h
-+++ b/src/common/Configuration.h
-@@ -63,11 +63,9 @@ namespace SDDM {
+diff -Naur a/src/common/Configuration.h b/src/common/Configuration.h
+--- a/src/common/Configuration.h	2021-05-10 19:27:26.292683768 +0000
++++ b/src/common/Configuration.h	2021-05-10 19:28:19.532501837 +0000
+@@ -63,11 +63,9 @@
              Entry(ServerPath,          QString,     _S("/usr/bin/X"),                           _S("Path to X server binary"));
              Entry(ServerArguments,     QString,     _S("-nolisten tcp"),                        _S("Arguments passed to the X server invocation"));
              Entry(XephyrPath,          QString,     _S("/usr/bin/Xephyr"),                      _S("Path to Xephyr binary"));
@@ -164,12 +158,10 @@ index cf44a629..a7e0585d 100644
              Entry(DisplayCommand,      QString,     _S(DATA_INSTALL_DIR "/scripts/Xsetup"),     _S("Path to a script to execute when starting the display server"));
              Entry(DisplayStopCommand,  QString,     _S(DATA_INSTALL_DIR "/scripts/Xstop"),      _S("Path to a script to execute when stopping the display server"));
              Entry(MinimumVT,           int,         MINIMUM_VT,                                 _S("The lowest virtual terminal number that will be used."));
-diff --git a/src/common/XauthUtils.cpp b/src/common/XauthUtils.cpp
-new file mode 100644
-index 00000000..da1c6913
---- /dev/null
-+++ b/src/common/XauthUtils.cpp
-@@ -0,0 +1,82 @@
+diff -Naur a/src/common/XauthUtils.cpp b/src/common/XauthUtils.cpp
+--- a/src/common/XauthUtils.cpp	1970-01-01 00:00:00.000000000 +0000
++++ b/src/common/XauthUtils.cpp	2021-05-10 19:31:13.451879090 +0000
+@@ -0,0 +1,88 @@
 +/****************************************************************************
 + * SPDX-FileCopyrightText: 2020 Fabian Vogt <fvogt@suse.de>
 + *
@@ -185,6 +177,8 @@ index 00000000..da1c6913
 +#include <QString>
 +
 +#include "XauthUtils.h"
++
++#include <sys/stat.h>
 +
 +namespace SDDM { namespace Xauth {
 +    QByteArray generateCookie()
@@ -207,8 +201,12 @@ index 00000000..da1c6913
 +        if(display.size() < 2 || display[0] != QLatin1Char(':') || cookie.count() != 16)
 +            return false;
 +
++        // The file needs 0600 permissions
++        int oldumask = umask(077);
++
 +        // Truncate the file. We don't support merging like the xauth tool does.
 +        FILE * const authFp = fopen(qPrintable(filename), "wb");
++        umask(oldumask);
 +        if (authFp == nullptr)
 +            return false;
 +
@@ -252,11 +250,9 @@ index 00000000..da1c6913
 +        return success;
 +    }
 +}}
-diff --git a/src/common/XauthUtils.h b/src/common/XauthUtils.h
-new file mode 100644
-index 00000000..112d003a
---- /dev/null
-+++ b/src/common/XauthUtils.h
+diff -Naur a/src/common/XauthUtils.h b/src/common/XauthUtils.h
+--- a/src/common/XauthUtils.h	1970-01-01 00:00:00.000000000 +0000
++++ b/src/common/XauthUtils.h	2021-05-10 19:28:19.532501837 +0000
 @@ -0,0 +1,16 @@
 +// SPDX-License-Identifier: GPL-2.0-or-later
 +
@@ -274,11 +270,10 @@ index 00000000..112d003a
 +}
 +
 +#endif // SDDM_XAUTHUTILS_H
-diff --git a/src/daemon/CMakeLists.txt b/src/daemon/CMakeLists.txt
-index 86d014be..91456078 100644
---- a/src/daemon/CMakeLists.txt
-+++ b/src/daemon/CMakeLists.txt
-@@ -2,6 +2,7 @@ include_directories(
+diff -Naur a/src/daemon/CMakeLists.txt b/src/daemon/CMakeLists.txt
+--- a/src/daemon/CMakeLists.txt	2020-11-03 09:47:51.000000000 +0000
++++ b/src/daemon/CMakeLists.txt	2021-05-10 19:28:19.532501837 +0000
+@@ -2,6 +2,7 @@
      "${CMAKE_SOURCE_DIR}/src/common"
      "${CMAKE_SOURCE_DIR}/src/auth"
      "${CMAKE_BINARY_DIR}/src/common"
@@ -286,7 +281,7 @@ index 86d014be..91456078 100644
      "${LIBXCB_INCLUDE_DIR}"
  )
  
-@@ -13,6 +14,7 @@ set(DAEMON_SOURCES
+@@ -13,6 +14,7 @@
      ${CMAKE_SOURCE_DIR}/src/common/ThemeMetadata.cpp
      ${CMAKE_SOURCE_DIR}/src/common/Session.cpp
      ${CMAKE_SOURCE_DIR}/src/common/SocketWriter.cpp
@@ -294,7 +289,7 @@ index 86d014be..91456078 100644
      ${CMAKE_SOURCE_DIR}/src/auth/Auth.cpp
      ${CMAKE_SOURCE_DIR}/src/auth/AuthPrompt.cpp
      ${CMAKE_SOURCE_DIR}/src/auth/AuthRequest.cpp
-@@ -64,6 +66,7 @@ target_link_libraries(sddm
+@@ -64,6 +66,7 @@
                        Qt5::DBus
                        Qt5::Network
                        Qt5::Qml
@@ -302,10 +297,9 @@ index 86d014be..91456078 100644
                        ${LIBXCB_LIBRARIES})
  if(PAM_FOUND)
      target_link_libraries(sddm ${PAM_LIBRARIES})
-diff --git a/src/daemon/XorgDisplayServer.cpp b/src/daemon/XorgDisplayServer.cpp
-index 5f93a1b3..148ebcc0 100644
---- a/src/daemon/XorgDisplayServer.cpp
-+++ b/src/daemon/XorgDisplayServer.cpp
+diff -Naur a/src/daemon/XorgDisplayServer.cpp b/src/daemon/XorgDisplayServer.cpp
+--- a/src/daemon/XorgDisplayServer.cpp	2020-11-03 09:49:10.000000000 +0000
++++ b/src/daemon/XorgDisplayServer.cpp	2021-05-10 19:28:19.532501837 +0000
 @@ -25,6 +25,7 @@
  #include "Display.h"
  #include "SignalHandler.h"
@@ -314,7 +308,7 @@ index 5f93a1b3..148ebcc0 100644
  
  #include <QDebug>
  #include <QFile>
-@@ -55,17 +56,7 @@ namespace SDDM {
+@@ -55,17 +56,7 @@
          m_authPath = QStringLiteral("%1/%2").arg(authDir).arg(QUuid::createUuid().toString());
  
          // generate cookie
@@ -333,7 +327,7 @@ index 5f93a1b3..148ebcc0 100644
      }
  
      XorgDisplayServer::~XorgDisplayServer() {
-@@ -84,35 +75,10 @@ namespace SDDM {
+@@ -84,35 +75,10 @@
          return QStringLiteral("x11");
      }
  
@@ -370,7 +364,7 @@ index 5f93a1b3..148ebcc0 100644
      bool XorgDisplayServer::start() {
          // check flag
          if (m_started)
-@@ -130,8 +96,7 @@ namespace SDDM {
+@@ -130,8 +96,7 @@
          // generate auth file.
          // For the X server's copy, the display number doesn't matter.
          // An empty file would result in no access control!
@@ -380,7 +374,7 @@ index 5f93a1b3..148ebcc0 100644
              qCritical() << "Failed to write xauth file";
              return false;
          }
-@@ -229,7 +194,7 @@ namespace SDDM {
+@@ -229,7 +194,7 @@
          // The file is also used by the greeter, which does care about the
          // display number. Write the proper entry, if it's different.
          if(m_display != QStringLiteral(":0")) {
@@ -389,11 +383,10 @@ index 5f93a1b3..148ebcc0 100644
                  qCritical() << "Failed to write xauth file";
                  return false;
              }
-diff --git a/src/daemon/XorgDisplayServer.h b/src/daemon/XorgDisplayServer.h
-index e97a0b53..05e0a4c6 100644
---- a/src/daemon/XorgDisplayServer.h
-+++ b/src/daemon/XorgDisplayServer.h
-@@ -38,7 +38,7 @@ namespace SDDM {
+diff -Naur a/src/daemon/XorgDisplayServer.h b/src/daemon/XorgDisplayServer.h
+--- a/src/daemon/XorgDisplayServer.h	2020-11-03 09:48:13.000000000 +0000
++++ b/src/daemon/XorgDisplayServer.h	2021-05-10 19:28:19.532501837 +0000
+@@ -38,7 +38,7 @@
  
          QString sessionType() const;
  
@@ -402,7 +395,7 @@ index e97a0b53..05e0a4c6 100644
  
          bool addCookie(const QString &file);
  
-@@ -50,7 +50,7 @@ namespace SDDM {
+@@ -50,7 +50,7 @@
  
      private:
          QString m_authPath;
@@ -411,11 +404,10 @@ index e97a0b53..05e0a4c6 100644
  
          QProcess *process { nullptr };
  
-diff --git a/src/helper/Backend.cpp b/src/helper/Backend.cpp
-index a324b39f..a0533102 100644
---- a/src/helper/Backend.cpp
-+++ b/src/helper/Backend.cpp
-@@ -68,13 +68,6 @@ namespace SDDM {
+diff -Naur a/src/helper/Backend.cpp b/src/helper/Backend.cpp
+--- a/src/helper/Backend.cpp	2020-11-03 07:41:06.000000000 +0000
++++ b/src/helper/Backend.cpp	2021-05-10 19:28:19.532501837 +0000
+@@ -68,13 +68,6 @@
              env.insert(QStringLiteral("SHELL"), QString::fromLocal8Bit(pw->pw_shell));
              env.insert(QStringLiteral("USER"), QString::fromLocal8Bit(pw->pw_name));
              env.insert(QStringLiteral("LOGNAME"), QString::fromLocal8Bit(pw->pw_name));
@@ -429,11 +421,10 @@ index a324b39f..a0533102 100644
  #if defined(Q_OS_FREEBSD)
          /* get additional environment variables via setclassenvironment();
              this needs to be done here instead of in UserSession::setupChildProcess
-diff --git a/src/helper/CMakeLists.txt b/src/helper/CMakeLists.txt
-index 8914ea75..81b939bb 100644
---- a/src/helper/CMakeLists.txt
-+++ b/src/helper/CMakeLists.txt
-@@ -3,6 +3,7 @@ include(CheckLibraryExists)
+diff -Naur a/src/helper/CMakeLists.txt b/src/helper/CMakeLists.txt
+--- a/src/helper/CMakeLists.txt	2020-11-03 09:47:51.000000000 +0000
++++ b/src/helper/CMakeLists.txt	2021-05-10 19:28:19.532501837 +0000
+@@ -3,6 +3,7 @@
  include_directories(
      "${CMAKE_SOURCE_DIR}/src/common"
      "${CMAKE_SOURCE_DIR}/src/auth"
@@ -441,7 +432,7 @@ index 8914ea75..81b939bb 100644
  )
  include_directories("${CMAKE_BINARY_DIR}/src/common")
  
-@@ -10,6 +11,7 @@ set(HELPER_SOURCES
+@@ -10,6 +11,7 @@
      ${CMAKE_SOURCE_DIR}/src/common/Configuration.cpp
      ${CMAKE_SOURCE_DIR}/src/common/ConfigReader.cpp
      ${CMAKE_SOURCE_DIR}/src/common/SafeDataStream.cpp
@@ -449,7 +440,7 @@ index 8914ea75..81b939bb 100644
      Backend.cpp
      HelperApp.cpp
      UserSession.cpp
-@@ -41,7 +43,11 @@ else()
+@@ -41,7 +43,11 @@
  endif()
  
  add_executable(sddm-helper ${HELPER_SOURCES})
@@ -462,11 +453,10 @@ index 8914ea75..81b939bb 100644
  if("${CMAKE_SYSTEM_NAME}" STREQUAL "FreeBSD")
      # On FreeBSD (possibly other BSDs as well), we want to use
      # setusercontext() to set up the login configuration from login.conf
-diff --git a/src/helper/HelperApp.cpp b/src/helper/HelperApp.cpp
-index 672359ae..4ad9cbd2 100644
---- a/src/helper/HelperApp.cpp
-+++ b/src/helper/HelperApp.cpp
-@@ -237,7 +237,7 @@ namespace SDDM {
+diff -Naur a/src/helper/HelperApp.cpp b/src/helper/HelperApp.cpp
+--- a/src/helper/HelperApp.cpp	2020-11-03 09:47:51.000000000 +0000
++++ b/src/helper/HelperApp.cpp	2021-05-10 19:28:19.532501837 +0000
+@@ -237,7 +237,7 @@
          str >> m >> env >> m_cookie;
          if (m != AUTHENTICATED) {
              env = QProcessEnvironment();
@@ -475,7 +465,7 @@ index 672359ae..4ad9cbd2 100644
              qCritical() << "Received a wrong opcode instead of AUTHENTICATED:" << m;
          }
          return env;
-@@ -263,7 +263,7 @@ namespace SDDM {
+@@ -263,7 +263,7 @@
          return m_user;
      }
  
@@ -484,11 +474,10 @@ index 672359ae..4ad9cbd2 100644
          return m_cookie;
      }
  
-diff --git a/src/helper/HelperApp.h b/src/helper/HelperApp.h
-index 3742df12..d417494c 100644
---- a/src/helper/HelperApp.h
-+++ b/src/helper/HelperApp.h
-@@ -40,7 +40,7 @@ namespace SDDM {
+diff -Naur a/src/helper/HelperApp.h b/src/helper/HelperApp.h
+--- a/src/helper/HelperApp.h	2020-11-02 10:03:22.000000000 +0000
++++ b/src/helper/HelperApp.h	2021-05-10 19:28:19.532501837 +0000
+@@ -40,7 +40,7 @@
  
          UserSession *session();
          const QString &user() const;
@@ -497,7 +486,7 @@ index 3742df12..d417494c 100644
  
      public slots:
          Request request(const Request &request);
-@@ -62,7 +62,7 @@ namespace SDDM {
+@@ -62,7 +62,7 @@
          QLocalSocket *m_socket { nullptr };
          QString m_user { };
          // TODO: get rid of this in a nice clean way along the way with moving to user session X server
@@ -506,10 +495,9 @@ index 3742df12..d417494c 100644
  
          /*!
           \brief Write utmp/wtmp/btmp records when a user logs in
-diff --git a/src/helper/UserSession.cpp b/src/helper/UserSession.cpp
-index c9a8a20f..4096edc1 100644
---- a/src/helper/UserSession.cpp
-+++ b/src/helper/UserSession.cpp
+diff -Naur a/src/helper/UserSession.cpp b/src/helper/UserSession.cpp
+--- a/src/helper/UserSession.cpp	2020-11-03 09:47:51.000000000 +0000
++++ b/src/helper/UserSession.cpp	2021-05-10 19:28:19.532501837 +0000
 @@ -20,9 +20,11 @@
   */
  
@@ -522,7 +510,7 @@ index c9a8a20f..4096edc1 100644
  
  #include <sys/types.h>
  #include <sys/ioctl.h>
-@@ -45,11 +47,35 @@ namespace SDDM {
+@@ -45,11 +47,35 @@
      }
  
      bool UserSession::start() {
@@ -559,7 +547,7 @@ index c9a8a20f..4096edc1 100644
              const QString cmd = QStringLiteral("%1 \"%2\"").arg(mainConfig.X11.SessionCommand.get()).arg(m_path);
              qInfo() << "Starting:" << cmd;
              QProcess::start(cmd);
-@@ -155,6 +181,11 @@ namespace SDDM {
+@@ -155,6 +181,11 @@
              exit(Auth::HELPER_OTHER_ERROR);
          }
  
@@ -571,7 +559,7 @@ index c9a8a20f..4096edc1 100644
  #ifdef USE_PAM
  
          // fetch ambient groups from PAM's environment;
-@@ -259,40 +290,6 @@ namespace SDDM {
+@@ -259,40 +290,6 @@
          } else {
              qWarning() << "Could not redirect stdout";
          }
@@ -612,10 +600,9 @@ index c9a8a20f..4096edc1 100644
      }
  
      void UserSession::setCachedProcessId(qint64 pid) {
-diff --git a/src/helper/UserSession.h b/src/helper/UserSession.h
-index 70690847..0ae627d7 100644
---- a/src/helper/UserSession.h
-+++ b/src/helper/UserSession.h
+diff -Naur a/src/helper/UserSession.h b/src/helper/UserSession.h
+--- a/src/helper/UserSession.h	2020-11-02 10:03:22.000000000 +0000
++++ b/src/helper/UserSession.h	2021-05-10 19:28:19.532501837 +0000
 @@ -25,6 +25,7 @@
  #include <QtCore/QObject>
  #include <QtCore/QString>
@@ -624,7 +611,7 @@ index 70690847..0ae627d7 100644
  
  namespace SDDM {
      class HelperApp;
-@@ -59,6 +60,7 @@ namespace SDDM {
+@@ -59,6 +60,7 @@
      private:
          QString m_path { };
          qint64 m_cachedProcessId;
