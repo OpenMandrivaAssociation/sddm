@@ -9,7 +9,7 @@ Release: 6.%{date}.3
 # git archive --format=tar --prefix sddm-0.18.1-$(date +%Y%m%d)/ HEAD | xz -vf > sddm-0.18.1-$(date +%Y%m%d).tar.xz
 Source0: https://github.com/sddm/sddm/archive/develop/%{name}-%{version}-%{date}.tar.gz
 %else
-Release: 8
+Release: 9
 Source0: https://github.com/sddm/sddm/releases/download/v%{version}/%{name}-%{version}.tar.xz
 %endif
 URL: https://github.com/sddm
@@ -127,7 +127,7 @@ sed -i -e 's,\(^background=\).*,\1%{_datadir}/mdk/backgrounds/OpenMandriva-splas
 sed -i -e 's,\(^background=\).*,\1%{_datadir}/mdk/backgrounds/OpenMandriva-splash.png,' %{buildroot}%{_datadir}/sddm/themes/maldives/theme.conf
 
 %pre
-%sysusers_create_package %{name}.conf %{SOURCE6}
+%sysusers_create_package %{name} %{SOURCE6}
 
 %files
 %{_bindir}/%{name}
