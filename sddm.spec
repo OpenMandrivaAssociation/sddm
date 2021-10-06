@@ -9,7 +9,7 @@ Release: 6.%{date}.3
 # git archive --format=tar --prefix sddm-0.18.1-$(date +%Y%m%d)/ HEAD | xz -vf > sddm-0.18.1-$(date +%Y%m%d).tar.xz
 Source0: https://github.com/sddm/sddm/archive/develop/%{name}-%{version}-%{date}.tar.gz
 %else
-Release: 9
+Release: 10
 Source0: https://github.com/sddm/sddm/releases/download/v%{version}/%{name}-%{version}.tar.xz
 %endif
 URL: https://github.com/sddm
@@ -22,13 +22,8 @@ Source3: sddm.pam
 Source4: sddm-autologin.pam
 Source5: tmpfiles-sddm.conf
 Source6: sddm.sysusers
-Source7: sddm.sysconfig
 Patch1: sddm-0.14.0-by-default-use-plasma-session.patch
 Patch2: sddm-0.18.1-add-suport-to-plymouth-smooth-transition.patch
-# (tpg) seems to be broken
-#Patch4: sddm-0.14.0-Log-Xorg-server-output-to-the-journal.patch
-# (tpg) based on this https://github.com/sddm/sddm/pull/525
-#Patch3: sddm-0.14.0-add-support-to-QtAccountsService.patch
 # (tpg) https://github.com/sddm/sddm/pull/817
 Patch6: 0001-Execute-etc-X11-Xsession.patch
 # This patch is IMPORTANT -- don't drop it just because it doesn't apply
@@ -47,6 +42,12 @@ Patch105: 0005-Emit-XorgDisplayServer-started-only-when-the-auth-fi.patch
 Patch106: 0006-Fix-sessions-being-started-as-the-wrong-type-on-auto.patch
 Patch107: 0007-wayland-session-Ensure-SHELL-remains-correctly-set.patch
 Patch108: 0008-Clear-VT-before-switching-to-it.patch
+Patch109: 0009-Error-in-elarun-theme-1336.patch
+Patch110: 0010-Use-avatars-in-FacesDir-first-and-if-not-found-searc.patch
+Patch111: 0011-Fix-warning-from-SDDM-generateName.patch
+Patch112: 0012-Allocate-VT-for-the-display.patch
+Patch113: 0013-sddm-service-is-a-part-of-graphical-target.patch
+Patch114: 0014-Fix-displaying-user-icons.patch
 
 BuildRequires: cmake(ECM)
 BuildRequires: pkgconfig(Qt5Core)
@@ -59,7 +60,8 @@ BuildRequires: pkgconfig(Qt5Test)
 BuildRequires: pkgconfig(libsystemd)
 BuildRequires: pam-devel
 BuildRequires: qt5-linguist-tools
-BuildRequires: systemd-macros
+BuildRequires: systemd-rpm-macros
+
 # For /etc/X11/Xsession
 Requires: xinitrc
 Requires(pre): systemd
@@ -89,14 +91,6 @@ Lightweight display manager (login screen).
 
 sed -i -e 's,system-login,system-auth,g' services/*.pam
 
-%ifarch %{aarch64}
-# As of sddm 0.18.0, clang 7.0.1, building sddm with clang
-# on aarch64 results in the login screen not appearing because
-# of a failing signal/slot connection
-# QObject::connect: signal not found in QDBusPendingCallWatcher
-export CC=gcc
-export CXX=g++
-%endif
 %cmake_kde5 \
     -DUSE_QT5:BOOL=ON \
     -DSESSION_COMMAND:FILEPATH=/etc/X11/Xsession \
@@ -118,7 +112,6 @@ install -Dpm 644 %{SOURCE3} %{buildroot}%{_sysconfdir}/pam.d/sddm
 install -Dpm 644 %{SOURCE4} %{buildroot}%{_sysconfdir}/pam.d/sddm-autologin
 install -Dpm 644 %{SOURCE5} %{buildroot}%{_tmpfilesdir}/sddm.conf
 install -Dpm 644 %{SOURCE6} %{buildroot}%{_sysusersdir}/sddm.conf
-install -Dpm 644 %{SOURCE7} %{buildroot}%{_sysconfdir}/sysconfig/sddm
 
 mkdir -p %{buildroot}%{_localstatedir}/lib/%{name}
 mkdir -p %{buildroot}%{_sysconfdir}/sddm.conf.d
@@ -135,7 +128,6 @@ sed -i -e 's,\(^background=\).*,\1%{_datadir}/mdk/backgrounds/OpenMandriva-splas
 %{_datadir}/%{name}
 %dir %{_sysconfdir}/sddm.conf.d
 %config(noreplace) %{_sysconfdir}/sddm.conf
-%config(noreplace) %{_sysconfdir}/sysconfig/sddm
 %{_sysconfdir}/dbus-1/system.d/org.freedesktop.DisplayManager.conf
 %{_sysconfdir}/pam.d/%{name}
 %{_sysconfdir}/pam.d/%{name}-greeter

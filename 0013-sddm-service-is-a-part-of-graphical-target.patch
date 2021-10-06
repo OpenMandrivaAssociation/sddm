@@ -1,0 +1,22 @@
+From 43a726436fed6ed94d7d3e9afa0ff773bc6cf2b2 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Tomasz=20Pawe=C5=82=20Gajc?= <tpgxyz@gmail.com>
+Date: Tue, 18 May 2021 13:11:56 +0200
+Subject: [PATCH] sddm service is a part of graphical target
+
+---
+ services/sddm.service.in | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff -Naur a/services/sddm.service.in b/services/sddm.service.in
+--- a/services/sddm.service.in	2021-10-06 15:40:25.439682845 +0000
++++ b/services/sddm.service.in	2021-10-06 15:41:09.039498615 +0000
+@@ -4,6 +4,7 @@
+ Conflicts=getty@tty1.service
+ Wants=plymouth-deactivate.service
+ After=systemd-user-sessions.service getty@tty1.service plymouth-deactivate.service plymouth-quit.service systemd-logind.service
++PartOf=graphical.target
+ StartLimitIntervalSec=30
+ StartLimitBurst=2
+ 
+--
+2.33.0

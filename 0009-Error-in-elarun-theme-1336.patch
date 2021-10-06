@@ -1,0 +1,39 @@
+From 191698e315c6469c0c7dad8eef40ee20f3a69e44 Mon Sep 17 00:00:00 2001
+From: mvlvrd <34712036+mvlvrd@users.noreply.github.com>
+Date: Sun, 14 Mar 2021 16:07:38 +0900
+Subject: [PATCH] Error in elarun theme (#1336)
+
+* session_button for the elarun theme is undefined, raising
+this error:
+file:///usr/share/sddm/themes/debian-theme/Main.qml:155: ReferenceError: session_button is not defined
+
+session_button was removed in #521
+---
+ data/themes/elarun/Main.qml | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/data/themes/elarun/Main.qml b/data/themes/elarun/Main.qml
+index 365c4f1..0408b82 100644
+--- a/data/themes/elarun/Main.qml
++++ b/data/themes/elarun/Main.qml
+@@ -152,7 +152,7 @@ Rectangle {
+ 
+                     onClicked: sddm.login(user_entry.text, pw_entry.text, sessionIndex)
+ 
+-                    KeyNavigation.backtab: pw_entry; KeyNavigation.tab: session_button
++		    KeyNavigation.backtab: pw_entry; KeyNavigation.tab: session
+                 }
+ 
+                 Item {
+@@ -172,7 +172,7 @@ Rectangle {
+                             source: "images/system_shutdown.png"
+                             onClicked: sddm.powerOff()
+ 
+-                            KeyNavigation.backtab: session_button; KeyNavigation.tab: reboot_button
++			    KeyNavigation.backtab: session; KeyNavigation.tab: reboot_button
+                         }
+ 
+                         ImageButton {
+-- 
+2.33.0
+
