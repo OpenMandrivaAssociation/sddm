@@ -9,7 +9,7 @@ Release: 6.%{date}.3
 # git archive --format=tar --prefix sddm-0.18.1-$(date +%Y%m%d)/ HEAD | xz -vf > sddm-0.18.1-$(date +%Y%m%d).tar.xz
 Source0: https://github.com/sddm/sddm/archive/develop/%{name}-%{version}-%{date}.tar.gz
 %else
-Release: 10
+Release: 11
 Source0: https://github.com/sddm/sddm/releases/download/v%{version}/%{name}-%{version}.tar.xz
 %endif
 URL: https://github.com/sddm
@@ -23,7 +23,6 @@ Source4: sddm-autologin.pam
 Source5: tmpfiles-sddm.conf
 Source6: sddm.sysusers
 Patch1: sddm-0.14.0-by-default-use-plasma-session.patch
-Patch2: sddm-0.18.1-add-suport-to-plymouth-smooth-transition.patch
 # (tpg) https://github.com/sddm/sddm/pull/817
 Patch6: 0001-Execute-etc-X11-Xsession.patch
 # This patch is IMPORTANT -- don't drop it just because it doesn't apply
@@ -96,7 +95,6 @@ sed -i -e 's,system-login,system-auth,g' services/*.pam
     -DSESSION_COMMAND:FILEPATH=/etc/X11/Xsession \
     -DENABLE_JOURNALD=ON \
     -DENABLE_PAM=ON \
-    -DENABLE_PLYMOUTH=ON \
     -DUID_MIN="1000" \
     -DUID_MAX="60000"
 
