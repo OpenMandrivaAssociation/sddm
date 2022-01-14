@@ -1,13 +1,13 @@
-%define date 0
+%define date 20220114
 
 Name: sddm
 Summary: Lightweight display manager
 Version: 0.19.0
 %if %{date}
-Release: 6.%{date}.3
+Release: 11.%{date}.1
 # Packaged from git for the time being -- no download URL available
 # git archive --format=tar --prefix sddm-0.18.1-$(date +%Y%m%d)/ HEAD | xz -vf > sddm-0.18.1-$(date +%Y%m%d).tar.xz
-Source0: https://github.com/sddm/sddm/archive/develop/%{name}-%{version}-%{date}.tar.gz
+Source0: https://github.com/sddm/sddm/archive/develop/%{name}-%{version}-%{date}.tar.xz
 %else
 Release: 11
 Source0: https://github.com/sddm/sddm/releases/download/v%{version}/%{name}-%{version}.tar.xz
@@ -23,30 +23,6 @@ Source4: sddm-autologin.pam
 Source5: tmpfiles-sddm.conf
 Source6: sddm.sysusers
 Patch1: sddm-0.14.0-by-default-use-plasma-session.patch
-# (tpg) https://github.com/sddm/sddm/pull/817
-Patch6: 0001-Execute-etc-X11-Xsession.patch
-# This patch is IMPORTANT -- don't drop it just because it doesn't apply
-# anymore!!!
-# https://github.com/sddm/sddm/issues/733
-# https://github.com/sddm/sddm/pull/1230
-Patch7: https://github.com/sddm/sddm/pull/1230.patch
-
-# (tpg) patches from upstream git
-Patch100: 0000-Improve-font-config-deserialization.patch
-Patch101: 0001-Only-use-the-base-name-for-DESKTOP_SESSION.patch
-Patch102: 0002-Merge-normal-and-testing-paths-in-XorgDisplayServer-.patch
-Patch103: 0003-Retry-starting-the-display-server.patch
-Patch104: 0004-Explicitly-stop-Xorg-when-starting-fails.patch
-Patch105: 0005-Emit-XorgDisplayServer-started-only-when-the-auth-fi.patch
-Patch106: 0006-Fix-sessions-being-started-as-the-wrong-type-on-auto.patch
-Patch107: 0007-wayland-session-Ensure-SHELL-remains-correctly-set.patch
-Patch108: 0008-Clear-VT-before-switching-to-it.patch
-Patch109: 0009-Error-in-elarun-theme-1336.patch
-Patch110: 0010-Use-avatars-in-FacesDir-first-and-if-not-found-searc.patch
-Patch111: 0011-Fix-warning-from-SDDM-generateName.patch
-Patch112: 0012-Allocate-VT-for-the-display.patch
-Patch113: 0013-sddm-service-is-a-part-of-graphical-target.patch
-Patch114: 0014-Fix-displaying-user-icons.patch
 
 BuildRequires: cmake(ECM)
 BuildRequires: pkgconfig(Qt5Core)
@@ -61,6 +37,9 @@ BuildRequires: pam-devel
 BuildRequires: qt5-linguist-tools
 BuildRequires: systemd-rpm-macros
 
+# Wayland is default DisplayServer
+Requires: weston
+Requires: %{_lib}qt5-output-driver-eglfs
 # For /etc/X11/Xsession
 Requires: xinitrc
 Requires(pre): systemd
@@ -83,7 +62,7 @@ Lightweight display manager (login screen).
 
 %prep
 %if %{date}
-%autosetup -n %{name}-develop -p1
+%autosetup -n %{name}-%{version}-%{date} -p1
 %else
 %autosetup -p1
 %endif
@@ -132,7 +111,7 @@ sed -i -e 's,\(^background=\).*,\1%{_datadir}/mdk/backgrounds/OpenMandriva-splas
 %{_sysconfdir}/pam.d/%{name}-autologin
 %{_sysusersdir}/sddm.conf
 %{_tmpfilesdir}/sddm.conf
-%{_libexecdir}/sddm-helper
+%{_libexecdir}/sddm-helper*
 %{_unitdir}/%{name}.service
 %{_libdir}/qt5/qml/SddmComponents
 %{_datadir}/X11/dm.d/11sddm.conf
