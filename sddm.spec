@@ -1,12 +1,12 @@
-%define date 20220114
+%define date 20220211
 
 Name: sddm
 Summary: Lightweight display manager
 Version: 0.19.0
 %if %{date}
-Release: 11.%{date}.1
+Release: 12.%{date}.1
 # Packaged from git for the time being -- no download URL available
-# git archive --format=tar --prefix sddm-0.18.1-$(date +%Y%m%d)/ HEAD | xz -vf > sddm-0.18.1-$(date +%Y%m%d).tar.xz
+# git archive --format=tar --prefix sddm-0.19.0-$(date +%Y%m%d)/ HEAD | xz -vf > sddm-0.19.0-$(date +%Y%m%d).tar.xz
 Source0: https://github.com/sddm/sddm/archive/develop/%{name}-%{version}-%{date}.tar.xz
 %else
 Release: 11
@@ -16,14 +16,16 @@ URL: https://github.com/sddm
 Group: Graphical desktop/KDE
 License: GPLv2
 # Adds sddm to drakedm
-Source1: 11sddm.conf
 Source2: sddm.conf
 Source3: sddm.pam
 Source4: sddm-autologin.pam
 Source5: tmpfiles-sddm.conf
 Source6: sddm.sysusers
 Patch1: sddm-0.14.0-by-default-use-plasma-session.patch
-
+Patch2: https://patch-diff.githubusercontent.com/raw/sddm/sddm/pull/1489.patch
+Patch3: https://patch-diff.githubusercontent.com/raw/sddm/sddm/pull/1494.patch
+Patch4: https://patch-diff.githubusercontent.com/raw/sddm/sddm/pull/1506.patch
+Patch5: https://patch-diff.githubusercontent.com/raw/sddm/sddm/pull/1511.patch
 BuildRequires: cmake(ECM)
 BuildRequires: pkgconfig(Qt5Core)
 BuildRequires: pkgconfig(Qt5Gui)
@@ -41,7 +43,7 @@ BuildRequires: systemd-rpm-macros
 Requires: weston
 Requires: %{_lib}qt5-output-driver-eglfs
 # For /etc/X11/Xsession
-Requires: xinitrc
+Suggests: xinitrc
 Requires(pre): systemd
 %systemd_requires
 # needed to get xcb plugin on Qt platform
@@ -70,10 +72,7 @@ Lightweight display manager (login screen).
 sed -i -e 's,system-login,system-auth,g' services/*.pam
 
 %cmake_kde5 \
-    -DUSE_QT5:BOOL=ON \
-    -DSESSION_COMMAND:FILEPATH=/etc/X11/Xsession \
-    -DENABLE_JOURNALD=ON \
-    -DENABLE_PAM=ON \
+    -DSESSION_COMMAND:PATH=%{_datadir}/X11/xdm/Xsession \
     -DUID_MIN="1000" \
     -DUID_MAX="60000"
 
@@ -83,13 +82,13 @@ sed -i -e 's,system-login,system-auth,g' services/*.pam
 %install
 %ninja_install -C build
 
-install -Dpm 644 %{SOURCE1} %{buildroot}%{_datadir}/X11/dm.d/11sddm.conf
 install -Dpm 644 %{SOURCE2} %{buildroot}%{_sysconfdir}/sddm.conf
 install -Dpm 644 %{SOURCE3} %{buildroot}%{_sysconfdir}/pam.d/sddm
 install -Dpm 644 %{SOURCE4} %{buildroot}%{_sysconfdir}/pam.d/sddm-autologin
 install -Dpm 644 %{SOURCE5} %{buildroot}%{_tmpfilesdir}/sddm.conf
 install -Dpm 644 %{SOURCE6} %{buildroot}%{_sysusersdir}/sddm.conf
 
+mkdir -p %{buildroot}/run/%{name}
 mkdir -p %{buildroot}%{_localstatedir}/lib/%{name}
 mkdir -p %{buildroot}%{_sysconfdir}/sddm.conf.d
 # use omv-background.png as sddm background for all themes
@@ -98,6 +97,15 @@ sed -i -e 's,\(^background=\).*,\1%{_datadir}/mdk/backgrounds/OpenMandriva-splas
 
 %pre
 %sysusers_create_package %{name} %{SOURCE6}
+
+%post
+%systemd_post %{name}.service
+
+%preun
+%systemd_preun %{name}.service
+
+%postun
+%systemd_postun %{name}.service
 
 %files
 %{_bindir}/%{name}
@@ -114,5 +122,5 @@ sed -i -e 's,\(^background=\).*,\1%{_datadir}/mdk/backgrounds/OpenMandriva-splas
 %{_libexecdir}/sddm-helper*
 %{_unitdir}/%{name}.service
 %{_libdir}/qt5/qml/SddmComponents
-%{_datadir}/X11/dm.d/11sddm.conf
-%attr(0755,sddm,sddm) %{_localstatedir}/lib/%{name}
+%attr(0711,root,sddm) %dir /run/sddm
+%attr(1770,sddm,sddm) %dir %{_localstatedir}/lib/%{name}

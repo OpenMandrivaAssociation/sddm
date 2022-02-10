@@ -1,0 +1,254 @@
+From 8ddf7e64be7b68471a43009929163fa238fcb980 Mon Sep 17 00:00:00 2001
+From: Aleksei Bavshin <alebastr89@gmail.com>
+Date: Wed, 2 Feb 2022 23:08:59 -0800
+Subject: [PATCH 1/3] WaylandHelper: support non-default display names
+
+Weston v10[1] and some wlroots-based compositors[2][3] decided to stop
+using `wayland-0`.
+Extend WaylandSocketWatcher to look for any socket matching the
+`wayland-?` pattern and pass the `WAYLAND_DISPLAY` to the greeter.
+
+[1]: https://gitlab.freedesktop.org/wayland/weston/-/merge_requests/486
+[2]: https://github.com/swaywm/sway/commit/65a751a21f61b30808b7e703257c6ca3b71f50eb
+[3]: https://github.com/WayfireWM/wayfire/commit/4ee4f3f259be00fd9a3c26960e8fce91ec526290
+---
+ src/helper/waylandhelper.cpp        |  5 ++++-
+ src/helper/waylandsocketwatcher.cpp | 19 ++++++++++++-------
+ src/helper/waylandsocketwatcher.h   |  5 +++--
+ 3 files changed, 19 insertions(+), 10 deletions(-)
+
+diff --git a/src/helper/waylandhelper.cpp b/src/helper/waylandhelper.cpp
+index 64640d83..c808e9bf 100644
+--- a/src/helper/waylandhelper.cpp
++++ b/src/helper/waylandhelper.cpp
+@@ -117,7 +117,6 @@ void WaylandHelper::startGreeter(const QString &cmd)
+     m_greeterProcess = new QProcess(this);
+     m_greeterProcess->setProgram(args.takeFirst());
+     m_greeterProcess->setArguments(args);
+-    m_greeterProcess->setProcessEnvironment(m_environment);
+     connect(m_greeterProcess, &QProcess::readyReadStandardError, this, [this] {
+         qWarning() << m_greeterProcess->readAllStandardError();
+     });
+@@ -126,6 +125,8 @@ void WaylandHelper::startGreeter(const QString &cmd)
+     });
+ 
+     if (m_watcher->status() == WaylandSocketWatcher::Started) {
++        m_environment.insert(QStringLiteral("WAYLAND_DISPLAY"), m_watcher->socketName());
++        m_greeterProcess->setProcessEnvironment(m_environment);
+         m_greeterProcess->start();
+     } else if (m_watcher->status() == WaylandSocketWatcher::Failed) {
+         Q_EMIT failed();
+@@ -133,6 +134,8 @@ void WaylandHelper::startGreeter(const QString &cmd)
+         connect(m_watcher, &WaylandSocketWatcher::failed, this, &WaylandHelper::failed);
+         connect(m_watcher, &WaylandSocketWatcher::started, this, [this] {
+             m_watcher->stop();
++            m_environment.insert(QStringLiteral("WAYLAND_DISPLAY"), m_watcher->socketName());
++            m_greeterProcess->setProcessEnvironment(m_environment);
+             m_greeterProcess->start();
+         });
+     }
+diff --git a/src/helper/waylandsocketwatcher.cpp b/src/helper/waylandsocketwatcher.cpp
+index 31669093..77ecae22 100644
+--- a/src/helper/waylandsocketwatcher.cpp
++++ b/src/helper/waylandsocketwatcher.cpp
+@@ -28,8 +28,10 @@ namespace SDDM {
+ WaylandSocketWatcher::WaylandSocketWatcher(QObject *parent )
+     : QObject(parent)
+     , m_runtimeDir(QDir(QStandardPaths::writableLocation(QStandardPaths::RuntimeLocation)))
+-    , m_socketPath(m_runtimeDir.absoluteFilePath(QLatin1String("wayland-0")))
++    , m_socketPattern(QLatin1String("wayland-?"))
+ {
++    m_runtimeDir.setFilter(QDir::Files | QDir::System);
++    m_runtimeDir.setNameFilters(QStringList() << m_socketPattern);
+ }
+ 
+ WaylandSocketWatcher::Status WaylandSocketWatcher::status() const
+@@ -37,9 +39,9 @@ WaylandSocketWatcher::Status WaylandSocketWatcher::status() const
+     return m_status;
+ }
+ 
+-QString WaylandSocketWatcher::socketPath() const
++QString WaylandSocketWatcher::socketName() const
+ {
+-    return m_socketPath;
++    return m_socketName;
+ }
+ 
+ void WaylandSocketWatcher::start()
+@@ -54,7 +56,7 @@ void WaylandSocketWatcher::start()
+         if (!m_watcher.isNull())
+             m_watcher->deleteLater();
+         qWarning("Wayland socket watcher for \"%s\" timed out",
+-                 qPrintable(m_socketPath));
++                 qPrintable(m_socketPattern));
+         m_status = Failed;
+         Q_EMIT failed();
+     });
+@@ -62,12 +64,15 @@ void WaylandSocketWatcher::start()
+     // Check if the socket exists
+     connect(m_watcher, &QFileSystemWatcher::directoryChanged, this,
+             [this](const QString &path) {
+-        qDebug() << "Directory" << path << "has changed, checking for" << m_socketPath;
++        qDebug() << "Directory" << path << "has changed, checking for" << m_socketPattern;
+ 
+-        if (QFile::exists(m_socketPath)) {
++        m_runtimeDir.refresh();
++        QStringList files = m_runtimeDir.entryList();
++        if (!files.empty()) {
+             m_timer.stop();
+             if (!m_watcher.isNull())
+                 m_watcher->deleteLater();
++            m_socketName = files.first();
+             m_status = Started;
+             Q_EMIT started();
+         }
+@@ -77,7 +82,7 @@ void WaylandSocketWatcher::start()
+     if (!m_runtimeDir.exists() || !m_watcher->addPath(m_runtimeDir.absolutePath())) {
+         qWarning("Cannot watch directory \"%s\" for Wayland socket \"%s\"",
+                  qPrintable(m_runtimeDir.absolutePath()),
+-                 qPrintable(m_socketPath));
++                 qPrintable(m_socketPattern));
+         m_watcher->deleteLater();
+         m_status = Failed;
+         Q_EMIT failed();
+diff --git a/src/helper/waylandsocketwatcher.h b/src/helper/waylandsocketwatcher.h
+index dfc5d214..a96e39a0 100644
+--- a/src/helper/waylandsocketwatcher.h
++++ b/src/helper/waylandsocketwatcher.h
+@@ -41,7 +41,7 @@ class WaylandSocketWatcher : public QObject
+     explicit WaylandSocketWatcher(QObject *parent = nullptr);
+ 
+     Status status() const;
+-    QString socketPath() const;
++    QString socketName() const;
+ 
+     void start();
+     void stop();
+@@ -54,7 +54,8 @@ class WaylandSocketWatcher : public QObject
+ private:
+     Status m_status = Stopped;
+     QDir m_runtimeDir;
+-    QString m_socketPath;
++    QString m_socketName;
++    QString m_socketPattern;
+     QTimer m_timer;
+     QPointer<QFileSystemWatcher> m_watcher;
+ };
+
+From 5727854190f026596f6f07a55b8afb1127abbd97 Mon Sep 17 00:00:00 2001
+From: Aleksei Bavshin <alebastr89@gmail.com>
+Date: Thu, 3 Feb 2022 07:46:00 -0800
+Subject: [PATCH 2/3] WaylandHelper: drop m_socketPattern and simplify logs
+
+---
+ src/helper/waylandsocketwatcher.cpp | 13 +++++--------
+ src/helper/waylandsocketwatcher.h   |  1 -
+ 2 files changed, 5 insertions(+), 9 deletions(-)
+
+diff --git a/src/helper/waylandsocketwatcher.cpp b/src/helper/waylandsocketwatcher.cpp
+index 77ecae22..01895fbc 100644
+--- a/src/helper/waylandsocketwatcher.cpp
++++ b/src/helper/waylandsocketwatcher.cpp
+@@ -28,10 +28,9 @@ namespace SDDM {
+ WaylandSocketWatcher::WaylandSocketWatcher(QObject *parent )
+     : QObject(parent)
+     , m_runtimeDir(QDir(QStandardPaths::writableLocation(QStandardPaths::RuntimeLocation)))
+-    , m_socketPattern(QLatin1String("wayland-?"))
+ {
+     m_runtimeDir.setFilter(QDir::Files | QDir::System);
+-    m_runtimeDir.setNameFilters(QStringList() << m_socketPattern);
++    m_runtimeDir.setNameFilters(QStringList() << QLatin1String("wayland-?"));
+ }
+ 
+ WaylandSocketWatcher::Status WaylandSocketWatcher::status() const
+@@ -55,8 +54,7 @@ void WaylandSocketWatcher::start()
+         // Time is up and a socket was not found
+         if (!m_watcher.isNull())
+             m_watcher->deleteLater();
+-        qWarning("Wayland socket watcher for \"%s\" timed out",
+-                 qPrintable(m_socketPattern));
++        qWarning("Wayland socket watcher timed out");
+         m_status = Failed;
+         Q_EMIT failed();
+     });
+@@ -64,7 +62,7 @@ void WaylandSocketWatcher::start()
+     // Check if the socket exists
+     connect(m_watcher, &QFileSystemWatcher::directoryChanged, this,
+             [this](const QString &path) {
+-        qDebug() << "Directory" << path << "has changed, checking for" << m_socketPattern;
++        qDebug() << "Directory" << path << "has changed, checking for Wayland socket";
+ 
+         m_runtimeDir.refresh();
+         QStringList files = m_runtimeDir.entryList();
+@@ -80,9 +78,8 @@ void WaylandSocketWatcher::start()
+ 
+     // Watch for runtime directory changes
+     if (!m_runtimeDir.exists() || !m_watcher->addPath(m_runtimeDir.absolutePath())) {
+-        qWarning("Cannot watch directory \"%s\" for Wayland socket \"%s\"",
+-                 qPrintable(m_runtimeDir.absolutePath()),
+-                 qPrintable(m_socketPattern));
++        qWarning("Cannot watch directory \"%s\" for Wayland socket",
++                 qPrintable(m_runtimeDir.absolutePath()));
+         m_watcher->deleteLater();
+         m_status = Failed;
+         Q_EMIT failed();
+diff --git a/src/helper/waylandsocketwatcher.h b/src/helper/waylandsocketwatcher.h
+index a96e39a0..0032c186 100644
+--- a/src/helper/waylandsocketwatcher.h
++++ b/src/helper/waylandsocketwatcher.h
+@@ -55,7 +55,6 @@ class WaylandSocketWatcher : public QObject
+     Status m_status = Stopped;
+     QDir m_runtimeDir;
+     QString m_socketName;
+-    QString m_socketPattern;
+     QTimer m_timer;
+     QPointer<QFileSystemWatcher> m_watcher;
+ };
+
+From 470192fcb10a6e125d46baa75efb2b4c2c299bea Mon Sep 17 00:00:00 2001
+From: Aleksei Bavshin <alebastr89@gmail.com>
+Date: Thu, 3 Feb 2022 07:53:26 -0800
+Subject: [PATCH 3/3] WaylandHelper: check socket owner
+
+---
+ src/helper/waylandsocketwatcher.cpp | 20 ++++++++++++--------
+ 1 file changed, 12 insertions(+), 8 deletions(-)
+
+diff --git a/src/helper/waylandsocketwatcher.cpp b/src/helper/waylandsocketwatcher.cpp
+index 01895fbc..6d67db3e 100644
+--- a/src/helper/waylandsocketwatcher.cpp
++++ b/src/helper/waylandsocketwatcher.cpp
+@@ -18,6 +18,7 @@
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ ***************************************************************************/
+ 
++#include <unistd.h>
+ #include <QDebug>
+ #include <QStandardPaths>
+ 
+@@ -65,14 +66,17 @@ void WaylandSocketWatcher::start()
+         qDebug() << "Directory" << path << "has changed, checking for Wayland socket";
+ 
+         m_runtimeDir.refresh();
+-        QStringList files = m_runtimeDir.entryList();
+-        if (!files.empty()) {
+-            m_timer.stop();
+-            if (!m_watcher.isNull())
+-                m_watcher->deleteLater();
+-            m_socketName = files.first();
+-            m_status = Started;
+-            Q_EMIT started();
++        const QFileInfoList fileInfoList = m_runtimeDir.entryInfoList();
++        for (const QFileInfo &fileInfo : fileInfoList) {
++            if (fileInfo.ownerId() == ::getuid()) {
++                m_timer.stop();
++                if (!m_watcher.isNull())
++                    m_watcher->deleteLater();
++                m_socketName = fileInfo.fileName();
++                m_status = Started;
++                Q_EMIT started();
++                break;
++            }
+         }
+     });
+ 
