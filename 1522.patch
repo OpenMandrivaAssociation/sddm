@@ -1,0 +1,108 @@
+From a5354bf59fd96b613953885064bf5ffb1b9d1336 Mon Sep 17 00:00:00 2001
+From: Aleix Pol <aleixpol@kde.org>
+Date: Tue, 1 Mar 2022 04:31:09 +0100
+Subject: [PATCH 1/3] Terminate wayland sessions
+
+---
+ src/helper/waylandhelper.cpp | 8 ++++++--
+ 1 file changed, 6 insertions(+), 2 deletions(-)
+
+diff --git a/src/helper/waylandhelper.cpp b/src/helper/waylandhelper.cpp
+index 64640d83..83dfbc42 100644
+--- a/src/helper/waylandhelper.cpp
++++ b/src/helper/waylandhelper.cpp
+@@ -57,7 +57,7 @@ bool WaylandHelper::startCompositor(const QString &cmd)
+ 
+ void stopProcess(QProcess *process)
+ {
+-    if (process) {
++    if (process && process->state() != QProcess::NotRunning) {
+         qInfo() << "Stopping..." << process->program();
+         process->terminate();
+         if (!process->waitForFinished(5000))
+@@ -124,7 +124,11 @@ void WaylandHelper::startGreeter(const QString &cmd)
+     connect(m_greeterProcess, &QProcess::readyReadStandardOutput, this, [this] {
+         qInfo() << m_greeterProcess->readAllStandardOutput();
+     });
+-
++    connect(m_greeterProcess, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
++            m_greeterProcess, [](int exitCode, QProcess::ExitStatus exitStatus) {
++        qDebug() << "wayland greeter finished" << exitCode << exitStatus;
++        QCoreApplication::instance()->quit();
++    });
+     if (m_watcher->status() == WaylandSocketWatcher::Started) {
+         m_greeterProcess->start();
+     } else if (m_watcher->status() == WaylandSocketWatcher::Failed) {
+
+From acfd780c25753cf785377353297ed2d35046a886 Mon Sep 17 00:00:00 2001
+From: Aleix Pol <aleixpol@kde.org>
+Date: Wed, 2 Mar 2022 01:57:43 +0100
+Subject: [PATCH 2/3] Revert "HelperApp: Ensure the session gets terminated
+ together with the helper app"
+
+This reverts commit e66b03bfaaa412c7716ad5f3a57bfdef181f3dc5.
+---
+ src/helper/HelperApp.cpp | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/src/helper/HelperApp.cpp b/src/helper/HelperApp.cpp
+index a05d7ed1..3eac6178 100644
+--- a/src/helper/HelperApp.cpp
++++ b/src/helper/HelperApp.cpp
+@@ -53,8 +53,7 @@ namespace SDDM {
+             , m_socket(new QLocalSocket(this)) {
+         qInstallMessageHandler(HelperMessageHandler);
+         SignalHandler *s = new SignalHandler(this);
+-        QObject::connect(s, &SignalHandler::sigtermReceived, m_session, [this] {
+-            m_session->stop();
++        QObject::connect(s, &SignalHandler::sigtermReceived, m_session, [] {
+             QCoreApplication::instance()->exit(-1);
+         });
+ 
+
+From c5932ec5b67a768e8bef6e32043324041fbeb80b Mon Sep 17 00:00:00 2001
+From: Aleix Pol <aleixpol@kde.org>
+Date: Tue, 1 Mar 2022 03:53:26 +0100
+Subject: [PATCH 3/3] VirtualTerminal: Only offer v_active when it's not in use
+ by others
+
+---
+ src/common/VirtualTerminal.cpp | 19 ++++++++++++++-----
+ 1 file changed, 14 insertions(+), 5 deletions(-)
+
+diff --git a/src/common/VirtualTerminal.cpp b/src/common/VirtualTerminal.cpp
+index 386bfdc4..e9c8784c 100644
+--- a/src/common/VirtualTerminal.cpp
++++ b/src/common/VirtualTerminal.cpp
+@@ -127,17 +127,26 @@ namespace SDDM {
+                 close(fd);
+             });
+ 
+-            vt_stat vtState = { 0 };
+-            if (ioctl(fd, VT_GETSTATE, &vtState) < 0) {
+-                qCritical() << "Failed to get current VT:" << strerror(errno);
+-
++            auto requestNewVt = [] (int fd) {
+                 int vt = 0;
+-                // If there's no current tty, request the next to open
+                 if (ioctl(fd, VT_OPENQRY, &vt) < 0) {
+                     qCritical() << "Failed to open new VT:" << strerror(errno);
+                     return -1;
+                 }
+                 return vt;
++            };
++
++            vt_stat vtState = { 0 };
++            if (ioctl(fd, VT_GETSTATE, &vtState) < 0) {
++                qCritical() << "Failed to get current VT:" << strerror(errno);
++
++                // If there's no current tty, request the next to open
++                return requestNewVt(fd);
++            }
++
++            // If the active vt is already taken, find a new one
++            if (1 << vtState.v_active & vtState.v_state) {
++                return requestNewVt(fd);
+             }
+             return vtState.v_active;
+         }

@@ -1,0 +1,25 @@
+From 38eb9a807a79aeb365b48e7ec1323fdd885d1f58 Mon Sep 17 00:00:00 2001
+From: Aleix Pol <aleixpol@kde.org>
+Date: Fri, 4 Mar 2022 18:28:36 +0100
+Subject: [PATCH] MessageHandler: Also use journald if the process is run by
+ sddm
+
+This way we don't end up in the awkward position of having to fish for
+the logs somewhere in /var
+---
+ src/common/MessageHandler.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/common/MessageHandler.h b/src/common/MessageHandler.h
+index 47ab0af0..db6c5387 100644
+--- a/src/common/MessageHandler.h
++++ b/src/common/MessageHandler.h
+@@ -126,7 +126,7 @@ namespace SDDM {
+ #ifdef HAVE_JOURNALD
+         // don't log to journald if running interactively, this is likely
+         // the case when running sddm in test mode
+-        static bool isInteractive = isatty(STDIN_FILENO);
++        static bool isInteractive = isatty(STDIN_FILENO) && qgetenv("USER") != "sddm";
+         if (!isInteractive) {
+             // log to journald
+             journaldLogger(type, context, logMessage);
