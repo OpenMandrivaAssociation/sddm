@@ -9,7 +9,7 @@ Release: 12.%{date}.1
 # git archive --format=tar --prefix sddm-0.19.0-$(date +%Y%m%d)/ HEAD | xz -vf > sddm-0.19.0-$(date +%Y%m%d).tar.xz
 Source0: https://github.com/sddm/sddm/archive/develop/%{name}-%{version}-%{date}.tar.xz
 %else
-Release: 11
+Release: 1
 Source0: https://github.com/sddm/sddm/releases/download/v%{version}/%{name}-%{version}.tar.xz
 %endif
 URL: https://github.com/sddm
@@ -39,26 +39,23 @@ BuildRequires: pkgconfig(libsystemd)
 BuildRequires: pam-devel
 BuildRequires: qt5-linguist-tools
 BuildRequires: systemd-rpm-macros
-
-# Wayland is default DisplayServer
-Requires: weston
-Requires: %{_lib}qt5-output-driver-eglfs
-# For /etc/X11/Xsession
-Suggests: xinitrc
 Requires(pre): systemd
 %systemd_requires
-# needed to get xcb plugin on Qt platform
-Requires: %{_lib}qt5-output-driver-default
 # needed for QtQuick
 Requires: qt5-qtdeclarative
 Requires: qt5-qtimageformats
-%ifnarch %{armx} %{riscv}
-Requires: distro-theme-OpenMandriva >= 1.4.37
+Requires: distro-release-theme
+%if %omvver >= 4050000
+# Wayland is default DisplayServer
+Requires: weston
+Requires: %{_lib}qt5-output-driver-eglfs
+%else
+# needed to get xcb plugin on Qt platform
+Requires: %{_lib}qt5-output-driver-default
+# For /etc/X11/Xsession
+Requires: xinitrc
 %endif
 Provides: dm
-# (tpg) fix update from 2014.0
-Provides: kdm = 2:4.11.22-1.1
-Obsoletes: kdm < 2:4.11.22-1.1
 
 %description
 Lightweight display manager (login screen).
@@ -73,7 +70,9 @@ Lightweight display manager (login screen).
 sed -i -e 's,system-login,system-auth,g' services/*.pam
 
 %cmake_kde5 \
+%if %omvver < 4050000
     -DSESSION_COMMAND:PATH=%{_datadir}/X11/xdm/Xsession \
+%endif
     -DUID_MIN="1000" \
     -DUID_MAX="60000"
 
@@ -96,6 +95,10 @@ mkdir -p %{buildroot}%{_sysconfdir}/sddm.conf.d
 sed -i -e 's,\(^background=\).*,\1%{_datadir}/mdk/backgrounds/OpenMandriva-splash.png,' %{buildroot}%{_datadir}/sddm/themes/elarun/theme.conf
 sed -i -e 's,\(^background=\).*,\1%{_datadir}/mdk/backgrounds/OpenMandriva-splash.png,' %{buildroot}%{_datadir}/sddm/themes/maldives/theme.conf
 
+%if %omvver < 4050000
+sed -i -e 's/DisplayServer=.*/DisplayServer=x11-user/g' %{buildroot}%{_sysconfdir}/sddm.conf
+%endif
+
 %pre
 %sysusers_create_package %{name} %{SOURCE6}
 
@@ -113,7 +116,7 @@ sed -i -e 's,\(^background=\).*,\1%{_datadir}/mdk/backgrounds/OpenMandriva-splas
 %{_bindir}/%{name}-greeter
 %{_datadir}/%{name}
 %dir %{_sysconfdir}/sddm.conf.d
-%config(noreplace) %{_sysconfdir}/sddm.conf
+%{_sysconfdir}/sddm.conf
 %{_sysconfdir}/dbus-1/system.d/org.freedesktop.DisplayManager.conf
 %{_sysconfdir}/pam.d/%{name}
 %{_sysconfdir}/pam.d/%{name}-greeter
