@@ -1,2 +1,2 @@
 g sddm - -
-u sddm - "Simple display manager" /var/lib/sddm /bin/false
+u sddm - "Simple display manager" /var/lib/sddm
