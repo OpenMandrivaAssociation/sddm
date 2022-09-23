@@ -1,4 +1,4 @@
-From 8ddf7e64be7b68471a43009929163fa238fcb980 Mon Sep 17 00:00:00 2001
+From 90a3c5b86521249f04374f186a24243b41bdba39 Mon Sep 17 00:00:00 2001
 From: Aleksei Bavshin <alebastr89@gmail.com>
 Date: Wed, 2 Feb 2022 23:08:59 -0800
 Subject: [PATCH 1/3] WaylandHelper: support non-default display names
@@ -18,10 +18,10 @@ Extend WaylandSocketWatcher to look for any socket matching the
  3 files changed, 19 insertions(+), 10 deletions(-)
 
 diff --git a/src/helper/waylandhelper.cpp b/src/helper/waylandhelper.cpp
-index 64640d83..c808e9bf 100644
+index 39952cb99..66d6b0796 100644
 --- a/src/helper/waylandhelper.cpp
 +++ b/src/helper/waylandhelper.cpp
-@@ -117,7 +117,6 @@ void WaylandHelper::startGreeter(const QString &cmd)
+@@ -119,7 +119,6 @@ void WaylandHelper::startGreeter(const QString &cmd)
      m_greeterProcess = new QProcess(this);
      m_greeterProcess->setProgram(args.takeFirst());
      m_greeterProcess->setArguments(args);
@@ -29,16 +29,16 @@ index 64640d83..c808e9bf 100644
      connect(m_greeterProcess, &QProcess::readyReadStandardError, this, [this] {
          qWarning() << m_greeterProcess->readAllStandardError();
      });
-@@ -126,6 +125,8 @@ void WaylandHelper::startGreeter(const QString &cmd)
+@@ -132,6 +131,8 @@ void WaylandHelper::startGreeter(const QString &cmd)
+         QCoreApplication::instance()->quit();
      });
- 
      if (m_watcher->status() == WaylandSocketWatcher::Started) {
 +        m_environment.insert(QStringLiteral("WAYLAND_DISPLAY"), m_watcher->socketName());
 +        m_greeterProcess->setProcessEnvironment(m_environment);
          m_greeterProcess->start();
      } else if (m_watcher->status() == WaylandSocketWatcher::Failed) {
          Q_EMIT failed();
-@@ -133,6 +134,8 @@ void WaylandHelper::startGreeter(const QString &cmd)
+@@ -139,6 +140,8 @@ void WaylandHelper::startGreeter(const QString &cmd)
          connect(m_watcher, &WaylandSocketWatcher::failed, this, &WaylandHelper::failed);
          connect(m_watcher, &WaylandSocketWatcher::started, this, [this] {
              m_watcher->stop();
@@ -48,7 +48,7 @@ index 64640d83..c808e9bf 100644
          });
      }
 diff --git a/src/helper/waylandsocketwatcher.cpp b/src/helper/waylandsocketwatcher.cpp
-index 31669093..77ecae22 100644
+index 316690935..77ecae22e 100644
 --- a/src/helper/waylandsocketwatcher.cpp
 +++ b/src/helper/waylandsocketwatcher.cpp
 @@ -28,8 +28,10 @@ namespace SDDM {
@@ -112,7 +112,7 @@ index 31669093..77ecae22 100644
          m_status = Failed;
          Q_EMIT failed();
 diff --git a/src/helper/waylandsocketwatcher.h b/src/helper/waylandsocketwatcher.h
-index dfc5d214..a96e39a0 100644
+index dfc5d214a..a96e39a08 100644
 --- a/src/helper/waylandsocketwatcher.h
 +++ b/src/helper/waylandsocketwatcher.h
 @@ -41,7 +41,7 @@ class WaylandSocketWatcher : public QObject
@@ -135,7 +135,7 @@ index dfc5d214..a96e39a0 100644
      QPointer<QFileSystemWatcher> m_watcher;
  };
 
-From 5727854190f026596f6f07a55b8afb1127abbd97 Mon Sep 17 00:00:00 2001
+From 4cde682fbd0534f94144ad86a9175d888974090e Mon Sep 17 00:00:00 2001
 From: Aleksei Bavshin <alebastr89@gmail.com>
 Date: Thu, 3 Feb 2022 07:46:00 -0800
 Subject: [PATCH 2/3] WaylandHelper: drop m_socketPattern and simplify logs
@@ -146,7 +146,7 @@ Subject: [PATCH 2/3] WaylandHelper: drop m_socketPattern and simplify logs
  2 files changed, 5 insertions(+), 9 deletions(-)
 
 diff --git a/src/helper/waylandsocketwatcher.cpp b/src/helper/waylandsocketwatcher.cpp
-index 77ecae22..01895fbc 100644
+index 77ecae22e..01895fbcc 100644
 --- a/src/helper/waylandsocketwatcher.cpp
 +++ b/src/helper/waylandsocketwatcher.cpp
 @@ -28,10 +28,9 @@ namespace SDDM {
@@ -193,7 +193,7 @@ index 77ecae22..01895fbc 100644
          m_status = Failed;
          Q_EMIT failed();
 diff --git a/src/helper/waylandsocketwatcher.h b/src/helper/waylandsocketwatcher.h
-index a96e39a0..0032c186 100644
+index a96e39a08..0032c1866 100644
 --- a/src/helper/waylandsocketwatcher.h
 +++ b/src/helper/waylandsocketwatcher.h
 @@ -55,7 +55,6 @@ class WaylandSocketWatcher : public QObject
@@ -205,7 +205,7 @@ index a96e39a0..0032c186 100644
      QPointer<QFileSystemWatcher> m_watcher;
  };
 
-From 470192fcb10a6e125d46baa75efb2b4c2c299bea Mon Sep 17 00:00:00 2001
+From 704e91a9148a2fb566e62ce18574f2a7a69d4b74 Mon Sep 17 00:00:00 2001
 From: Aleksei Bavshin <alebastr89@gmail.com>
 Date: Thu, 3 Feb 2022 07:53:26 -0800
 Subject: [PATCH 3/3] WaylandHelper: check socket owner
@@ -215,7 +215,7 @@ Subject: [PATCH 3/3] WaylandHelper: check socket owner
  1 file changed, 12 insertions(+), 8 deletions(-)
 
 diff --git a/src/helper/waylandsocketwatcher.cpp b/src/helper/waylandsocketwatcher.cpp
-index 01895fbc..6d67db3e 100644
+index 01895fbcc..6d67db3e7 100644
 --- a/src/helper/waylandsocketwatcher.cpp
 +++ b/src/helper/waylandsocketwatcher.cpp
 @@ -18,6 +18,7 @@

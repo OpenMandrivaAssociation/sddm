@@ -25,7 +25,7 @@ Signed-off-by: Jeremy Linton <jeremy.linton@arm.com>
  3 files changed, 42 insertions(+), 10 deletions(-)
 
 diff --git a/src/daemon/LogindDBusTypes.cpp b/src/daemon/LogindDBusTypes.cpp
-index 011bb7f5..83ddae13 100644
+index 011bb7f5c..83ddae133 100644
 --- a/src/daemon/LogindDBusTypes.cpp
 +++ b/src/daemon/LogindDBusTypes.cpp
 @@ -8,6 +8,8 @@
@@ -75,7 +75,7 @@ index 011bb7f5..83ddae13 100644
      if (QDBusConnection::systemBus().interface()->isServiceRegistered(QStringLiteral("org.freedesktop.ConsoleKit"))) {
          qDebug() << "Console kit interface found";
 diff --git a/src/daemon/SeatManager.cpp b/src/daemon/SeatManager.cpp
-index 60d22ea3..16a68e6b 100644
+index 60d22ea3f..16a68e6ba 100644
 --- a/src/daemon/SeatManager.cpp
 +++ b/src/daemon/SeatManager.cpp
 @@ -26,6 +26,9 @@
@@ -120,7 +120,7 @@ index 60d22ea3..16a68e6b 100644
      {
          auto logindSeat = new LogindSeat(name, objectPath, this);
 diff --git a/src/daemon/SeatManager.h b/src/daemon/SeatManager.h
-index b2f9796b..3460e654 100644
+index b2f9796ba..3460e6543 100644
 --- a/src/daemon/SeatManager.h
 +++ b/src/daemon/SeatManager.h
 @@ -49,6 +49,7 @@ namespace SDDM {
