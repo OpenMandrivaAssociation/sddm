@@ -1,0 +1,13 @@
+diff -up sddm-0.19.0/src/greeter/GreeterApp.cpp.4~ sddm-0.19.0/src/greeter/GreeterApp.cpp
+--- sddm-0.19.0/src/greeter/GreeterApp.cpp.4~	2022-10-25 12:13:08.686822653 +0200
++++ sddm-0.19.0/src/greeter/GreeterApp.cpp	2022-10-25 12:15:30.979553113 +0200
+@@ -296,6 +296,9 @@ namespace SDDM {
+ 
+ int main(int argc, char **argv)
+ {
++    // Qt internally may load the xdg portal system early on, prevent this, we do not have a functional session running.
++    qputenv("QT_NO_XDG_DESKTOP_PORTAL", "1");
++
+     // Install message handler
+     qInstallMessageHandler(SDDM::GreeterMessageHandler);
+ 
