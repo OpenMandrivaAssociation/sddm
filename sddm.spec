@@ -31,6 +31,7 @@ Patch3: https://patch-diff.githubusercontent.com/raw/sddm/sddm/pull/1494.patch
 Patch4: https://patch-diff.githubusercontent.com/raw/sddm/sddm/pull/1506.patch
 Patch5: https://patch-diff.githubusercontent.com/raw/sddm/sddm/pull/1562.patch
 Patch6: https://patch-diff.githubusercontent.com/raw/sddm/sddm/pull/1581.patch
+Patch7: https://github.com/sddm/sddm/commit/fc24321541f6f65b7d1aac89cd82336ffd53e1a0.patch
 BuildRequires: cmake(ECM)
 BuildRequires: pkgconfig(Qt5Core)
 BuildRequires: pkgconfig(Qt5Gui)
