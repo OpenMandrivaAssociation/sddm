@@ -1,4 +1,4 @@
-%define date 20221114
+%define date 20221118
 
 Name: sddm
 Summary: Lightweight display manager
@@ -26,8 +26,7 @@ Patch1: sddm-0.14.0-by-default-use-plasma-wayland.patch
 %else
 Patch1: sddm-0.14.0-by-default-use-plasma-session.patch
 %endif
-Patch2: https://patch-diff.githubusercontent.com/raw/sddm/sddm/pull/1489.patch
-Patch3: https://patch-diff.githubusercontent.com/raw/sddm/sddm/pull/1494.patch
+#Patch3: https://patch-diff.githubusercontent.com/raw/sddm/sddm/pull/1494.patch
 Patch4: https://patch-diff.githubusercontent.com/raw/sddm/sddm/pull/1506.patch
 Patch5: https://patch-diff.githubusercontent.com/raw/sddm/sddm/pull/1562.patch
 BuildRequires: cmake(ECM)
