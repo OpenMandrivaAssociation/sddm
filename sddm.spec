@@ -4,7 +4,7 @@ Name: sddm
 Summary: Lightweight display manager
 Version: 0.19.0
 %if %{date}
-Release: 14.%{date}.1
+Release: 16.%{date}.1
 # Packaged from git for the time being -- no download URL available
 # git archive --format=tar --prefix sddm-0.19.0-$(date +%Y%m%d)/ HEAD | xz -vf > sddm-0.19.0-$(date +%Y%m%d).tar.xz
 Source0: https://github.com/sddm/sddm/archive/develop/%{name}-%{version}-%{date}.tar.xz
