@@ -1,4 +1,4 @@
-%define date 20221118
+%define date 20230127
 
 Name: sddm
 Summary: Lightweight display manager
@@ -6,6 +6,7 @@ Version: 0.19.0
 %if %{date}
 Release: 16.%{date}.1
 # Packaged from git for the time being -- no download URL available
+# git clone https://github.com/sddm/sddm.git -b develop
 # git archive --format=tar --prefix sddm-0.19.0-$(date +%Y%m%d)/ HEAD | xz -vf > sddm-0.19.0-$(date +%Y%m%d).tar.xz
 Source0: https://github.com/sddm/sddm/archive/develop/%{name}-%{version}-%{date}.tar.xz
 %else
@@ -29,6 +30,7 @@ Patch1: sddm-0.14.0-by-default-use-plasma-session.patch
 #Patch3: https://patch-diff.githubusercontent.com/raw/sddm/sddm/pull/1494.patch
 Patch4: https://patch-diff.githubusercontent.com/raw/sddm/sddm/pull/1506.patch
 Patch5: https://patch-diff.githubusercontent.com/raw/sddm/sddm/pull/1562.patch
+Patch6: https://patch-diff.githubusercontent.com/raw/sddm/sddm/pull/1641.patch
 BuildRequires: cmake(ECM)
 BuildRequires: pkgconfig(Qt5Core)
 BuildRequires: pkgconfig(Qt5Gui)
