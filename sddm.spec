@@ -1,4 +1,4 @@
-%define date 20230127
+%define date 20230210
 
 Name: sddm
 Summary: Lightweight display manager
@@ -20,17 +20,12 @@ Source1: sddm-x11.conf
 Source2: sddm.conf
 Source3: sddm.pam
 Source4: sddm-autologin.pam
-Source5: tmpfiles-sddm.conf
-Source6: sddm.sysusers
 %if %omvver >= 4090000
 Patch1: sddm-0.14.0-by-default-use-plasma-wayland.patch
 %else
 Patch1: sddm-0.14.0-by-default-use-plasma-session.patch
 %endif
 #Patch3: https://patch-diff.githubusercontent.com/raw/sddm/sddm/pull/1494.patch
-Patch4: https://patch-diff.githubusercontent.com/raw/sddm/sddm/pull/1506.patch
-Patch5: https://patch-diff.githubusercontent.com/raw/sddm/sddm/pull/1562.patch
-Patch6: https://patch-diff.githubusercontent.com/raw/sddm/sddm/pull/1641.patch
 BuildRequires: cmake(ECM)
 BuildRequires: pkgconfig(Qt5Core)
 BuildRequires: pkgconfig(Qt5Gui)
@@ -39,6 +34,7 @@ BuildRequires: pkgconfig(Qt5Quick)
 BuildRequires: pkgconfig(Qt5Network)
 BuildRequires: pkgconfig(Qt5Qml)
 BuildRequires: pkgconfig(Qt5Test)
+BuildRequires: pkgconfig(Qt5QuickTest)
 BuildRequires: pkgconfig(libsystemd)
 BuildRequires: pam-devel
 BuildRequires: qt5-linguist-tools
@@ -89,8 +85,6 @@ sed -i -e 's,system-login,system-auth,g' services/*.pam
 install -Dpm 644 %{SOURCE2} %{buildroot}%{_sysconfdir}/sddm.conf
 install -Dpm 644 %{SOURCE3} %{buildroot}%{_sysconfdir}/pam.d/sddm
 install -Dpm 644 %{SOURCE4} %{buildroot}%{_sysconfdir}/pam.d/sddm-autologin
-install -Dpm 644 %{SOURCE5} %{buildroot}%{_tmpfilesdir}/sddm.conf
-install -Dpm 644 %{SOURCE6} %{buildroot}%{_sysusersdir}/sddm.conf
 
 mkdir -p %{buildroot}/run/%{name}
 mkdir -p %{buildroot}%{_localstatedir}/lib/%{name}
