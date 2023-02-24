@@ -1,4 +1,4 @@
-%define date 20230210
+%define date 20230224
 
 Name: sddm
 Summary: Lightweight display manager
@@ -20,7 +20,7 @@ Source1: sddm-x11.conf
 Source2: sddm.conf
 Source3: sddm.pam
 Source4: sddm-autologin.pam
-%if %omvver >= 4090000
+%ifarch %{armx}
 Patch1: sddm-0.14.0-by-default-use-plasma-wayland.patch
 %else
 Patch1: sddm-0.14.0-by-default-use-plasma-session.patch
@@ -45,7 +45,7 @@ Requires(pre): systemd
 Requires: qt5-qtdeclarative
 Requires: qt5-qtimageformats
 Requires: distro-release-theme
-%if %omvver >= 4090000
+%ifarch %{armx}
 # Wayland is default DisplayServer
 Requires: weston
 Requires: %{_lib}qt5-output-driver-eglfs
@@ -70,7 +70,7 @@ Lightweight display manager (login screen).
 sed -i -e 's,system-login,system-auth,g' services/*.pam
 
 %cmake_kde5 \
-%if %omvver < 4090000
+%ifnarch %{armx}
     -DSESSION_COMMAND:PATH=%{_datadir}/X11/xdm/Xsession \
 %endif
     -DUID_MIN="1000" \
@@ -93,7 +93,7 @@ mkdir -p %{buildroot}%{_sysconfdir}/sddm.conf.d
 sed -i -e 's,\(^background=\).*,\1%{_datadir}/mdk/backgrounds/OpenMandriva-splash.png,' %{buildroot}%{_datadir}/sddm/themes/elarun/theme.conf
 sed -i -e 's,\(^background=\).*,\1%{_datadir}/mdk/backgrounds/OpenMandriva-splash.png,' %{buildroot}%{_datadir}/sddm/themes/maldives/theme.conf
 
-%if %omvver < 4090000
+%ifnarch %{armx}
 install -Dpm 644 %{SOURCE1} %{buildroot}%{_sysconfdir}/sddm.conf.d/x11.conf
 %endif
 
@@ -115,7 +115,7 @@ install -Dpm 644 %{SOURCE1} %{buildroot}%{_sysconfdir}/sddm.conf.d/x11.conf
 %{_datadir}/%{name}
 %dir %{_sysconfdir}/sddm.conf.d
 %{_sysconfdir}/sddm.conf
-%if %omvver < 4090000
+%ifnarch %{armx}
 %{_sysconfdir}/sddm.conf.d/x11.conf
 %endif
 %{_sysconfdir}/dbus-1/system.d/org.freedesktop.DisplayManager.conf
