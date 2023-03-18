@@ -1,4 +1,4 @@
-%define date 20230224
+%define date 20230318
 
 Name: sddm
 Summary: Lightweight display manager
@@ -25,7 +25,7 @@ Patch1: sddm-0.14.0-by-default-use-plasma-wayland.patch
 %else
 Patch1: sddm-0.14.0-by-default-use-plasma-session.patch
 %endif
-#Patch3: https://patch-diff.githubusercontent.com/raw/sddm/sddm/pull/1494.patch
+Patch4: https://github.com/sddm/sddm/pull/1687.patch
 BuildRequires: cmake(ECM)
 BuildRequires: pkgconfig(Qt5Core)
 BuildRequires: pkgconfig(Qt5Gui)
@@ -86,7 +86,7 @@ install -Dpm 644 %{SOURCE2} %{buildroot}%{_sysconfdir}/sddm.conf
 install -Dpm 644 %{SOURCE3} %{buildroot}%{_sysconfdir}/pam.d/sddm
 install -Dpm 644 %{SOURCE4} %{buildroot}%{_sysconfdir}/pam.d/sddm-autologin
 
-mkdir -p %{buildroot}/run/%{name}
+mkdir -p %{buildroot}%{_rundir}/%{name}
 mkdir -p %{buildroot}%{_localstatedir}/lib/%{name}
 mkdir -p %{buildroot}%{_sysconfdir}/sddm.conf.d
 # use omv-background.png as sddm background for all themes
@@ -127,5 +127,5 @@ install -Dpm 644 %{SOURCE1} %{buildroot}%{_sysconfdir}/sddm.conf.d/x11.conf
 %{_libexecdir}/sddm-helper*
 %{_unitdir}/%{name}.service
 %{_libdir}/qt5/qml/SddmComponents
-%attr(0711,root,sddm) %dir /run/sddm
+%attr(0711,root,sddm) %dir %{_rundir}/sddm
 %attr(1770,sddm,sddm) %dir %{_localstatedir}/lib/%{name}

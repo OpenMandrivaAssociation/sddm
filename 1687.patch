@@ -1,0 +1,23 @@
+From 0ec536c94a64b4ac85aff1191c758c5541be99c4 Mon Sep 17 00:00:00 2001
+From: Aleix Pol <aleixpol@kde.org>
+Date: Sat, 18 Mar 2023 01:42:53 +0100
+Subject: [PATCH] Make sure greeter sessions are set with
+ QT_NO_XDG_DESKTOP_PORTAL=1
+
+Other processes involved could also be triggering xdp
+---
+ src/helper/HelperApp.cpp | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/src/helper/HelperApp.cpp b/src/helper/HelperApp.cpp
+index 65ff08fb..4b6dc85a 100644
+--- a/src/helper/HelperApp.cpp
++++ b/src/helper/HelperApp.cpp
+@@ -168,6 +168,7 @@ namespace SDDM {
+         QProcessEnvironment env = authenticated(m_user);
+ 
+         if (env.value(QStringLiteral("XDG_SESSION_CLASS")) == QLatin1String("greeter")) {
++            env.insert(QStringLiteral("QT_NO_XDG_DESKTOP_PORTAL"), QStringLiteral("1"));
+             for (const auto &entry : mainConfig.GreeterEnvironment.get()) {
+                 const int index = entry.indexOf(QLatin1Char('='));
+                 if (index < 0) {
