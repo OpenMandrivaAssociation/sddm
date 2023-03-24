@@ -1,0 +1,23 @@
+From a1f0b6896c1c5b1f1e7b24be509fdfec7b0a662e Mon Sep 17 00:00:00 2001
+From: Fabian Vogt <fabian@ritter-vogt.de>
+Date: Tue, 21 Mar 2023 19:14:36 +0100
+Subject: [PATCH] Emit loginFailed when trying to log in as sddm user
+
+The greeter expects either success or failure getting emitted for login
+attempts, just returning early leaves it waiting indefinitely.
+---
+ src/daemon/Display.cpp | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/src/daemon/Display.cpp b/src/daemon/Display.cpp
+index 1b019df7..882fe9ff 100644
+--- a/src/daemon/Display.cpp
++++ b/src/daemon/Display.cpp
+@@ -316,6 +316,7 @@ namespace SDDM {
+         //the SDDM user has special privileges that skip password checking so that we can load the greeter
+         //block ever trying to log in as the SDDM user
+         if (user == QLatin1String("sddm")) {
++            emit loginFailed(m_socket);
+             return;
+         }
+ 

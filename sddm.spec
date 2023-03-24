@@ -1,4 +1,4 @@
-%define date 20230318
+%define date 20230324
 
 Name: sddm
 Summary: Lightweight display manager
@@ -25,7 +25,8 @@ Patch1: sddm-0.14.0-by-default-use-plasma-wayland.patch
 %else
 Patch1: sddm-0.14.0-by-default-use-plasma-session.patch
 %endif
-Patch4: https://github.com/sddm/sddm/pull/1687.patch
+Patch100: https://github.com/sddm/sddm/pull/1691.patch
+Patch101: https://github.com/sddm/sddm/pull/1692.patch
 BuildRequires: cmake(ECM)
 BuildRequires: pkgconfig(Qt5Core)
 BuildRequires: pkgconfig(Qt5Gui)
