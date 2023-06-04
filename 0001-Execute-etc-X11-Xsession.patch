@@ -1,0 +1,17 @@
+diff -Naur sddm-0.19.0/data/scripts/Xsession sddm-0.19.0.tpg/data/scripts/Xsession
+--- sddm-0.19.0/data/scripts/Xsession	2020-11-03 07:41:06.000000000 +0000
++++ sddm-0.19.0.tpg/data/scripts/Xsession	2020-11-03 17:35:15.811311967 +0000
+@@ -82,6 +82,13 @@
+     done
+ fi
+ 
++# Load Xsession scripts, if any
++if [ -x /etc/X11/Xsession ]; then
++    # Let Xsession execute the session for us
++    export STARTUP=$session
++    exec /etc/X11/Xsession
++fi
++
+ if [ -d /etc/X11/Xresources ]; then
+   for i in /etc/X11/Xresources/*; do
+     [ -f $i ] && xrdb -merge $i
