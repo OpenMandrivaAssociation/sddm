@@ -40,6 +40,7 @@ BuildRequires: cmake(Qt6Network)
 BuildRequires: cmake(Qt6Qml)
 BuildRequires: cmake(Qt6Test)
 BuildRequires: cmake(Qt6LinguistTools)
+BuildRequires: cmake(Qt6QuickTest)
 BuildRequires: pkgconfig(libsystemd)
 BuildRequires: pam-devel
 BuildRequires: systemd-rpm-macros
