@@ -2,14 +2,14 @@
 
 Name: sddm
 Summary: Lightweight display manager
-Version: 0.19.0
+Version: 0.20.0
 %if %{date}
-Release: 0.%{date}.3
+Release: 0.%{date}.1
 # Packaged from git for the time being -- no download URL available
 # git archive --format=tar --prefix sddm-0.18.1-$(date +%Y%m%d)/ HEAD | xz -vf > sddm-0.18.1-$(date +%Y%m%d).tar.xz
 Source0: https://github.com/sddm/sddm/archive/develop/%{name}-%{version}-%{date}.tar.gz
 %else
-Release: 17
+Release: 1
 Source0: https://github.com/sddm/sddm/releases/download/v%{version}/%{name}-%{version}.tar.xz
 %endif
 URL: https://github.com/sddm
@@ -20,37 +20,8 @@ Source1: 11sddm.conf
 Source2: sddm.conf
 Source3: sddm.pam
 Source4: sddm-autologin.pam
-Source5: tmpfiles-sddm.conf
-Source6: sddm.sysusers
-Patch1: sddm-0.14.0-by-default-use-plasma-session.patch
-# (tpg) https://github.com/sddm/sddm/pull/817
-Patch6: 0001-Execute-etc-X11-Xsession.patch
-# This patch is IMPORTANT -- don't drop it just because it doesn't apply
-# anymore!!!
-# https://github.com/sddm/sddm/issues/733
-# https://github.com/sddm/sddm/pull/1230
-Patch7: https://github.com/sddm/sddm/pull/1230.patch
-# Based on
-# https://github.com/sddm/sddm/pull/1603
-# (difference: backported to current stable tree)
-Patch8: 1603.patch
-
-# (tpg) patches from upstream git
-Patch100: 0000-Improve-font-config-deserialization.patch
-Patch101: 0001-Only-use-the-base-name-for-DESKTOP_SESSION.patch
-Patch102: 0002-Merge-normal-and-testing-paths-in-XorgDisplayServer-.patch
-Patch103: 0003-Retry-starting-the-display-server.patch
-Patch104: 0004-Explicitly-stop-Xorg-when-starting-fails.patch
-Patch105: 0005-Emit-XorgDisplayServer-started-only-when-the-auth-fi.patch
-Patch106: 0006-Fix-sessions-being-started-as-the-wrong-type-on-auto.patch
-Patch107: 0007-wayland-session-Ensure-SHELL-remains-correctly-set.patch
-Patch108: 0008-Clear-VT-before-switching-to-it.patch
-Patch109: 0009-Error-in-elarun-theme-1336.patch
-Patch110: 0010-Use-avatars-in-FacesDir-first-and-if-not-found-searc.patch
-Patch111: 0011-Fix-warning-from-SDDM-generateName.patch
-Patch112: 0012-Allocate-VT-for-the-display.patch
-Patch113: 0013-sddm-service-is-a-part-of-graphical-target.patch
-Patch114: 0014-Fix-displaying-user-icons.patch
+Source5: sddm-tmpfiles.conf
+Source6: sddm-sysuser.conf
 
 BuildRequires: cmake(ECM)
 BuildRequires: pkgconfig(Qt5Core)
