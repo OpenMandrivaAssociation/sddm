@@ -10,7 +10,7 @@ Release: 0.%{date}.1
 Source0: https://github.com/sddm/sddm/archive/develop/%{name}-%{version}-%{date}.tar.gz
 %else
 Release: 1
-Source0: https://github.com/sddm/sddm/releases/download/v%{version}/%{name}-%{version}.tar.xz
+Source0: https://github.com/sddm/sddm/archive/refs/tags/v%{version}.tar.gz
 %endif
 URL: https://github.com/sddm
 Group: Graphical desktop/KDE
@@ -108,6 +108,8 @@ sed -i -e 's,\(^background=\).*,\1%{_datadir}/mdk/backgrounds/OpenMandriva-splas
 %{_sysusersdir}/sddm.conf
 %{_tmpfilesdir}/sddm.conf
 %{_libexecdir}/sddm-helper
+%{_libexecdir}/sddm-helper-start-wayland
+%{_libexecdir}/sddm-helper-start-x11user
 %{_unitdir}/%{name}.service
 %{_libdir}/qt5/qml/SddmComponents
 %{_datadir}/X11/dm.d/11sddm.conf
