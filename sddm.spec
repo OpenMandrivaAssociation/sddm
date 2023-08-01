@@ -9,12 +9,16 @@ Release: 0.%{date}.1
 # git archive --format=tar --prefix sddm-0.18.1-$(date +%Y%m%d)/ HEAD | xz -vf > sddm-0.18.1-$(date +%Y%m%d).tar.xz
 Source0: https://github.com/sddm/sddm/archive/develop/%{name}-%{version}-%{date}.tar.gz
 %else
-Release: 2
+Release: 3
 Source0: https://github.com/sddm/sddm/archive/refs/tags/v%{version}.tar.gz
 %endif
 URL: https://github.com/sddm
 Group: Graphical desktop/KDE
 License: GPLv2
+# Allow specifying a default session (and default to plasma) for
+# users that haven't logged in before
+Patch0: sddm-0.20.0-allow-setting-default-session.patch
+Patch1: sddm-0.20.0-default-rootless.patch
 # Adds sddm to drakedm
 Source1: 11sddm.conf
 Source2: sddm.conf

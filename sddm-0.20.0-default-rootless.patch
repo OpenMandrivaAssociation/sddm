@@ -1,0 +1,12 @@
+diff -up sddm-0.20.0/src/common/Configuration.h.omv~ sddm-0.20.0/src/common/Configuration.h
+--- sddm-0.20.0/src/common/Configuration.h.omv~	2023-08-01 21:54:21.315430172 +0200
++++ sddm-0.20.0/src/common/Configuration.h	2023-08-01 21:54:34.620540705 +0200
+@@ -38,7 +38,7 @@ namespace SDDM {
+ 
+         //  Name                   Type         Default value                                   Description
+         // TODO: Change default to x11-user in a future release
+-        Entry(DisplayServer,       QString,     _S("x11"),                                      _S("Which display server should be used.\n"
++        Entry(DisplayServer,       QString,     _S("x11-user"),                                 _S("Which display server should be used.\n"
+                                                                                                    "Valid values are: x11, x11-user, wayland. Wayland support is experimental"));
+         Entry(DefaultSession,      QString,     QStringLiteral("plasma"),                       _S("Default preselected session (just the base name,\n"
+                                                                                                    "e.g. plasma, plasmawayland, lxqt, ..."));

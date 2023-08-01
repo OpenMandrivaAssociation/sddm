@@ -1,0 +1,37 @@
+diff -up sddm-0.20.0/src/common/Configuration.cpp.omv~ sddm-0.20.0/src/common/Configuration.cpp
+diff -up sddm-0.20.0/src/common/Configuration.h.omv~ sddm-0.20.0/src/common/Configuration.h
+--- sddm-0.20.0/src/common/Configuration.h.omv~	2023-08-01 21:46:37.939584703 +0200
++++ sddm-0.20.0/src/common/Configuration.h	2023-08-01 21:50:31.351520593 +0200
+@@ -40,6 +40,8 @@ namespace SDDM {
+         // TODO: Change default to x11-user in a future release
+         Entry(DisplayServer,       QString,     _S("x11"),                                      _S("Which display server should be used.\n"
+                                                                                                    "Valid values are: x11, x11-user, wayland. Wayland support is experimental"));
++        Entry(DefaultSession,      QString,     QStringLiteral("plasma"),                       _S("Default preselected session (just the base name,\n"
++                                                                                                   "e.g. plasma, plasmawayland, lxqt, ..."));
+         Entry(HaltCommand,         QString,     _S(HALT_COMMAND),                               _S("Halt command"));
+         Entry(RebootCommand,       QString,     _S(REBOOT_COMMAND),                             _S("Reboot command"));
+         Entry(Numlock,             NumState,    NUM_NONE,                                       _S("Initial NumLock state. Can be on, off or none.\n"
+diff -up sddm-0.20.0/src/greeter/SessionModel.cpp.omv~ sddm-0.20.0/src/greeter/SessionModel.cpp
+--- sddm-0.20.0/src/greeter/SessionModel.cpp.omv~	2023-08-01 21:39:09.074874031 +0200
++++ sddm-0.20.0/src/greeter/SessionModel.cpp	2023-08-01 21:51:49.521169494 +0200
+@@ -135,6 +135,7 @@ namespace SDDM {
+         }
+         // read session
+         sessions.removeDuplicates();
++        int sessionId = 0;
+         for (auto& session : qAsConst(sessions)) {
+             Session *si = new Session(type, session);
+             bool execAllowed = true;
+@@ -160,6 +161,12 @@ namespace SDDM {
+             if (!si->isHidden() && !si->isNoDisplay() && execAllowed) {
+                 d->displayNames.append(si->displayName());
+                 d->sessions.push_back(si);
++                // for users who haven't logged in before, default to Plasma
++                // (for users who have logged in before, it's overridden below
++                // to the user's last session)
++                if (session.endsWith(QStringLiteral("/") + mainConfig.DefaultSession.get() + QStringLiteral(".desktop")))
++                    d->lastIndex = sessionId;
++                sessionId++;
+             } else {
+                 delete si;
+             }
