@@ -1,15 +1,15 @@
-%define date 20230723
+%define date 20230802
 
 Name: plasma6-sddm
 Summary: Lightweight display manager
-Version: 0.19.1
+Version: 0.20.1
 %if %{date}
 Release: 0.%{date}.1
 # Packaged from git for the time being -- no download URL available
 # git archive --format=tar --prefix sddm-0.18.1-$(date +%Y%m%d)/ HEAD | xz -vf > sddm-0.18.1-$(date +%Y%m%d).tar.xz
 Source0: https://github.com/sddm/sddm/archive/develop/%{name}-%{version}-%{date}.tar.gz
 %else
-Release: 17
+Release: 1
 Source0: https://github.com/sddm/sddm/releases/download/v%{version}/%{name}-%{version}.tar.xz
 %endif
 URL: https://github.com/sddm
@@ -22,13 +22,9 @@ Source3: sddm.pam
 Source4: sddm-autologin.pam
 Source5: tmpfiles-sddm.conf
 Source6: sddm.sysusers
-Patch1: sddm-0.14.0-by-default-use-plasma-session.patch
-# (tpg) https://github.com/sddm/sddm/pull/817
+Patch0:	sddm-0.20.0-allow-setting-default-session.patch
+Patch1:	sddm-0.20.0-default-rootless.patch
 Patch6: 0001-Execute-etc-X11-Xsession.patch
-# Based on
-# https://github.com/sddm/sddm/pull/1603
-# (difference: backported to current stable tree)
-Patch8: 1603.patch
 
 BuildRequires: cmake(ECM)
 BuildRequires: cmake(Qt6)
@@ -100,7 +96,7 @@ sed -i -e 's,\(^background=\).*,\1%{_datadir}/mdk/backgrounds/OpenMandriva-splas
 %{_datadir}/sddm
 %dir %{_sysconfdir}/sddm.conf.d
 %config(noreplace) %{_sysconfdir}/sddm.conf
-%{_sysconfdir}/dbus-1/system.d/org.freedesktop.DisplayManager.conf
+%{_datadir}/dbus-1/system.d/org.freedesktop.DisplayManager.conf
 %{_sysconfdir}/pam.d/sddm
 %{_sysconfdir}/pam.d/sddm-greeter
 %{_sysconfdir}/pam.d/sddm-autologin
