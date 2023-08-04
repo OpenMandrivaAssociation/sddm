@@ -4,7 +4,7 @@ Name: plasma6-sddm
 Summary: Lightweight display manager
 Version: 0.20.1
 %if %{date}
-Release: 0.%{date}.1
+Release: 0.%{date}.2
 # Packaged from git for the time being -- no download URL available
 # git archive --format=tar --prefix sddm-0.18.1-$(date +%Y%m%d)/ HEAD | xz -vf > sddm-0.18.1-$(date +%Y%m%d).tar.xz
 Source0: https://github.com/sddm/sddm/archive/develop/%{name}-%{version}-%{date}.tar.gz
@@ -87,6 +87,8 @@ mkdir -p %{buildroot}%{_sysconfdir}/sddm.conf.d
 sed -i -e 's,\(^background=\).*,\1%{_datadir}/mdk/backgrounds/OpenMandriva-splash.png,' %{buildroot}%{_datadir}/sddm/themes/elarun/theme.conf
 sed -i -e 's,\(^background=\).*,\1%{_datadir}/mdk/backgrounds/OpenMandriva-splash.png,' %{buildroot}%{_datadir}/sddm/themes/maldives/theme.conf
 
+mkdir -p %{buildroot}%{_localstatedir}/lib/sddm
+
 %pre
 %sysusers_create_package %{name} %{SOURCE6}
 
@@ -108,3 +110,4 @@ sed -i -e 's,\(^background=\).*,\1%{_datadir}/mdk/backgrounds/OpenMandriva-splas
 %{_unitdir}/sddm.service
 %{_libdir}/qt6/qml/SddmComponents
 %{_datadir}/X11/dm.d/11sddm.conf
+%attr(-,sddm,sddm) %{_localstatedir}/lib/sddm
