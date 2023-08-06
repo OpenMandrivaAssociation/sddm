@@ -1,12 +1,12 @@
-%define date 20230802
+%define date 20230810
 
 Name: plasma6-sddm
 Summary: Lightweight display manager
 Version: 0.20.1
 %if %{date}
-Release: 0.%{date}.2
+Release: 0.%{date}.3
 # Packaged from git for the time being -- no download URL available
-# git archive --format=tar --prefix sddm-0.18.1-$(date +%Y%m%d)/ HEAD | xz -vf > sddm-0.18.1-$(date +%Y%m%d).tar.xz
+# git archive --format=tar --prefix sddm-0.20.1-$(date +%Y%m%d)/ HEAD | xz -vf > sddm-0.20.1-$(date +%Y%m%d).tar.xz
 Source0: https://github.com/sddm/sddm/archive/develop/%{name}-%{version}-%{date}.tar.gz
 %else
 Release: 1
@@ -15,17 +15,9 @@ Source0: https://github.com/sddm/sddm/releases/download/v%{version}/%{name}-%{ve
 URL: https://github.com/sddm
 Group: Graphical desktop/KDE
 License: GPLv2
-# Adds sddm to drakedm
-Source1: 11sddm.conf
-Source2: sddm.conf
-Source3: sddm.pam
-Source4: sddm-autologin.pam
-Source5: tmpfiles-sddm.conf
-Source6: sddm.sysusers
-Patch0:	sddm-0.20.0-allow-setting-default-session.patch
-Patch1:	sddm-0.20.0-default-rootless.patch
-Patch6: 0001-Execute-etc-X11-Xsession.patch
-
+Source1: sddm.conf
+Patch0: sddm-0.20.0-allow-setting-default-session.patch
+Patch1: sddm-0.20.0-default-rootless.patch
 BuildRequires: cmake(ECM)
 BuildRequires: cmake(Qt6)
 BuildRequires: cmake(Qt6Core)
@@ -43,7 +35,6 @@ BuildRequires: systemd-rpm-macros
 
 # For /etc/X11/Xsession
 Requires: xinitrc
-Requires(pre): systemd
 %systemd_requires
 Provides: dm
 Conflicts: sddm
@@ -74,12 +65,7 @@ sed -i -e 's,system-login,system-auth,g' services/*.pam
 %install
 %ninja_install -C build
 
-install -Dpm 644 %{SOURCE1} %{buildroot}%{_datadir}/X11/dm.d/11sddm.conf
-install -Dpm 644 %{SOURCE2} %{buildroot}%{_sysconfdir}/sddm.conf
-install -Dpm 644 %{SOURCE3} %{buildroot}%{_sysconfdir}/pam.d/sddm
-install -Dpm 644 %{SOURCE4} %{buildroot}%{_sysconfdir}/pam.d/sddm-autologin
-install -Dpm 644 %{SOURCE5} %{buildroot}%{_tmpfilesdir}/sddm.conf
-install -Dpm 644 %{SOURCE6} %{buildroot}%{_sysusersdir}/sddm.conf
+install -Dpm 644 %{SOURCE1} %{buildroot}%{_sysconfdir}/sddm.conf
 
 mkdir -p %{buildroot}%{_localstatedir}/lib/%{name}
 mkdir -p %{buildroot}%{_sysconfdir}/sddm.conf.d
@@ -89,8 +75,14 @@ sed -i -e 's,\(^background=\).*,\1%{_datadir}/mdk/backgrounds/OpenMandriva-splas
 
 mkdir -p %{buildroot}%{_localstatedir}/lib/sddm
 
-%pre
-%sysusers_create_package %{name} %{SOURCE6}
+%post
+%systemd_post sddm.service
+
+%preun
+%systemd_preun sddm.service
+
+%postun
+%systemd_postun sddm.service
 
 %files
 %{_bindir}/sddm
@@ -109,5 +101,4 @@ mkdir -p %{buildroot}%{_localstatedir}/lib/sddm
 %{_libexecdir}/sddm-helper-start-wayland
 %{_unitdir}/sddm.service
 %{_libdir}/qt6/qml/SddmComponents
-%{_datadir}/X11/dm.d/11sddm.conf
 %attr(-,sddm,sddm) %{_localstatedir}/lib/sddm
