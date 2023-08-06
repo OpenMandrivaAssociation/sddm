@@ -9,24 +9,17 @@ Release: 0.%{date}.1
 # git archive --format=tar --prefix sddm-0.18.1-$(date +%Y%m%d)/ HEAD | xz -vf > sddm-0.18.1-$(date +%Y%m%d).tar.xz
 Source0: https://github.com/sddm/sddm/archive/develop/%{name}-%{version}-%{date}.tar.gz
 %else
-Release: 4
+Release: 5
 Source0: https://github.com/sddm/sddm/archive/refs/tags/v%{version}.tar.gz
 %endif
 URL: https://github.com/sddm
 Group: Graphical desktop/KDE
 License: GPLv2
+Source1: sddm.conf
 # Allow specifying a default session (and default to plasma) for
 # users that haven't logged in before
 Patch0: sddm-0.20.0-allow-setting-default-session.patch
 Patch1: sddm-0.20.0-default-rootless.patch
-# Adds sddm to drakedm
-Source1: 11sddm.conf
-Source2: sddm.conf
-Source3: sddm.pam
-Source4: sddm-autologin.pam
-Source5: sddm-tmpfiles.conf
-Source6: sddm-sysuser.conf
-
 BuildRequires: cmake(ECM)
 BuildRequires: pkgconfig(Qt5Core)
 BuildRequires: pkgconfig(Qt5Gui)
@@ -43,7 +36,6 @@ BuildRequires: systemd-rpm-macros
 
 # For /etc/X11/Xsession
 Requires: xinitrc
-Requires(pre): systemd
 %systemd_requires
 # needed to get xcb plugin on Qt platform
 Requires: %{_lib}qt5-output-driver-default
@@ -84,12 +76,7 @@ sed -i -e 's,system-login,system-auth,g' services/*.pam
 %install
 %ninja_install -C build
 
-install -Dpm 644 %{SOURCE1} %{buildroot}%{_datadir}/X11/dm.d/11sddm.conf
-install -Dpm 644 %{SOURCE2} %{buildroot}%{_sysconfdir}/sddm.conf
-install -Dpm 644 %{SOURCE3} %{buildroot}%{_sysconfdir}/pam.d/sddm
-install -Dpm 644 %{SOURCE4} %{buildroot}%{_sysconfdir}/pam.d/sddm-autologin
-install -Dpm 644 %{SOURCE5} %{buildroot}%{_tmpfilesdir}/sddm.conf
-install -Dpm 644 %{SOURCE6} %{buildroot}%{_sysusersdir}/sddm.conf
+install -Dpm 644 %{SOURCE1} %{buildroot}%{_sysconfdir}/sddm.conf
 
 mkdir -p %{buildroot}%{_localstatedir}/lib/%{name}
 mkdir -p %{buildroot}%{_sysconfdir}/sddm.conf.d
@@ -102,8 +89,14 @@ cat >%{buildroot}%{_sysconfdir}/sddm.conf.d/00-rootless.conf <<EOF
 DisplayServer=x11-user
 EOF
 
-%pre
-%sysusers_create_package %{name} %{SOURCE6}
+%post
+%systemd_post sddm.service
+
+%preun
+%systemd_preun sddm.service
+
+%postun
+%systemd_postun sddm.service
 
 %files
 %{_bindir}/%{name}
@@ -123,5 +116,4 @@ EOF
 %{_libexecdir}/sddm-helper-start-x11user
 %{_unitdir}/%{name}.service
 %{_libdir}/qt5/qml/SddmComponents
-%{_datadir}/X11/dm.d/11sddm.conf
 %attr(0755,sddm,sddm) %{_localstatedir}/lib/%{name}
