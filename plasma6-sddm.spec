@@ -1,4 +1,4 @@
-%define date 20230810
+%define date 20230814
 
 Name: plasma6-sddm
 Summary: Lightweight display manager
