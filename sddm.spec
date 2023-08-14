@@ -9,13 +9,16 @@ Release: 0.%{date}.1
 # git archive --format=tar --prefix sddm-0.18.1-$(date +%Y%m%d)/ HEAD | xz -vf > sddm-0.18.1-$(date +%Y%m%d).tar.xz
 Source0: https://github.com/sddm/sddm/archive/develop/%{name}-%{version}-%{date}.tar.gz
 %else
-Release: 6
+Release: 7
 Source0: https://github.com/sddm/sddm/archive/refs/tags/v%{version}.tar.gz
 %endif
 URL: https://github.com/sddm
 Group: Graphical desktop/KDE
 License: GPLv2
 Source1: sddm.conf
+Source2: sddm.pam
+Source3: sddm-autologin.pam
+Source4: sddm-sysuser.conf
 # Allow specifying a default session (and default to plasma) for
 # users that haven't logged in before
 Patch0: sddm-0.20.0-allow-setting-default-session.patch
@@ -82,7 +85,10 @@ sed -i -e 's,system-login,system-auth,g' services/*.pam
 %install
 %ninja_install -C build
 
-install -Dpm 644 %{SOURCE1} %{buildroot}%{_sysconfdir}/sddm.conf
+install -Dpcm 644 %{S:1} %{buildroot}%{_sysconfdir}/sddm.conf
+install -Dpcm 644 %{S:2} %{buildroot}%{_sysconfdir}/pam.d/sddm
+install -Dpcm 644 %{S:3} %{buildroot}%{_sysconfdir}/pam.d/sddm-autologin
+install -Dpcm 644 %{S:4} %{buildroot}%{_sysusersdir}/sddm.conf
 
 mkdir -p %{buildroot}%{_localstatedir}/lib/%{name}
 mkdir -p %{buildroot}%{_sysconfdir}/sddm.conf.d
@@ -94,6 +100,9 @@ cat >%{buildroot}%{_sysconfdir}/sddm.conf.d/00-rootless.conf <<EOF
 [General]
 DisplayServer=x11-user
 EOF
+
+%pre
+%sysusers_create_package %{name} %{S:4}
 
 %post
 %systemd_post sddm.service
