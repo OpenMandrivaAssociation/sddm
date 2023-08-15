@@ -1,10 +1,10 @@
-%define date 20230814
+%define date 20230815
 
 Name: plasma6-sddm
 Summary: Lightweight display manager
 Version: 0.20.1
 %if %{date}
-Release: 0.%{date}.3
+Release: 0.%{date}.1
 # Packaged from git for the time being -- no download URL available
 # git archive --format=tar --prefix sddm-0.20.1-$(date +%Y%m%d)/ HEAD | xz -vf > sddm-0.20.1-$(date +%Y%m%d).tar.xz
 Source0: https://github.com/sddm/sddm/archive/develop/%{name}-%{version}-%{date}.tar.gz
@@ -16,6 +16,9 @@ URL: https://github.com/sddm
 Group: Graphical desktop/KDE
 License: GPLv2
 Source1: sddm.conf
+Source2: sddm.pam
+Source3: sddm-autologin.pam
+Source4: sddm-sysuser.conf
 Patch0: sddm-0.20.0-allow-setting-default-session.patch
 Patch1: sddm-0.20.0-default-rootless.patch
 BuildRequires: cmake(ECM)
@@ -65,7 +68,10 @@ sed -i -e 's,system-login,system-auth,g' services/*.pam
 %install
 %ninja_install -C build
 
-install -Dpm 644 %{SOURCE1} %{buildroot}%{_sysconfdir}/sddm.conf
+install -Dpcm 644 %{S:1} %{buildroot}%{_sysconfdir}/sddm.conf
+install -Dpcm 644 %{S:2} %{buildroot}%{_sysconfdir}/pam.d/sddm
+install -Dpcm 644 %{S:3} %{buildroot}%{_sysconfdir}/pam.d/sddm-autologin
+install -Dpcm 644 %{S:4} %{buildroot}%{_sysusersdir}/sddm.conf
 
 mkdir -p %{buildroot}%{_localstatedir}/lib/%{name}
 mkdir -p %{buildroot}%{_sysconfdir}/sddm.conf.d
@@ -74,6 +80,9 @@ sed -i -e 's,\(^background=\).*,\1%{_datadir}/mdk/backgrounds/OpenMandriva-splas
 sed -i -e 's,\(^background=\).*,\1%{_datadir}/mdk/backgrounds/OpenMandriva-splash.png,' %{buildroot}%{_datadir}/sddm/themes/maldives/theme.conf
 
 mkdir -p %{buildroot}%{_localstatedir}/lib/sddm
+
+%pre
+%sysusers_create_package %{name} %{S:4}
 
 %post
 %systemd_post sddm.service
