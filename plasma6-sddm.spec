@@ -1,4 +1,4 @@
-%define date 20230821
+%define date 20231112
 
 Name: plasma6-sddm
 Summary: Lightweight display manager
@@ -35,6 +35,10 @@ BuildRequires: cmake(Qt6QuickTest)
 BuildRequires: pkgconfig(libsystemd)
 BuildRequires: pam-devel
 BuildRequires: systemd-rpm-macros
+
+# For qml(QtQuick.VirtualKeyboard) -- provided by both lib64Qt6VirtualKeyboard
+# and qt5-qtvirtualkeyboard (but obviously we need the qt6 version)
+Requires: %mklibname Qt6VirtualKeyboard
 
 # For /etc/X11/Xsession
 Requires: xinitrc
