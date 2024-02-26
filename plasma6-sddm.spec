@@ -1,16 +1,16 @@
-%define date 20231112
+#define date 20231112
 
 Name: plasma6-sddm
 Summary: Lightweight display manager
-Version: 0.20.1
-%if %{date}
+Version: 0.21.0
+%if 0%{?date:1}
 Release: 0.%{date}.1
 # Packaged from git for the time being -- no download URL available
 # git archive --format=tar --prefix sddm-0.20.1-$(date +%Y%m%d)/ HEAD | xz -vf > sddm-0.20.1-$(date +%Y%m%d).tar.xz
-Source0: https://github.com/sddm/sddm/archive/develop/%{name}-%{version}-%{date}.tar.gz
+Source0: https://github.com/sddm/sddm/archive/develop/sddm-%{version}-%{date}.tar.gz
 %else
 Release: 1
-Source0: https://github.com/sddm/sddm/releases/download/v%{version}/%{name}-%{version}.tar.xz
+Source0: https://github.com/sddm/sddm/archive/refs/tags/v%{version}.tar.gz
 %endif
 URL: https://github.com/sddm
 Group: Graphical desktop/KDE
@@ -50,10 +50,10 @@ Conflicts: sddm
 Lightweight display manager (login screen).
 
 %prep
-%if %{date}
+%if 0%{?date:1}
 %autosetup -n sddm-develop -p1
 %else
-%autosetup -p1
+%autosetup -p1 -n sddm-%{version}
 %endif
 
 sed -i -e 's,system-login,system-auth,g' services/*.pam
@@ -99,7 +99,7 @@ mkdir -p %{buildroot}%{_localstatedir}/lib/sddm
 
 %files
 %{_bindir}/sddm
-%{_bindir}/sddm-greeter
+%{_bindir}/sddm-greeter-qt6
 %{_datadir}/sddm
 %dir %{_sysconfdir}/sddm.conf.d
 %config(noreplace) %{_sysconfdir}/sddm.conf
