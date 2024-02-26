@@ -2,7 +2,7 @@
 
 Name: sddm
 Summary: Lightweight display manager
-Version: 0.20.0
+Version: 0.21.0
 %if %{date}
 Release: 0.%{date}.1
 # Packaged from git for the time being -- no download URL available
@@ -23,12 +23,6 @@ Source4: sddm-sysuser.conf
 # users that haven't logged in before
 Patch0: sddm-0.20.0-allow-setting-default-session.patch
 Patch1: sddm-0.20.0-default-rootless.patch
-# (tpg) upstream patches
-Patch100: https://github.com/sddm/sddm/commit/5b702ae986464fe6dbc8557d4b2da725ac1ed175.patch
-Patch101: https://github.com/sddm/sddm/commit/e27b70957505dc7b986ab2fa68219af546c63344.patch
-Patch102: https://github.com/sddm/sddm/commit/07631f2ef00a52d883d0fd47ff7d1e1a6bc6358f.patch
-Patch103: https://github.com/sddm/sddm/commit/0823810ed1683e6dcb7d687795764e11ddb6ff8a.patch
-Patch104: https://github.com/sddm/sddm/commit/9e7791d5fb375933d20f590daba9947195515b26.patch
 BuildRequires: cmake(ECM)
 BuildRequires: pkgconfig(Qt5Core)
 BuildRequires: pkgconfig(Qt5Gui)
