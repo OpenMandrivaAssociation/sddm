@@ -9,7 +9,7 @@ Release: 0.%{date}.1
 # git archive --format=tar --prefix sddm-0.18.1-$(date +%Y%m%d)/ HEAD | xz -vf > sddm-0.18.1-$(date +%Y%m%d).tar.xz
 Source0: https://github.com/sddm/sddm/archive/develop/%{name}-%{version}-%{date}.tar.gz
 %else
-Release: 7
+Release: 8
 Source0: https://github.com/sddm/sddm/archive/refs/tags/v%{version}.tar.gz
 %endif
 URL: https://github.com/sddm
