@@ -1,0 +1,21 @@
+From 352878a7f99d7c429b768f5bac4aba87211d94ee Mon Sep 17 00:00:00 2001
+From: Fabian Vogt <fabian@ritter-vogt.de>
+Date: Mon, 15 Jul 2024 20:47:26 +0200
+Subject: [PATCH] Remove unused Display::m_relogin variable
+
+---
+ src/daemon/Display.h | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/src/daemon/Display.h b/src/daemon/Display.h
+index a70671afa..b215852ff 100644
+--- a/src/daemon/Display.h
++++ b/src/daemon/Display.h
+@@ -94,7 +94,6 @@ namespace SDDM {
+ 
+         DisplayServerType m_displayServerType = X11DisplayServerType;
+ 
+-        bool m_relogin { true };
+         bool m_started { false };
+ 
+         int m_terminalId = -1;

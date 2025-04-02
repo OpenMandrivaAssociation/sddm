@@ -1,0 +1,23 @@
+From 9e51fa00c9329f2e9dd6faf0bf8cd86e10f210d3 Mon Sep 17 00:00:00 2001
+From: rewine <luhongxu@deepin.org>
+Date: Wed, 26 Mar 2025 17:59:58 +0800
+Subject: [PATCH] Fix index check for UserModel
+
+when 'index.row() == d->users.count()', it's an out-of-bounds access to an array
+---
+ src/greeter/UserModel.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/greeter/UserModel.cpp b/src/greeter/UserModel.cpp
+index c07bcba6f..7c67222da 100644
+--- a/src/greeter/UserModel.cpp
++++ b/src/greeter/UserModel.cpp
+@@ -183,7 +183,7 @@ namespace SDDM {
+     }
+ 
+     QVariant UserModel::data(const QModelIndex &index, int role) const {
+-        if (index.row() < 0 || index.row() > d->users.count())
++        if (index.row() < 0 || index.row() >= d->users.count())
+             return QVariant();
+ 
+         // get user

@@ -1,0 +1,45 @@
+From fbffb577796c471e4fabf64f6422aa7bab4ea990 Mon Sep 17 00:00:00 2001
+From: nerdopolis <bluescreen_avenger@verizon.net>
+Date: Fri, 23 Feb 2024 20:28:32 -0500
+Subject: [PATCH] VirtualTerminal: Export defaultVtPath
+
+---
+ src/common/VirtualTerminal.cpp | 4 ++--
+ src/common/VirtualTerminal.h   | 2 ++
+ 2 files changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/src/common/VirtualTerminal.cpp b/src/common/VirtualTerminal.cpp
+index 2cac325dc..9c0261e1a 100644
+--- a/src/common/VirtualTerminal.cpp
++++ b/src/common/VirtualTerminal.cpp
+@@ -43,7 +43,7 @@
+ namespace SDDM {
+     namespace VirtualTerminal {
+ #ifdef __FreeBSD__
+-        static const char *defaultVtPath = "/dev/ttyv0";
++        const char *defaultVtPath = "/dev/ttyv0";
+ 
+         QString path(int vt) {
+             char c = (vt <= 10 ? '0' : 'a') + (vt - 1);
+@@ -59,7 +59,7 @@ namespace SDDM {
+             return vtActive;
+         }
+ #else
+-        static const char *defaultVtPath = "/dev/tty0";
++        const char *defaultVtPath = "/dev/tty0";
+ 
+         QString path(int vt) {
+             return QStringLiteral("/dev/tty%1").arg(vt);
+diff --git a/src/common/VirtualTerminal.h b/src/common/VirtualTerminal.h
+index 0e6539d54..378375c2a 100644
+--- a/src/common/VirtualTerminal.h
++++ b/src/common/VirtualTerminal.h
+@@ -24,6 +24,8 @@
+ 
+ namespace SDDM {
+     namespace VirtualTerminal {
++        extern const char *defaultVtPath;
++
+         QString path(int vt);
+         int currentVt();
+         int setUpNewVt();

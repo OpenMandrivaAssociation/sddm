@@ -1,0 +1,24 @@
+From 71b2171f0224805a9cbd4662c99eb13d0bcea95d Mon Sep 17 00:00:00 2001
+From: Aleksei Bavshin <alebastr89@gmail.com>
+Date: Tue, 30 Jan 2024 20:16:25 -0800
+Subject: [PATCH] Mark keyboard backend as disabled on Wayland
+
+8c370d9 already cleared the list of layouts, but Num/Caps indicators
+are also not supported on Wayland. Let's communicate that clearly by
+marking the KeyboardModel as disabled.
+---
+ src/greeter/waylandkeyboardbackend.cpp | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/src/greeter/waylandkeyboardbackend.cpp b/src/greeter/waylandkeyboardbackend.cpp
+index fcea53614..c42bee6f2 100644
+--- a/src/greeter/waylandkeyboardbackend.cpp
++++ b/src/greeter/waylandkeyboardbackend.cpp
+@@ -95,6 +95,7 @@ void WaylandKeyboardBackend::init()
+     // TODO: We can't actually switch keyboard layout yet, so don't populate a list of layouts
+     // so that themes can know to not show the option to change layout
+     // d->layouts = parseRules(QStringLiteral("/usr/share/X11/xkb/rules/evdev.xml"), d->layout_id);
++    d->enabled = false;
+ }
+ 
+ void WaylandKeyboardBackend::disconnect()

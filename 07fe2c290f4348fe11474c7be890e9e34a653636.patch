@@ -1,0 +1,102 @@
+From 07fe2c290f4348fe11474c7be890e9e34a653636 Mon Sep 17 00:00:00 2001
+From: Mohammad Bahoosh <12122474+the-moisrex@users.noreply.github.com>
+Date: Sat, 15 Jul 2023 11:29:01 -0800
+Subject: [PATCH] Add translation for Persian
+
+---
+ data/translations/CMakeLists.txt |  1 +
+ data/translations/fa.ts          | 73 ++++++++++++++++++++++++++++++++
+ 2 files changed, 74 insertions(+)
+ create mode 100644 data/translations/fa.ts
+
+diff --git a/data/translations/CMakeLists.txt b/data/translations/CMakeLists.txt
+index 83467fdcf..15719273e 100644
+--- a/data/translations/CMakeLists.txt
++++ b/data/translations/CMakeLists.txt
+@@ -9,6 +9,7 @@ set(TRANSLATION_FILES
+     es.ts
+     et.ts
+     eu.ts
++    fa.ts
+     fi.ts
+     fr.ts
+     gl.ts
+diff --git a/data/translations/fa.ts b/data/translations/fa.ts
+new file mode 100644
+index 000000000..ec1eddcbc
+--- /dev/null
++++ b/data/translations/fa.ts
+@@ -0,0 +1,73 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!DOCTYPE TS>
++<TS version="2.1" language="fa">
++<context>
++    <name>PictureBox</name>
++    <message>
++        <source>Press to login</source>
++        <translation>برای ورود کلیک کنید</translation>
++    </message>
++</context>
++<context>
++    <name>QObject</name>
++    <message>
++        <source>%1 (Wayland)</source>
++        <translation type="unfinished"></translation>
++    </message>
++</context>
++<context>
++    <name>TextConstants</name>
++    <message>
++        <source>Welcome to %1</source>
++        <translation>به %1 خوش آمدید.</translation>
++    </message>
++    <message>
++        <source>Warning, Caps Lock is ON!</source>
++        <translation>کلید Caps Lock روشن است!</translation>
++    </message>
++    <message>
++        <source>Layout</source>
++        <translation>طرح‌بندی</translation>
++    </message>
++    <message>
++        <source>Login</source>
++        <translation>ورود</translation>
++    </message>
++    <message>
++        <source>Login failed</source>
++        <translation>ورود ناموفق ماند</translation>
++    </message>
++    <message>
++        <source>Login succeeded</source>
++        <translation>ورود موفقیت‌آمیز بود</translation>
++    </message>
++    <message>
++        <source>Password</source>
++        <translation>گذرواژه</translation>
++    </message>
++    <message>
++        <source>Enter your username and password</source>
++        <translation>نام‌کاربری و رمزعبور خود را وارد کنید</translation>
++    </message>
++    <message>
++        <source>Reboot</source>
++        <translation>راه‌اندازی مجدد</translation>
++    </message>
++    <message>
++        <source>Session</source>
++        <translation>نشست</translation>
++    </message>
++    <message>
++        <source>Shutdown</source>
++        <translation>خاموش کردن</translation>
++    </message>
++    <message>
++        <source>Username</source>
++        <translation>نام‌کاربری</translation>
++    </message>
++    <message>
++        <source>Select your user and enter password</source>
++        <translation>کاربر خود را انتخاب و گذرواژه مربوطه را وارد کنید</translation>
++    </message>
++</context>
++</TS>

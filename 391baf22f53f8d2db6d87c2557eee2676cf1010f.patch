@@ -1,0 +1,175 @@
+From 391baf22f53f8d2db6d87c2557eee2676cf1010f Mon Sep 17 00:00:00 2001
+From: Aleksei Bavshin <alebastr89@gmail.com>
+Date: Mon, 26 Feb 2024 19:39:53 -0800
+Subject: [PATCH] Components: use Transitions instead of Behaviors
+
+It's not recommended[^1] to use Behaviors with States, but the specific
+examples in SDDM weren't causing any problems previously (on Qt5).
+
+Now, with Qt6 support, we can finally observe the promised bugs from the
+referenced article in the wild:
+
+* ComboBox can be closed only once. On a second activation it stays open
+* Button color transitions on focus out are abruptly stopped on a wrong
+  color
+* ... (this is where I noticed a pattern and decided to convert
+  everything else preemptively).
+
+This commit essentially reverts 930fa07bf24d391d42abcfb981f145117292d49d
+
+[^1]: https://doc.qt.io/qt-5/qtquick-statesanimations-behaviors.html
+---
+ components/2.0/Button.qml      |  4 +++-
+ components/2.0/ComboBox.qml    | 12 ++++++++----
+ components/2.0/ImageButton.qml |  4 +++-
+ components/2.0/Menu.qml        |  6 ++++--
+ components/2.0/PictureBox.qml  |  6 ++++--
+ components/2.0/TextBox.qml     |  6 ++++--
+ 6 files changed, 26 insertions(+), 12 deletions(-)
+
+diff --git a/components/2.0/Button.qml b/components/2.0/Button.qml
+index cedc8356e..7c74f1ded 100644
+--- a/components/2.0/Button.qml
++++ b/components/2.0/Button.qml
+@@ -67,7 +67,9 @@ Rectangle {
+         }
+     ]
+ 
+-    Behavior on color { NumberAnimation { duration: 200 } }
++    transitions: Transition {
++        ColorAnimation { duration: 200 }
++    }
+ 
+     clip: true
+     smooth: true
+diff --git a/components/2.0/ComboBox.qml b/components/2.0/ComboBox.qml
+index 26bbef35e..e7fdb3362 100644
+--- a/components/2.0/ComboBox.qml
++++ b/components/2.0/ComboBox.qml
+@@ -70,8 +70,6 @@ FocusScope {
+         border.color: container.borderColor
+         border.width: container.borderWidth
+ 
+-        Behavior on border.color { ColorAnimation { duration: 100 } }
+-
+         states: [
+             State {
+                 name: "hover"; when: mouseArea.containsMouse
+@@ -82,6 +80,10 @@ FocusScope {
+                 PropertyChanges { target: main; border.width: container.borderWidth; border.color: container.focusColor }
+             }
+         ]
++
++        transitions: Transition {
++            ColorAnimation { property: "border.color"; duration: 100 }
++        }
+     }
+ 
+     Loader {
+@@ -157,8 +159,6 @@ FocusScope {
+ 
+         clip: true
+ 
+-        Behavior on height { NumberAnimation { duration: 100 } }
+-
+         Component {
+             id: myDelegate
+ 
+@@ -214,6 +214,10 @@ FocusScope {
+                 PropertyChanges { target: dropDown; height: (container.height - 2*container.borderWidth) * listView.count + container.borderWidth}
+             }
+         ]
++
++        transitions: Transition {
++            NumberAnimation { property: "height"; duration: 100 }
++        }
+     }
+ 
+     function toggle() {
+diff --git a/components/2.0/ImageButton.qml b/components/2.0/ImageButton.qml
+index 6277148ab..28bc940be 100644
+--- a/components/2.0/ImageButton.qml
++++ b/components/2.0/ImageButton.qml
+@@ -53,7 +53,9 @@ Image {
+         }
+     ]
+ 
+-    Behavior on opacity { NumberAnimation { duration: 200 } }
++    transitions: Transition {
++        NumberAnimation { property: "opacity"; duration: 200 }
++    }
+ 
+     clip: true
+     smooth: true
+diff --git a/components/2.0/Menu.qml b/components/2.0/Menu.qml
+index 8ef29841e..9acecb9e2 100644
+--- a/components/2.0/Menu.qml
++++ b/components/2.0/Menu.qml
+@@ -34,8 +34,6 @@ Rectangle {
+     property alias model: menuList.model
+     property alias index: menuList.currentIndex
+ 
+-    Behavior on height { NumberAnimation { duration: 100 } }
+-
+     states: [
+         State {
+             name: "visible";
+@@ -43,6 +41,10 @@ Rectangle {
+         }
+     ]
+ 
++    transitions: Transition {
++        NumberAnimation { property: "height"; duration: 100 }
++    }
++
+     Component {
+         id: listViewItem
+ 
+diff --git a/components/2.0/PictureBox.qml b/components/2.0/PictureBox.qml
+index eb2fbfee8..b9571f04e 100644
+--- a/components/2.0/PictureBox.qml
++++ b/components/2.0/PictureBox.qml
+@@ -37,8 +37,6 @@ FocusScope {
+ 
+     signal login()
+ 
+-    Behavior on height { NumberAnimation { duration: 100 } }
+-
+     states: [
+         State {
+             name: ""
+@@ -50,6 +48,10 @@ FocusScope {
+         }
+     ]
+ 
++    transitions: Transition {
++        NumberAnimation { property: "height"; duration: 100 }
++    }
++
+     Rectangle {
+         id: shadow
+         anchors.fill: parent
+diff --git a/components/2.0/TextBox.qml b/components/2.0/TextBox.qml
+index a8d89afd5..0db8ce885 100644
+--- a/components/2.0/TextBox.qml
++++ b/components/2.0/TextBox.qml
+@@ -47,8 +47,6 @@ FocusScope {
+         border.color: container.borderColor
+         border.width: 1
+ 
+-        Behavior on border.color { ColorAnimation { duration: 100 } }
+-
+         states: [
+             State {
+                 name: "hover"; when: mouseArea.containsMouse
+@@ -59,6 +57,10 @@ FocusScope {
+                 PropertyChanges { target: main; border.width: 1; border.color: container.focusColor }
+             }
+         ]
++
++        transitions: Transition {
++            ColorAnimation { duration: 100 }
++        }
+     }
+ 
+     MouseArea {

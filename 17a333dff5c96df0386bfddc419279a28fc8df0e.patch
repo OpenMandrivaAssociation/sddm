@@ -1,0 +1,93 @@
+From 17a333dff5c96df0386bfddc419279a28fc8df0e Mon Sep 17 00:00:00 2001
+From: Fabian Vogt <fabian@ritter-vogt.de>
+Date: Fri, 30 Aug 2024 21:04:55 +0200
+Subject: [PATCH] Less strict [Section Header] parsing for session .desktop
+ files
+
+Don't just assume the last byte is ], ignore whatever comes after it.
+
+Fixes #1982
+---
+ src/common/Session.cpp     | 18 +++++++++++++++---
+ test/SessionTest.cpp       | 16 ++++++++++++++++
+ test/almostinvalid.desktop |  7 +++++++
+ 3 files changed, 38 insertions(+), 3 deletions(-)
+ create mode 100644 test/almostinvalid.desktop
+
+diff --git a/src/common/Session.cpp b/src/common/Session.cpp
+index 5eec64859..69779aa5c 100644
+--- a/src/common/Session.cpp
++++ b/src/common/Session.cpp
+@@ -40,8 +40,12 @@ namespace SDDM {
+     class DesktopFileFormat {
+         static bool readFunc(QIODevice &device, QSettings::SettingsMap &map)
+         {
++            QString filename = QStringLiteral("(unknown)");
++            if(QFile *file = qobject_cast<QFile*>(&device); file)
++                filename = file->fileName();
++
+             QString currentSectionName;
+-            while(!device.atEnd())
++            for(int lineNumber = 1; !device.atEnd(); lineNumber++)
+             {
+                 // Iterate each line, remove line terminators
+                 const auto line = device.readLine().replace("\r", "").replace("\n", "");
+@@ -50,8 +54,16 @@ namespace SDDM {
+ 
+                 if(line.startsWith('[')) // Section header
+                 {
+-                    // Remove [ and ].
+-                    currentSectionName = QString::fromUtf8(line.mid(1, line.length() - 2));
++                    const int endOfHeader = line.lastIndexOf(']');
++                    if(endOfHeader < 0)
++                    {
++                        qWarning() << QStringLiteral("%1:%2: Invalid section header").arg(filename).arg(lineNumber);
++                        return false;
++                    }
++                    if(endOfHeader != line.length() - 1)
++                        qWarning() << QStringLiteral("%1:%2: Section header does not end line with ]").arg(filename).arg(lineNumber);
++
++                    currentSectionName = QString::fromUtf8(line.mid(1, endOfHeader - 1));
+                 }
+                 else if(int equalsPos = line.indexOf('='); equalsPos > 0) // Key=Value
+                 {
+diff --git a/test/SessionTest.cpp b/test/SessionTest.cpp
+index ef8df6fb4..ebc5134bb 100644
+--- a/test/SessionTest.cpp
++++ b/test/SessionTest.cpp
+@@ -59,6 +59,22 @@ private slots:
+         QCOMPARE(session.isHidden(), false);
+         QCOMPARE(session.isNoDisplay(), false);
+     }
++    void testAlmostInvalid()
++    {
++        auto fileName = QFINDTESTDATA("almostinvalid.desktop");
++        SDDM::Session session(SDDM::Session::X11Session, fileName);
++        QVERIFY(session.isValid());
++        QCOMPARE(session.xdgSessionType(), QStringLiteral("x11"));
++        QCOMPARE(session.fileName(), fileName);
++        QCOMPARE(session.displayName(), QStringLiteral("Smart DE change "));
++        QCOMPARE(session.comment(), QStringLiteral("Plasma for huesped and LXQt for other"));
++        QCOMPARE(session.exec(), QStringLiteral("/usr/sbin/startDE.sh"));
++        QCOMPARE(session.tryExec(), QStringLiteral("/usr/sbin/startDE.sh"));
++        QCOMPARE(session.desktopSession(), QStringLiteral("almostinvalid"));
++        QCOMPARE(session.desktopNames(), QStringLiteral("SmartDeskSel"));
++        QCOMPARE(session.isHidden(), false);
++        QCOMPARE(session.isNoDisplay(), false);
++    }
+ };
+ 
+ QTEST_MAIN(SessionTest);
+diff --git a/test/almostinvalid.desktop b/test/almostinvalid.desktop
+new file mode 100644
+index 000000000..881381966
+--- /dev/null
++++ b/test/almostinvalid.desktop
+@@ -0,0 +1,7 @@
++[Desktop Entry] 
++Type=Application 
++Exec=/usr/sbin/startDE.sh
++TryExec=/usr/sbin/startDE.sh
++DesktopNames=SmartDeskSel
++Name=Smart DE change 
++Comment=Plasma for huesped and LXQt for other

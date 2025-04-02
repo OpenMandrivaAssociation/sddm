@@ -1,0 +1,325 @@
+From fa65020883d5de1bda576d702d185ed865176aa4 Mon Sep 17 00:00:00 2001
+From: Aleksei Bavshin <alebastr89@gmail.com>
+Date: Wed, 31 Jan 2024 02:08:47 -0800
+Subject: [PATCH] Themes: explicitly resolve image URLs
+
+Qt6 no longer resolves relative URLs on assignment to a property of type
+url[^1]. The resolution now happens late, in the context of the item that
+uses the URL. In our case, it would be a QML component containing Image.
+However, the themes shipped with SDDM contain resources in the theme
+directories and rely on the previous algorithm of the URL resolution.
+
+The only documented[^2] way to address that is to resolve the paths in
+advance with `Qt.resolvedUrl` to avoid any ambiguity. `Qt.resolvedUrl`
+is supported in Qt5, so that should be a safe, albeit a bit verbose,
+conversion.
+
+Fixes following error:
+```
+file:///usr/lib64/qt6/qml/SddmComponents/ComboBox.qml:105:9: QML Image: Cannot open: file:///usr/lib64/qt6/qml/SddmComponents/angle-down.png
+```
+
+[^1]: https://doc.qt.io/qt-6/qml-url.html
+[^2]: `QQmlAbstractUrlInterceptor` exists in Qt5, but
+  `QQmlEngine::setUrlInterceptor` is undocumented and has potential
+negative side-effects. It also receives already resolved absolute URLs.
+---
+ data/themes/elarun/Main.qml   | 29 +++++++++++++++--------------
+ data/themes/maldives/Main.qml | 13 +++++++------
+ data/themes/maya/Main.qml     | 10 +++++-----
+ docs/THEMING.md               |  2 +-
+ src/greeter/theme/Main.qml    | 14 +++++++-------
+ 5 files changed, 35 insertions(+), 33 deletions(-)
+
+diff --git a/data/themes/elarun/Main.qml b/data/themes/elarun/Main.qml
+index 523dab7b3..8151bb52a 100644
+--- a/data/themes/elarun/Main.qml
++++ b/data/themes/elarun/Main.qml
+@@ -50,11 +50,12 @@ Rectangle {
+ 
+     Background {
+         anchors.fill: parent
+-        source: config.background
++        source: Qt.resolvedUrl(config.background)
+         fillMode: Image.PreserveAspectCrop
+         onStatusChanged: {
+-            if (status == Image.Error && source != config.defaultBackground) {
+-                source = config.defaultBackground
++            var defaultBackground = Qt.resolvedUrl(config.defaultBackground)
++            if (status == Image.Error && source != defaultBackground) {
++                source = defaultBackground
+             }
+         }
+     }
+@@ -72,12 +73,12 @@ Rectangle {
+ 
+             Image {
+                 anchors.fill: parent
+-                source: "images/rectangle.png"
++                source: Qt.resolvedUrl("images/rectangle.png")
+             }
+ 
+             Image {
+                 anchors.fill: parent
+-                source: "images/rectangle_overlay.png"
++                source: Qt.resolvedUrl("images/rectangle_overlay.png")
+                 opacity: 0.1
+             }
+ 
+@@ -103,7 +104,7 @@ Rectangle {
+                     anchors.centerIn: parent
+ 
+                     Row {
+-                        Image { source: "images/user_icon.png" }
++                        Image { source: Qt.resolvedUrl("images/user_icon.png") }
+ 
+                         TextBox {
+                             id: user_entry
+@@ -121,7 +122,7 @@ Rectangle {
+ 
+                     Row {
+ 
+-                        Image { source: "images/lock.png" }
++                        Image { source: Qt.resolvedUrl("images/lock.png") }
+ 
+                         PasswordBox {
+                             id: pw_entry
+@@ -150,7 +151,7 @@ Rectangle {
+                     anchors.verticalCenter: parent.verticalCenter
+                     anchors.margins: 20
+ 
+-                    source: "images/login_normal.png"
++                    source: Qt.resolvedUrl("images/login_normal.png")
+ 
+                     onClicked: sddm.login(user_entry.text, pw_entry.text, sessionIndex)
+ 
+@@ -171,7 +172,7 @@ Rectangle {
+ 
+                         ImageButton {
+                             id: system_button
+-                            source: "images/system_shutdown.png"
++                            source: Qt.resolvedUrl("images/system_shutdown.png")
+                             onClicked: sddm.powerOff()
+ 
+ 			    KeyNavigation.backtab: session; KeyNavigation.tab: reboot_button
+@@ -179,7 +180,7 @@ Rectangle {
+ 
+                         ImageButton {
+                             id: reboot_button
+-                            source: "images/system_reboot.png"
++                            source: Qt.resolvedUrl("images/system_reboot.png")
+                             onClicked: sddm.reboot()
+ 
+                             KeyNavigation.backtab: system_button; KeyNavigation.tab: suspend_button
+@@ -187,7 +188,7 @@ Rectangle {
+ 
+                         ImageButton {
+                             id: suspend_button
+-                            source: "images/system_suspend.png"
++                            source: Qt.resolvedUrl("images/system_suspend.png")
+                             visible: sddm.canSuspend
+                             onClicked: sddm.suspend()
+ 
+@@ -196,7 +197,7 @@ Rectangle {
+ 
+                         ImageButton {
+                             id: hibernate_button
+-                            source: "images/system_hibernate.png"
++                            source: Qt.resolvedUrl("images/system_hibernate.png")
+                             visible: sddm.canHibernate
+                             onClicked: sddm.hibernate()
+ 
+@@ -256,7 +257,7 @@ Rectangle {
+                 width: 245
+                 anchors.verticalCenter: parent.verticalCenter
+ 
+-                arrowIcon: "angle-down.png"
++                arrowIcon: Qt.resolvedUrl("angle-down.png")
+ 
+                 model: sessionModel
+                 index: sessionModel.lastIndex
+@@ -285,7 +286,7 @@ Rectangle {
+ 
+                 visible: keyboard.enabled && keyboard.layouts.length > 0
+ 
+-                arrowIcon: "angle-down.png"
++                arrowIcon: Qt.resolvedUrl("angle-down.png")
+ 
+                 KeyNavigation.backtab: session; KeyNavigation.tab: user_entry
+             }
+diff --git a/data/themes/maldives/Main.qml b/data/themes/maldives/Main.qml
+index 7f1959a5f..f346829e8 100644
+--- a/data/themes/maldives/Main.qml
++++ b/data/themes/maldives/Main.qml
+@@ -58,11 +58,12 @@ Rectangle {
+ 
+     Background {
+         anchors.fill: parent
+-        source: config.background
++        source: Qt.resolvedUrl(config.background)
+         fillMode: Image.PreserveAspectCrop
+         onStatusChanged: {
+-            if (status == Image.Error && source != config.defaultBackground) {
+-                source = config.defaultBackground
++            var defaultBackground = Qt.resolvedUrl(config.defaultBackground)
++            if (status == Image.Error && source != defaultBackground) {
++                source = defaultBackground
+             }
+         }
+     }
+@@ -87,7 +88,7 @@ Rectangle {
+             width: Math.max(320, mainColumn.implicitWidth + 50)
+             height: Math.max(320, mainColumn.implicitHeight + 50)
+ 
+-            source: "rectangle.png"
++            source: Qt.resolvedUrl("rectangle.png")
+ 
+             Column {
+                 id: mainColumn
+@@ -186,7 +187,7 @@ Rectangle {
+                             width: parent.width; height: 30
+                             font.pixelSize: 14
+ 
+-                            arrowIcon: "angle-down.png"
++                            arrowIcon: Qt.resolvedUrl("angle-down.png")
+ 
+                             model: sessionModel
+                             index: sessionModel.lastIndex
+@@ -217,7 +218,7 @@ Rectangle {
+                             width: parent.width; height: 30
+                             font.pixelSize: 14
+ 
+-                            arrowIcon: "angle-down.png"
++                            arrowIcon: Qt.resolvedUrl("angle-down.png")
+ 
+                             KeyNavigation.backtab: session; KeyNavigation.tab: loginButton
+                         }
+diff --git a/data/themes/maya/Main.qml b/data/themes/maya/Main.qml
+index d166b718c..30bb530ca 100644
+--- a/data/themes/maya/Main.qml
++++ b/data/themes/maya/Main.qml
+@@ -251,7 +251,7 @@ Rectangle {
+         font.family     : opensans_cond_light.name
+         font.pixelSize  : spFontNormal
+ 
+-        arrowIcon: "images/ic_arrow_drop_down_white_24px.svg"
++        arrowIcon: Qt.resolvedUrl("images/ic_arrow_drop_down_white_24px.svg")
+         arrowColor: primaryHue3
+ 
+         KeyNavigation.tab     : maya_username
+@@ -296,7 +296,7 @@ Rectangle {
+         font.family     : opensans_cond_light.name
+         font.pixelSize  : spFontNormal
+ 
+-        arrowIcon: "images/ic_arrow_drop_down_white_24px.svg"
++        arrowIcon: Qt.resolvedUrl("images/ic_arrow_drop_down_white_24px.svg")
+         arrowColor: primaryHue3
+ 
+         KeyNavigation.tab     : maya_layout
+@@ -355,7 +355,7 @@ Rectangle {
+         label       : textConstants.shutdown
+         labelColor  : normalText
+ 
+-        icon        : "images/ic_power_settings_new_white_24px.svg"
++        icon        : Qt.resolvedUrl("images/ic_power_settings_new_white_24px.svg")
+         iconColor   : accentShade
+ 
+         hoverIconColor  : powerColor
+@@ -381,7 +381,7 @@ Rectangle {
+         label       : textConstants.reboot
+         labelColor  : normalText
+ 
+-        icon        : "images/ic_refresh_white_24px.svg"
++        icon        : Qt.resolvedUrl("images/ic_refresh_white_24px.svg")
+         iconColor   : accentLight
+ 
+         hoverIconColor  : rebootColor
+@@ -492,7 +492,7 @@ Rectangle {
+         hoverColor  : accentLight
+         textColor   : normalText
+ 
+-        image       : "images/ic_warning_white_24px.svg"
++        image       : Qt.resolvedUrl("images/ic_warning_white_24px.svg")
+ 
+         tooltipEnabled  : true
+         tooltipText     : textConstants.capslockWarning
+diff --git a/docs/THEMING.md b/docs/THEMING.md
+index bc69be003..873172192 100644
+--- a/docs/THEMING.md
++++ b/docs/THEMING.md
+@@ -8,7 +8,7 @@ We also provide models containing information about the screens, available sessi
+ 
+     ComboBox {
+     	id: session
+-    	arrowIcon: "angle-down.png"
++    	arrowIcon: Qt.resolvedPath("angle-down.png")
+     	model: sessionModel
+     	index: sessionModel.lastIndex
+     }
+diff --git a/src/greeter/theme/Main.qml b/src/greeter/theme/Main.qml
+index 2106f6004..b799670ac 100644
+--- a/src/greeter/theme/Main.qml
++++ b/src/greeter/theme/Main.qml
+@@ -55,7 +55,7 @@ Rectangle {
+ 
+     Background {
+         anchors.fill: parent
+-        source: "qrc:/theme/background.png"
++        source: "qrc:///theme/background.png"
+         fillMode: Image.PreserveAspectCrop
+         onStatusChanged: {
+             if (status == Image.Error && source != config.defaultBackground) {
+@@ -131,7 +131,7 @@ Rectangle {
+                         anchors.left: parent.left
+                         anchors.verticalCenter: parent.verticalCenter
+                         anchors.margins: 10
+-                        source: "angle-left.png"
++                        source: "qrc:///theme/angle-left.png"
+                         onClicked: listView.decrementCurrentIndex()
+ 
+                         KeyNavigation.backtab: btnShutdown; KeyNavigation.tab: listView
+@@ -162,7 +162,7 @@ Rectangle {
+                         anchors.right: parent.right
+                         anchors.verticalCenter: parent.verticalCenter
+                         anchors.margins: 10
+-                        source: "angle-right.png"
++                        source: "qrc:///theme/angle-right.png"
+                         onClicked: listView.incrementCurrentIndex()
+                         KeyNavigation.backtab: listView; KeyNavigation.tab: session
+                     }
+@@ -222,7 +222,7 @@ Rectangle {
+                     width: 245
+                     anchors.verticalCenter: parent.verticalCenter
+ 
+-                    arrowIcon: "angle-down.png"
++                    arrowIcon: "qrc:///theme/angle-down.png"
+ 
+                     model: sessionModel
+                     index: sessionModel.lastIndex
+@@ -251,7 +251,7 @@ Rectangle {
+ 
+                     visible: keyboard.enabled && keyboard.layouts.length > 0
+ 
+-                    arrowIcon: "angle-down.png"
++                    arrowIcon: "qrc:///theme/angle-down.png"
+ 
+                     KeyNavigation.backtab: session; KeyNavigation.tab: btnShutdown
+                 }
+@@ -266,7 +266,7 @@ Rectangle {
+                 ImageButton {
+                     id: btnReboot
+                     height: parent.height
+-                    source: "reboot.png"
++                    source: "qrc:///theme/reboot.png"
+ 
+                     visible: sddm.canReboot
+ 
+@@ -278,7 +278,7 @@ Rectangle {
+                 ImageButton {
+                     id: btnShutdown
+                     height: parent.height
+-                    source: "shutdown.png"
++                    source: "qrc:///theme/shutdown.png"
+ 
+                     visible: sddm.canPowerOff
+ 

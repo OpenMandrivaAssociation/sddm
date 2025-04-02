@@ -1,0 +1,63 @@
+From 5c7af4e5c02247962da528d2ff49c162706fcecb Mon Sep 17 00:00:00 2001
+From: nerdopolis <bluescreen_avenger@verizon.net>
+Date: Mon, 29 Apr 2024 23:02:51 -0400
+Subject: [PATCH] Switch back to greeter when logind emits SecureAttentionKey
+
+---
+ data/interfaces/org.freedesktop.login1.Manager.xml | 4 ++++
+ src/daemon/SeatManager.cpp                         | 7 +++++++
+ src/daemon/SeatManager.h                           | 1 +
+ 3 files changed, 12 insertions(+)
+
+diff --git a/data/interfaces/org.freedesktop.login1.Manager.xml b/data/interfaces/org.freedesktop.login1.Manager.xml
+index 800d2bc35..0a63f7f74 100644
+--- a/data/interfaces/org.freedesktop.login1.Manager.xml
++++ b/data/interfaces/org.freedesktop.login1.Manager.xml
+@@ -185,6 +185,10 @@
+    <arg type="s" direction="in"/>
+    <arg type="h" direction="out"/>
+   </method>
++  <signal name="SecureAttentionKey">
++   <arg type="s"/>
++   <arg type="o"/>
++  </signal>
+   <signal name="SessionNew">
+    <arg type="s"/>
+    <arg type="o"/>
+diff --git a/src/daemon/SeatManager.cpp b/src/daemon/SeatManager.cpp
+index 78a0af133..26a3ade8d 100644
+--- a/src/daemon/SeatManager.cpp
++++ b/src/daemon/SeatManager.cpp
+@@ -115,6 +115,7 @@ namespace SDDM {
+             }
+         });
+ 
++        QDBusConnection::systemBus().connect(Logind::serviceName(), Logind::managerPath(), Logind::managerIfaceName(), QStringLiteral("SecureAttentionKey"), this, SLOT(logindSecureAttentionKey(QString,QDBusObjectPath)));
+         QDBusConnection::systemBus().connect(Logind::serviceName(), Logind::managerPath(), Logind::managerIfaceName(), QStringLiteral("SeatNew"), this, SLOT(logindSeatAdded(QString,QDBusObjectPath)));
+         QDBusConnection::systemBus().connect(Logind::serviceName(), Logind::managerPath(), Logind::managerIfaceName(), QStringLiteral("SeatRemoved"), this, SLOT(logindSeatRemoved(QString,QDBusObjectPath)));
+     }
+@@ -172,6 +173,12 @@ namespace SDDM {
+         m_seats.value(name)->createDisplay(Display::defaultDisplayServerType());
+     }
+ 
++    void SDDM::SeatManager::logindSecureAttentionKey(const QString& name, const QDBusObjectPath& objectPath)
++    {
++        Q_UNUSED(objectPath);
++        daemonApp->seatManager()->switchToGreeter(name);
++    }
++
+     void SDDM::SeatManager::logindSeatAdded(const QString& name, const QDBusObjectPath& objectPath)
+     {
+         auto logindSeat = new LogindSeat(name, objectPath);
+diff --git a/src/daemon/SeatManager.h b/src/daemon/SeatManager.h
+index b2f9796ba..e1a594911 100644
+--- a/src/daemon/SeatManager.h
++++ b/src/daemon/SeatManager.h
+@@ -43,6 +43,7 @@ namespace SDDM {
+         void seatRemoved(const QString &name);
+ 
+     private Q_SLOTS:
++        void logindSecureAttentionKey(const QString &name, const QDBusObjectPath &objectPath);
+         void logindSeatAdded(const QString &name, const QDBusObjectPath &objectPath);
+         void logindSeatRemoved(const QString &name, const QDBusObjectPath &objectPath);
+ 

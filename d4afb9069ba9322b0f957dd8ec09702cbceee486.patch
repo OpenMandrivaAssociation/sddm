@@ -1,0 +1,168 @@
+From d4afb9069ba9322b0f957dd8ec09702cbceee486 Mon Sep 17 00:00:00 2001
+From: Emil Velikov <emil.l.velikov@gmail.com>
+Date: Wed, 24 Jan 2024 13:04:38 +0000
+Subject: [PATCH] cmake: drop Debian specific PAM modules
+
+Having a per-distribution set in the upstream project (sddm) does not
+scale well. Instead sddm can provide a default set that distributions
+can opt out of with "cmake -DINSTALL_PAM_CONFIGURATION=off ..."
+---
+ services/CMakeLists.txt            | 18 +++++---------
+ services/debian.sddm-autologin.pam | 32 ------------------------
+ services/debian.sddm-greeter.pam   | 31 -----------------------
+ services/debian.sddm.pam           | 40 ------------------------------
+ 4 files changed, 6 insertions(+), 115 deletions(-)
+ delete mode 100644 services/debian.sddm-autologin.pam
+ delete mode 100644 services/debian.sddm-greeter.pam
+ delete mode 100644 services/debian.sddm.pam
+
+diff --git a/services/CMakeLists.txt b/services/CMakeLists.txt
+index 129d74654..5406f8bd6 100644
+--- a/services/CMakeLists.txt
++++ b/services/CMakeLists.txt
+@@ -20,18 +20,12 @@ endif()
+ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/sddm-greeter.pam.in" "${CMAKE_CURRENT_BINARY_DIR}/sddm-greeter.pam")
+ 
+ if(INSTALL_PAM_CONFIGURATION)
+-    if(EXISTS "/etc/debian_version")
+-        install(FILES debian.sddm-autologin.pam DESTINATION ${CMAKE_INSTALL_FULL_SYSCONFDIR}/pam.d RENAME sddm-autologin)
+-        install(FILES debian.sddm-greeter.pam DESTINATION ${CMAKE_INSTALL_FULL_SYSCONFDIR}/pam.d RENAME sddm-greeter)
+-        install(FILES debian.sddm.pam DESTINATION ${CMAKE_INSTALL_FULL_SYSCONFDIR}/pam.d RENAME sddm)
++    if(HAVE_PAM_FAILLOCK)
++        install(FILES sddm-autologin.pam DESTINATION ${CMAKE_INSTALL_FULL_SYSCONFDIR}/pam.d RENAME sddm-autologin)
+     else()
+-        if(HAVE_PAM_FAILLOCK)
+-           install(FILES sddm-autologin.pam DESTINATION ${CMAKE_INSTALL_FULL_SYSCONFDIR}/pam.d RENAME sddm-autologin)
+-        else()
+-           install(FILES sddm-autologin-tally2.pam DESTINATION ${CMAKE_INSTALL_FULL_SYSCONFDIR}/pam.d RENAME sddm-autologin)
+-        endif()
+-
+-        install(FILES sddm.pam DESTINATION ${CMAKE_INSTALL_FULL_SYSCONFDIR}/pam.d RENAME sddm)
+-        install(FILES "${CMAKE_CURRENT_BINARY_DIR}/sddm-greeter.pam" DESTINATION ${CMAKE_INSTALL_FULL_SYSCONFDIR}/pam.d RENAME sddm-greeter)
++        install(FILES sddm-autologin-tally2.pam DESTINATION ${CMAKE_INSTALL_FULL_SYSCONFDIR}/pam.d RENAME sddm-autologin)
+     endif()
++
++    install(FILES sddm.pam DESTINATION ${CMAKE_INSTALL_FULL_SYSCONFDIR}/pam.d RENAME sddm)
++    install(FILES "${CMAKE_CURRENT_BINARY_DIR}/sddm-greeter.pam" DESTINATION ${CMAKE_INSTALL_FULL_SYSCONFDIR}/pam.d RENAME sddm-greeter)
+ endif()
+diff --git a/services/debian.sddm-autologin.pam b/services/debian.sddm-autologin.pam
+deleted file mode 100644
+index d59568244..000000000
+--- a/services/debian.sddm-autologin.pam
++++ /dev/null
+@@ -1,32 +0,0 @@
+-#%PAM-1.0
+-
+-# Block login if they are globally disabled
+-auth    requisite       pam_nologin.so
+-auth    required        pam_permit.so
+-
+-@include common-account
+-
+-# SELinux needs to be the first session rule.  This ensures that any
+-# lingering context has been cleared.  Without this it is possible that a
+-# module could execute code in the wrong domain.
+-session [success=ok ignore=ignore module_unknown=ignore default=bad] pam_selinux.so close
+-# Create a new session keyring.
+-session optional        pam_keyinit.so force revoke
+-session required        pam_limits.so
+-session required        pam_loginuid.so
+-@include common-session
+-# SELinux needs to intervene at login time to ensure that the process starts
+-# in the proper default security context.  Only sessions which are intended
+-# to run in the user's context should be run after this.
+-session [success=ok ignore=ignore module_unknown=ignore default=bad] pam_selinux.so open
+-
+-@include common-password
+-
+-# From the pam_env man page
+-# Since setting of PAM environment variables can have side effects to other modules, this module should be the last one on the stack.
+-
+-# Load environment from /etc/environment
+-session required        pam_env.so
+-
+-# Load environment from /etc/default/locale
+-session required        pam_env.so envfile=/etc/default/locale
+diff --git a/services/debian.sddm-greeter.pam b/services/debian.sddm-greeter.pam
+deleted file mode 100644
+index 78aed41a9..000000000
+--- a/services/debian.sddm-greeter.pam
++++ /dev/null
+@@ -1,31 +0,0 @@
+-#%PAM-1.0
+-
+-auth    required        pam_permit.so
+-
+-@include common-account
+-
+-# SELinux needs to be the first session rule.  This ensures that any
+-# lingering context has been cleared.  Without this it is possible that a
+-# module could execute code in the wrong domain.
+-session [success=ok ignore=ignore module_unknown=ignore default=bad] pam_selinux.so close
+-# Create a new session keyring.
+-session optional        pam_keyinit.so force revoke
+-session required        pam_limits.so
+-session required        pam_loginuid.so
+-@include common-session
+-# SELinux needs to intervene at login time to ensure that the process starts
+-# in the proper default security context.  Only sessions which are intended
+-# to run in the user's context should be run after this.
+-session [success=ok ignore=ignore module_unknown=ignore default=bad] pam_selinux.so open
+-
+-# Can't change password
+-password        required pam_deny.so
+-
+-# From the pam_env man page
+-# Since setting of PAM environment variables can have side effects to other modules, this module should be the last one on the stack.
+-
+-# Load environment from /etc/environment
+-session required        pam_env.so
+-
+-# Load environment from /etc/default/locale
+-session required        pam_env.so envfile=/etc/default/locale
+diff --git a/services/debian.sddm.pam b/services/debian.sddm.pam
+deleted file mode 100644
+index de7fd79bb..000000000
+--- a/services/debian.sddm.pam
++++ /dev/null
+@@ -1,40 +0,0 @@
+-#%PAM-1.0
+-
+-# Block login if they are globally disabled
+-auth    requisite       pam_nologin.so
+-auth    required        pam_succeed_if.so user != root quiet_success
+-
+-# auth    sufficient      pam_succeed_if.so user ingroup nopasswdlogin
+-@include common-auth
+-# gnome_keyring breaks QProcess
+--auth   optional        pam_gnome_keyring.so
+--auth   optional        pam_kwallet5.so
+-
+-@include common-account
+-
+-# SELinux needs to be the first session rule.  This ensures that any
+-# lingering context has been cleared.  Without this it is possible that a
+-# module could execute code in the wrong domain.
+-session [success=ok ignore=ignore module_unknown=ignore default=bad] pam_selinux.so close
+-# Create a new session keyring.
+-session optional        pam_keyinit.so force revoke
+-session required        pam_limits.so
+-session required        pam_loginuid.so
+-@include common-session
+-# SELinux needs to intervene at login time to ensure that the process starts
+-# in the proper default security context.  Only sessions which are intended
+-# to run in the user's context should be run after this.
+-session [success=ok ignore=ignore module_unknown=ignore default=bad] pam_selinux.so open
+--session optional       pam_gnome_keyring.so auto_start
+--session optional       pam_kwallet5.so auto_start
+-
+-@include common-password
+-
+-# From the pam_env man page
+-# Since setting of PAM environment variables can have side effects to other modules, this module should be the last one on the stack.
+-
+-# Load environment from /etc/environment
+-session required        pam_env.so
+-
+-# Load environment from /etc/default/locale and ~/.pam_environment
+-session required        pam_env.so envfile=/etc/default/locale user_readenv=1

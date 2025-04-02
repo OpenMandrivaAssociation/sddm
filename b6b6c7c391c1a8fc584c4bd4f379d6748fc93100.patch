@@ -1,0 +1,30 @@
+From b6b6c7c391c1a8fc584c4bd4f379d6748fc93100 Mon Sep 17 00:00:00 2001
+From: walken <61562049+walken11@users.noreply.github.com>
+Date: Wed, 28 Feb 2024 23:06:02 +0100
+Subject: [PATCH] Update Czech translations
+
+---
+ data/translations/cs.ts | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/data/translations/cs.ts b/data/translations/cs.ts
+index 1b8abff5c..9cb66e586 100644
+--- a/data/translations/cs.ts
++++ b/data/translations/cs.ts
+@@ -5,14 +5,14 @@
+     <name>PictureBox</name>
+     <message>
+         <source>Press to login</source>
+-        <translation type="unfinished"></translation>
++        <translation>Klikněte pro přihlášení</translation>
+     </message>
+ </context>
+ <context>
+     <name>QObject</name>
+     <message>
+         <source>%1 (Wayland)</source>
+-        <translation type="unfinished"></translation>
++        <translation>%1 (Wayland)</translation>
+     </message>
+ </context>
+ <context>

@@ -1,0 +1,53 @@
+From e505a38c241677c3b3c8f4bdaf65249d452f05e3 Mon Sep 17 00:00:00 2001
+From: Kisaragi Hiu <mail@kisaragi-hiu.com>
+Date: Fri, 24 Jan 2025 23:51:27 +0900
+Subject: [PATCH] Update Traditional Chinese translation
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+- Add exclamation mark where it exists in source text
+- Remove an extra period where source text doesn't have it
+- Use 暫停 for Suspend, consistent with KDE
+  - Note: Suspend = 暫停, Hibernate = 休止, Sleep = 睡眠
+- Use 目前 for "current" to be more like zh_TW not zh_Hant_CN
+---
+ data/translations/zh_TW.ts | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/data/translations/zh_TW.ts b/data/translations/zh_TW.ts
+index 16c5447ab..074696f16 100644
+--- a/data/translations/zh_TW.ts
++++ b/data/translations/zh_TW.ts
+@@ -47,7 +47,7 @@
+     </message>
+     <message>
+         <source>Please enter a password!</source>
+-        <translation>請輸入密碼</translation>
++        <translation>請輸入密碼！</translation>
+     </message>
+     <message>
+         <source>Change password</source>
+@@ -95,7 +95,7 @@
+     </message>
+     <message>
+         <source>Suspend</source>
+-        <translation>掛起（到記憶體）</translation>
++        <translation>暫停</translation>
+     </message>
+     <message>
+         <source>Hibernate</source>
+@@ -111,11 +111,11 @@
+     </message>
+     <message>
+         <source>Password change aborted because maximum tries reached</source>
+-        <translation>達到最大嘗試次數，密碼更改已中止。</translation>
++        <translation>達到最大嘗試次數，密碼更改已中止</translation>
+     </message>
+     <message>
+         <source>New password change round! Please input current password again!</source>
+-        <translation>請再次輸入當前密碼！</translation>
++        <translation>請再次輸入目前的密碼！</translation>
+     </message>
+ </context>
+ </TS>

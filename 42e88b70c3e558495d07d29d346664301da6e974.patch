@@ -1,0 +1,137 @@
+From 42e88b70c3e558495d07d29d346664301da6e974 Mon Sep 17 00:00:00 2001
+From: rewine <luhongxu@deepin.org>
+Date: Wed, 26 Mar 2025 18:12:15 +0800
+Subject: [PATCH] Remove use of qAsConst which is deprecated
+
+---
+ src/auth/AuthMessages.h      | 2 +-
+ src/auth/AuthRequest.cpp     | 6 +++---
+ src/common/ConfigReader.cpp  | 8 ++++----
+ src/common/Session.cpp       | 4 ++--
+ src/greeter/GreeterApp.cpp   | 2 +-
+ src/greeter/SessionModel.cpp | 2 +-
+ 6 files changed, 12 insertions(+), 12 deletions(-)
+
+diff --git a/src/auth/AuthMessages.h b/src/auth/AuthMessages.h
+index 6aea7483f..d7348b765 100644
+--- a/src/auth/AuthMessages.h
++++ b/src/auth/AuthMessages.h
+@@ -188,7 +188,7 @@ namespace SDDM {
+     inline QDataStream& operator<<(QDataStream &s, const Request &m) {
+         qint32 length = m.prompts.length();
+         s << length;
+-        for(const Prompt &p : qAsConst(m.prompts)) {
++        for(const Prompt &p : std::as_const(m.prompts)) {
+             s << p;
+         }
+         return s;
+diff --git a/src/auth/AuthRequest.cpp b/src/auth/AuthRequest.cpp
+index 9ccc2d259..3f68fd412 100644
+--- a/src/auth/AuthRequest.cpp
++++ b/src/auth/AuthRequest.cpp
+@@ -38,7 +38,7 @@ namespace SDDM {
+             : QObject(parent) { }
+ 
+     void AuthRequest::Private::responseChanged() {
+-        for(const AuthPrompt *qap : qAsConst(prompts)) {
++        for(const AuthPrompt *qap : std::as_const(prompts)) {
+             if (qap->response().isEmpty())
+                 return;
+         }
+@@ -54,7 +54,7 @@ namespace SDDM {
+         QList<AuthPrompt*> promptsCopy(d->prompts);
+         d->prompts.clear();
+         if (request != nullptr) {
+-            for (const Prompt& p : qAsConst(request->prompts)) {
++            for (const Prompt& p : std::as_const(request->prompts)) {
+                 AuthPrompt *qap = new AuthPrompt(&p, this);
+                 d->prompts << qap;
+                 if (finishAutomatically())
+@@ -96,7 +96,7 @@ namespace SDDM {
+ 
+     Request AuthRequest::request() const {
+         Request r;
+-        for (const AuthPrompt* qap : qAsConst(d->prompts)) {
++        for (const AuthPrompt* qap : std::as_const(d->prompts)) {
+             Prompt p;
+             p.hidden = qap->hidden();
+             p.message = qap->message();
+diff --git a/src/common/ConfigReader.cpp b/src/common/ConfigReader.cpp
+index da7d92a84..0117a8335 100644
+--- a/src/common/ConfigReader.cpp
++++ b/src/common/ConfigReader.cpp
+@@ -182,7 +182,7 @@ namespace SDDM {
+         }
+         m_fileModificationTime = latestModificationTime;
+ 
+-        for (const QString &filepath : qAsConst(files)) {
++        for (const QString &filepath : std::as_const(files)) {
+             loadInternal(filepath);
+         }
+     }
+@@ -245,14 +245,14 @@ namespace SDDM {
+             if (entry && !entry->matchesDefault())
+                 remainingEntries.insert(section, entry);
+             else {
+-                for (const ConfigEntryBase *b : qAsConst(section->entries()))
++                for (const ConfigEntryBase *b : std::as_const(section->entries()))
+                     if (!b->matchesDefault())
+                         remainingEntries.insert(section, b);
+             }
+         }
+         else {
+-            for (const ConfigSection *s : qAsConst(m_sections)) {
+-                for (const ConfigEntryBase *b : qAsConst(s->entries()))
++            for (const ConfigSection *s : std::as_const(m_sections)) {
++                for (const ConfigEntryBase *b : std::as_const(s->entries()))
+                     if (!b->matchesDefault())
+                         remainingEntries.insert(s, b);
+             }
+diff --git a/src/common/Session.cpp b/src/common/Session.cpp
+index 69779aa5c..b116f4cb1 100644
+--- a/src/common/Session.cpp
++++ b/src/common/Session.cpp
+@@ -218,7 +218,7 @@ namespace SDDM {
+         }
+ 
+         QFile file;
+-        for (const auto &path: qAsConst(sessionDirs)) {
++        for (const auto &path: std::as_const(sessionDirs)) {
+             m_dir.setPath(path);
+             m_fileName = m_dir.absoluteFilePath(fileName);
+ 
+@@ -246,7 +246,7 @@ namespace SDDM {
+         settings.beginGroup(QLatin1String("Desktop Entry"));
+ 
+         auto localizedValue = [&] (const QLatin1String &key) {
+-            for (QString locale : qAsConst(locales)) {
++            for (QString locale : std::as_const(locales)) {
+                 QString localizedValue = settings.value(key + QLatin1Char('[') + locale + QLatin1Char(']'), QString()).toString();
+                 if (!localizedValue.isEmpty()) {
+                     return localizedValue;
+diff --git a/src/greeter/GreeterApp.cpp b/src/greeter/GreeterApp.cpp
+index 01613cc66..be4f9f000 100644
+--- a/src/greeter/GreeterApp.cpp
++++ b/src/greeter/GreeterApp.cpp
+@@ -288,7 +288,7 @@ namespace SDDM {
+ 
+     void GreeterApp::activatePrimary() {
+         // activate and give focus to the window assigned to the primary screen
+-        for (QQuickView *view : qAsConst(m_views)) {
++        for (QQuickView *view : std::as_const(m_views)) {
+             if (view->screen() == QGuiApplication::primaryScreen()) {
+                 view->requestActivate();
+                 break;
+diff --git a/src/greeter/SessionModel.cpp b/src/greeter/SessionModel.cpp
+index d8698b7f7..61b115bed 100644
+--- a/src/greeter/SessionModel.cpp
++++ b/src/greeter/SessionModel.cpp
+@@ -135,7 +135,7 @@ namespace SDDM {
+         }
+         // read session
+         sessions.removeDuplicates();
+-        for (auto& session : qAsConst(sessions)) {
++        for (auto& session : std::as_const(sessions)) {
+             Session *si = new Session(type, session);
+             bool execAllowed = true;
+             QFileInfo fi(si->tryExec());

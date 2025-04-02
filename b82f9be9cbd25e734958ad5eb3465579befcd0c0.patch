@@ -1,0 +1,94 @@
+From b82f9be9cbd25e734958ad5eb3465579befcd0c0 Mon Sep 17 00:00:00 2001
+From: Emil Velikov <emil.l.velikov@gmail.com>
+Date: Wed, 24 Jan 2024 13:03:48 +0000
+Subject: [PATCH] cmake: drop FreeBSD specific PAM modules
+
+Having a per-distribution set in the upstream project (sddm) does not
+scale well. Instead sddm can provide a default set that distributions
+can opt out of with "cmake -DINSTALL_PAM_CONFIGURATION=off ..."
+
+Glancing through the FreeBSD ports - all the pam modules are patched
+already, so dropping them from here should reduce maintenance on both
+sides.
+---
+ services/CMakeLists.txt             |  4 ----
+ services/freebsd.sddm-autologin.pam | 12 ------------
+ services/freebsd.sddm-greeter.pam   | 13 -------------
+ services/freebsd.sddm.pam           | 14 --------------
+ 4 files changed, 43 deletions(-)
+ delete mode 100644 services/freebsd.sddm-autologin.pam
+ delete mode 100644 services/freebsd.sddm-greeter.pam
+ delete mode 100644 services/freebsd.sddm.pam
+
+diff --git a/services/CMakeLists.txt b/services/CMakeLists.txt
+index 5158e87d0..129d74654 100644
+--- a/services/CMakeLists.txt
++++ b/services/CMakeLists.txt
+@@ -24,10 +24,6 @@ if(INSTALL_PAM_CONFIGURATION)
+         install(FILES debian.sddm-autologin.pam DESTINATION ${CMAKE_INSTALL_FULL_SYSCONFDIR}/pam.d RENAME sddm-autologin)
+         install(FILES debian.sddm-greeter.pam DESTINATION ${CMAKE_INSTALL_FULL_SYSCONFDIR}/pam.d RENAME sddm-greeter)
+         install(FILES debian.sddm.pam DESTINATION ${CMAKE_INSTALL_FULL_SYSCONFDIR}/pam.d RENAME sddm)
+-    elseif(CMAKE_SYSTEM_NAME STREQUAL "FreeBSD")
+-        install(FILES freebsd.sddm-autologin.pam DESTINATION ${CMAKE_INSTALL_FULL_SYSCONFDIR}/pam.d RENAME sddm-autologin)
+-        install(FILES freebsd.sddm-greeter.pam DESTINATION ${CMAKE_INSTALL_FULL_SYSCONFDIR}/pam.d RENAME sddm-greeter)
+-        install(FILES freebsd.sddm.pam DESTINATION ${CMAKE_INSTALL_FULL_SYSCONFDIR}/pam.d RENAME sddm)
+     else()
+         if(HAVE_PAM_FAILLOCK)
+            install(FILES sddm-autologin.pam DESTINATION ${CMAKE_INSTALL_FULL_SYSCONFDIR}/pam.d RENAME sddm-autologin)
+diff --git a/services/freebsd.sddm-autologin.pam b/services/freebsd.sddm-autologin.pam
+deleted file mode 100644
+index c55ba8165..000000000
+--- a/services/freebsd.sddm-autologin.pam
++++ /dev/null
+@@ -1,12 +0,0 @@
+-#%PAM-1.0
+-auth        required    pam_permit.so
+-#auth       optional    pam_gnome_keyring.so
+-#auth       optional    pam_kwallet5.so
+-
+-account     include     login
+-
+-password    required    pam_deny.so
+-
+-session     include     login
+-#session    optional    pam_gnome_keyring.so auto_start
+-#session    optional    pam_kwallet5.so auto_start
+diff --git a/services/freebsd.sddm-greeter.pam b/services/freebsd.sddm-greeter.pam
+deleted file mode 100644
+index ea351799a..000000000
+--- a/services/freebsd.sddm-greeter.pam
++++ /dev/null
+@@ -1,13 +0,0 @@
+-#%PAM-1.0
+-
+-# Always let the greeter start without authentication
+-auth		required pam_permit.so
+-
+-# No action required for account management
+-account		required pam_permit.so
+-
+-# Can't change password
+-password	required pam_deny.so
+-
+-# Setup session
+-session		required pam_permit.so
+diff --git a/services/freebsd.sddm.pam b/services/freebsd.sddm.pam
+deleted file mode 100644
+index 97996051c..000000000
+--- a/services/freebsd.sddm.pam
++++ /dev/null
+@@ -1,14 +0,0 @@
+-#%PAM-1.0
+-
+-auth        include     login
+-#auth       optional    pam_gnome_keyring.so
+-#auth       optional    pam_kwallet5.so
+-
+-account     include     login
+-
+-password    include     login
+-#password   optional    pam_gnome_keyring.so    use_authtok
+-
+-session     include     login
+-#session    optional    pam_gnome_keyring.so    auto_start
+-#session    optional    pam_kwallet5.so         auto_start

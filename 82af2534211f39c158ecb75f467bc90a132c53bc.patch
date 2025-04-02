@@ -1,0 +1,258 @@
+From 82af2534211f39c158ecb75f467bc90a132c53bc Mon Sep 17 00:00:00 2001
+From: Aleksei Bavshin <alebastr89@gmail.com>
+Date: Mon, 26 Feb 2024 21:11:01 -0800
+Subject: [PATCH] Themes: fix deprecated signal handler declarations
+
+Fixes following warnings:
+```
+QML Connections: Implicitly defined onFoo properties in Connections are deprecated. Use this syntax instead: function onFoo(<arguments>) { ... }
+Parameter "event" is not declared. Injection of parameters into signal handlers is deprecated. Use JavaScript functions with formal parameters instead.
+```
+---
+ components/2.0/Button.qml      |  4 ++--
+ components/2.0/ComboBox.qml    |  2 +-
+ components/2.0/ImageButton.qml |  4 ++--
+ components/2.0/LayoutBox.qml   |  8 ++++++--
+ components/2.0/PictureBox.qml  |  2 +-
+ data/themes/elarun/Main.qml    |  8 ++++----
+ data/themes/maldives/Main.qml  | 11 +++++------
+ data/themes/maya/Main.qml      | 10 +++++-----
+ src/greeter/theme/Main.qml     |  6 +++---
+ 9 files changed, 29 insertions(+), 26 deletions(-)
+
+diff --git a/components/2.0/Button.qml b/components/2.0/Button.qml
+index 7c74f1ded..4d6d40a76 100644
+--- a/components/2.0/Button.qml
++++ b/components/2.0/Button.qml
+@@ -111,7 +111,7 @@ Rectangle {
+         onReleased: { container.focus = true; container.released() }
+     }
+ 
+-    Keys.onPressed: {
++    Keys.onPressed: function (event) {
+         if (event.key === Qt.Key_Space) {
+             container.spaceDown = true;
+             container.pressed()
+@@ -122,7 +122,7 @@ Rectangle {
+         }
+     }
+ 
+-    Keys.onReleased: {
++    Keys.onReleased: function (event) {
+         if (event.key === Qt.Key_Space) {
+             container.spaceDown = false;
+             container.released()
+diff --git a/components/2.0/ComboBox.qml b/components/2.0/ComboBox.qml
+index e7fdb3362..997a3886e 100644
+--- a/components/2.0/ComboBox.qml
++++ b/components/2.0/ComboBox.qml
+@@ -134,7 +134,7 @@ FocusScope {
+         }
+     }
+ 
+-    Keys.onPressed: {
++    Keys.onPressed: function (event) {
+         if (event.key === Qt.Key_Up) {
+             listView.decrementCurrentIndex()
+         } else if (event.key === Qt.Key_Down) {
+diff --git a/components/2.0/ImageButton.qml b/components/2.0/ImageButton.qml
+index 28bc940be..b2c267d2b 100644
+--- a/components/2.0/ImageButton.qml
++++ b/components/2.0/ImageButton.qml
+@@ -77,7 +77,7 @@ Image {
+         onReleased: { container.focus = true; container.released() }
+     }
+ 
+-    Keys.onPressed: {
++    Keys.onPressed: function (event) {
+         if (event.key === Qt.Key_Space) {
+             container.spaceDown = true;
+             container.pressed()
+@@ -88,7 +88,7 @@ Image {
+         }
+     }
+ 
+-    Keys.onReleased: {
++    Keys.onReleased: function (event) {
+         if (event.key === Qt.Key_Space) {
+             container.spaceDown = false;
+             container.released()
+diff --git a/components/2.0/LayoutBox.qml b/components/2.0/LayoutBox.qml
+index b992f28de..5e62acd3f 100644
+--- a/components/2.0/LayoutBox.qml
++++ b/components/2.0/LayoutBox.qml
+@@ -30,12 +30,16 @@ ComboBox {
+     model: keyboard.layouts
+     index: keyboard.currentLayout
+ 
+-    onValueChanged: keyboard.currentLayout = id
++    function onValueChanged(id) {
++        keyboard.currentLayout = id
++    }
+ 
+     Connections {
+         target: keyboard
+ 
+-        onCurrentLayoutChanged: combo.index = keyboard.currentLayout
++        function onCurrentLayoutChanged() {
++            combo.index = keyboard.currentLayout
++        }
+     }
+ 
+     rowDelegate: Rectangle {
+diff --git a/components/2.0/PictureBox.qml b/components/2.0/PictureBox.qml
+index b9571f04e..560556e40 100644
+--- a/components/2.0/PictureBox.qml
++++ b/components/2.0/PictureBox.qml
+@@ -105,7 +105,7 @@ FocusScope {
+             focus: true
+             visible: showPassword
+ 
+-            Keys.onPressed: {
++            Keys.onPressed: function (event) {
+                 if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+                     container.login();
+                     event.accepted = true
+diff --git a/data/themes/elarun/Main.qml b/data/themes/elarun/Main.qml
+index 8151bb52a..d0caadaea 100644
+--- a/data/themes/elarun/Main.qml
++++ b/data/themes/elarun/Main.qml
+@@ -39,11 +39,11 @@ Rectangle {
+ 
+     Connections {
+         target: sddm
+-        onLoginSucceeded: {
++        function onLoginSucceeded() {
+         }
+-        onInformationMessage: {
++        function onInformationMessage(message) {
+         }
+-        onLoginFailed: {
++        function onLoginFailed() {
+             pw_entry.text = ""
+         }
+     }
+@@ -135,7 +135,7 @@ Rectangle {
+ 
+                             KeyNavigation.backtab: user_entry; KeyNavigation.tab: login_button
+ 
+-                            Keys.onPressed: {
++                            Keys.onPressed: function (event) {
+                                 if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+                                     sddm.login(user_entry.text, pw_entry.text, sessionIndex)
+                                     event.accepted = true
+diff --git a/data/themes/maldives/Main.qml b/data/themes/maldives/Main.qml
+index f346829e8..17b1b8aff 100644
+--- a/data/themes/maldives/Main.qml
++++ b/data/themes/maldives/Main.qml
+@@ -40,17 +40,16 @@ Rectangle {
+     Connections {
+         target: sddm
+ 
+-        onLoginSucceeded: {
++        function onLoginSucceeded() {
+             errorMessage.color = "steelblue"
+             errorMessage.text = textConstants.loginSucceeded
+         }
+-
+-        onLoginFailed: {
++        function onLoginFailed() {
+             password.text = ""
+             errorMessage.color = "red"
+             errorMessage.text = textConstants.loginFailed
+         }
+-        onInformationMessage: {
++        function onInformationMessage(message) {
+             errorMessage.color = "red"
+             errorMessage.text = message
+         }
+@@ -126,7 +125,7 @@ Rectangle {
+ 
+                         KeyNavigation.backtab: rebootButton; KeyNavigation.tab: password
+ 
+-                        Keys.onPressed: {
++                        Keys.onPressed: function (event) {
+                             if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+                                 sddm.login(name.text, password.text, sessionIndex)
+                                 event.accepted = true
+@@ -153,7 +152,7 @@ Rectangle {
+ 
+                         KeyNavigation.backtab: name; KeyNavigation.tab: session
+ 
+-                        Keys.onPressed: {
++                        Keys.onPressed: function (event) {
+                             if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+                                 sddm.login(name.text, password.text, sessionIndex)
+                                 event.accepted = true
+diff --git a/data/themes/maya/Main.qml b/data/themes/maya/Main.qml
+index 30bb530ca..60473a473 100644
+--- a/data/themes/maya/Main.qml
++++ b/data/themes/maya/Main.qml
+@@ -75,7 +75,7 @@ Rectangle {
+   Connections {
+     target: sddm
+ 
+-    onLoginSucceeded: {
++    function onLoginSucceeded() {
+       prompt_bg.color = successText
+       prompt_txt.text = textConstants.loginSucceeded
+ 
+@@ -84,7 +84,7 @@ Rectangle {
+ 
+       anim_success.start()
+     }
+-    onLoginFailed: {
++    function onLoginFailed() {
+       prompt_bg.color = failureText
+       prompt_txt.text = textConstants.loginFailed
+ 
+@@ -93,7 +93,7 @@ Rectangle {
+ 
+       anim_failure.start()
+     }
+-    onInformationMessage: {
++    function onInformationMessage(message) {
+       prompt_bg.color = failureText
+       prompt_txt.text = message
+ 
+@@ -505,7 +505,7 @@ Rectangle {
+         KeyNavigation.tab     : maya_login
+         KeyNavigation.backtab : maya_username
+ 
+-        Keys.onPressed: {
++        Keys.onPressed: function (event) {
+           if ((event.key === Qt.Key_Return) || (event.key === Qt.Key_Enter)) {
+             maya_root.tryLogin()
+ 
+@@ -546,7 +546,7 @@ Rectangle {
+ 
+         onClicked: maya_root.tryLogin()
+ 
+-        Keys.onPressed: {
++        Keys.onPressed: function (event) {
+           if ((event.key === Qt.Key_Return) || (event.key === Qt.Key_Enter)) {
+             maya_root.tryLogin()
+ 
+diff --git a/src/greeter/theme/Main.qml b/src/greeter/theme/Main.qml
+index b799670ac..257153b16 100644
+--- a/src/greeter/theme/Main.qml
++++ b/src/greeter/theme/Main.qml
+@@ -40,15 +40,15 @@ Rectangle {
+ 
+     Connections {
+         target: sddm
+-        onLoginSucceeded: {
++        function onLoginSucceeded() {
+         }
+ 
+-        onLoginFailed: {
++        function onLoginFailed() {
+             txtMessage.text = textConstants.loginFailed
+             listView.currentItem.password = ""
+         }
+ 
+-        onInformationMessage: {
++        function onInformationMessage(message) {
+             txtMessage.text = message
+         }
+     }

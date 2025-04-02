@@ -1,0 +1,23 @@
+From 98a6b3c8a99185015a25f82f8fbdad459f0a83ca Mon Sep 17 00:00:00 2001
+From: Fabian Vogt <fabian@ritter-vogt.de>
+Date: Tue, 16 Jul 2024 20:06:07 +0200
+Subject: [PATCH] CI: Fix order of arguments for dnf
+
+Should fix installing dependencies for Fedora rawhide builds.
+---
+ .github/workflows/build.yml | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/.github/workflows/build.yml b/.github/workflows/build.yml
+index a5d8181b2..2d216d4c7 100644
+--- a/.github/workflows/build.yml
++++ b/.github/workflows/build.yml
+@@ -52,7 +52,7 @@ jobs:
+           if [[ "${{ matrix.container-image }}" =~ "centos" ]]; then dnf --assumeyes config-manager --set-enabled crb && dnf --assumeyes install epel-release; fi
+           dnf --assumeyes builddep sddm
+           if [ "${{ matrix.qt }}" = "qt5" ] && [[ "${{ matrix.container-image }}" =~ "fedora" ]]; then dnf --assumeyes install qt5-qtbase-devel qt5-qtdeclarative-devel qt5-qttools-devel; fi
+-          dnf --assumeyes --allowerasing --nobest install clang clazy
++          dnf --assumeyes install --allowerasing --nobest clang clazy
+       - name: Dependencies (deb-type)
+         if: ${{ contains(matrix.container-image, 'ubuntu') }}
+         run: |

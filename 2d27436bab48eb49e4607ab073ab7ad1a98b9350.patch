@@ -1,0 +1,85 @@
+From 2d27436bab48eb49e4607ab073ab7ad1a98b9350 Mon Sep 17 00:00:00 2001
+From: Yaron Shahrabani <sh.yaron@gmail.com>
+Date: Mon, 14 Oct 2024 15:58:53 +0300
+Subject: [PATCH] Hebrew translation update
+
+Added some missing strings from TextConstants.qml
+---
+ data/translations/he.ts | 48 +++++++++++++++++++++++++++++++++++++++--
+ 1 file changed, 46 insertions(+), 2 deletions(-)
+
+diff --git a/data/translations/he.ts b/data/translations/he.ts
+index 9dd2f100b..6b6e33b34 100644
+--- a/data/translations/he.ts
++++ b/data/translations/he.ts
+@@ -45,9 +45,37 @@
+         <source>Password</source>
+         <translation>סיסמה</translation>
+     </message>
++    <message>
++        <source>Password:</source>
++        <translation>סיסמה:</translation>
++    </message>
++    <message>
++        <source>Please enter a password!</source>
++        <translation>נא למלא סיסמה!</translation>
++    </message>
++    <message>
++        <source>Change password</source>
++        <translation>החלפת סיסמה</translation>
++    </message>
++    <message>
++        <source>Enter your username</source>
++        <translation>נא למלא את שם המשתמש שלך</translation>
++    </message>
++    <message>
++        <source>Enter your password</source>
++        <translation>נא למלא את הסיסמה שלך</translation>
++    </message>
+     <message>
+         <source>Enter your username and password</source>
+-        <translation>יש למלא את שם המשתמש ואת הסיסמה שלך</translation>
++        <translation>נא למלא את שם המשתמש ואת הסיסמה שלך</translation>
++    </message>
++    <message>
++        <source>Show password</source>
++        <translation>הצגת הסיסמה</translation>
++    </message>
++    <message>
++        <source>Hide password</source>
++        <translation>הסתרת הסיסמה</translation>
+     </message>
+     <message>
+         <source>Reboot</source>
+@@ -57,6 +85,22 @@
+         <source>Session</source>
+         <translation>הפעלה</translation>
+     </message>
++    <message>
++        <source>Suspend</source>
++        <translation>השהיה</translation>
++    </message>
++    <message>
++        <source>Hibernate</source>
++        <translation>תרדמת</translation>
++    </message>
++    <message>
++        <source>Password change aborted because maximum tries reached</source>
++        <translation>החלפת הסיסמה בוטלה כי הגעת לכמות הניסיונות המרבית</translation>
++    </message>
++    <message>
++        <source>New password change round! Please input current password again!</source>
++        <translation>סבב החלפת סיסמאות חדש! נא למלא את הסיסמה הנוכחית שוב!</translation>
++    </message>
+     <message>
+         <source>Shutdown</source>
+         <translation>כיבוי</translation>
+@@ -67,7 +111,7 @@
+     </message>
+     <message>
+         <source>Select your user and enter password</source>
+-        <translation>יש לבחור את המשתמש שלך ולמלא את הסיסמה</translation>
++        <translation>נא לבחור את המשתמש שלך ולמלא את הסיסמה</translation>
+     </message>
+ </context>
+ </TS>

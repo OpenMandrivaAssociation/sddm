@@ -1,0 +1,48 @@
+From dadf4e0eaa2dcebbc83970af451309358dec25a0 Mon Sep 17 00:00:00 2001
+From: nerdopolis <bluescreen_avenger@verizon.net>
+Date: Mon, 29 Apr 2024 20:15:33 -0400
+Subject: [PATCH] Prevent the greeter display server from hanging if
+ SwitchToGreeter() is sent to a seat when the greeter is already active
+
+---
+ src/daemon/SeatManager.cpp | 20 ++++++++++++++++++++
+ 1 file changed, 20 insertions(+)
+
+diff --git a/src/daemon/SeatManager.cpp b/src/daemon/SeatManager.cpp
+index bd207e61f..78a0af133 100644
+--- a/src/daemon/SeatManager.cpp
++++ b/src/daemon/SeatManager.cpp
+@@ -27,6 +27,8 @@
+ #include <QDBusPendingReply>
+ #include <QDBusContext>
+ 
++#include <Login1Manager.h>
++#include <Login1Session.h>
+ #include "LogindDBusTypes.h"
+ 
+ namespace SDDM {
+@@ -148,6 +150,24 @@ namespace SDDM {
+         if (!m_seats.contains(name))
+             return;
+ 
++        // Switch to existing greeter session if available
++        if (Logind::isAvailable()) {
++            OrgFreedesktopLogin1ManagerInterface manager(Logind::serviceName(), Logind::managerPath(), QDBusConnection::systemBus());
++            auto reply = manager.ListSessions();
++            reply.waitForFinished();
++
++            const auto info = reply.value();
++            for(const SessionInfo &s : reply.value()) {
++                if (s.userName == QLatin1String("sddm")) {
++                    OrgFreedesktopLogin1SessionInterface session(Logind::serviceName(), s.sessionPath.path(), QDBusConnection::systemBus());
++                    if (session.service() == QLatin1String("sddm-greeter") && session.seat().name == name) {
++                        session.Activate();
++                        return;
++                    }
++                }
++            }
++        }
++
+         // switch to greeter
+         m_seats.value(name)->createDisplay(Display::defaultDisplayServerType());
+     }

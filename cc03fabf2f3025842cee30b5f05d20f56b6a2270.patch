@@ -1,0 +1,22 @@
+From cc03fabf2f3025842cee30b5f05d20f56b6a2270 Mon Sep 17 00:00:00 2001
+From: Aleksei Bavshin <alebastr89@gmail.com>
+Date: Tue, 27 Feb 2024 07:07:26 -0800
+Subject: [PATCH] Docs: add QtVersion information to THEMING
+
+---
+ docs/THEMING.md | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/docs/THEMING.md b/docs/THEMING.md
+index 873172192..69997e88a 100644
+--- a/docs/THEMING.md
++++ b/docs/THEMING.md
+@@ -13,6 +13,8 @@ We also provide models containing information about the screens, available sessi
+     	index: sessionModel.lastIndex
+     }
+ 
++Themes are run by a Qt 5 built sddm-greeter, unless the `QtVersion` property in metadata.desktop specifies a different version, such as `QtVersion=6` for using `sddm-greeter-qt6`.
++
+ ## Proxy Object
+ 
+ We provide a proxy object, called as `sddm` to the themes as a context property. This object holds some useful properties about the host system. It also acts as a proxy between the greeter and the daemon. All of the methods called on this object will be transferred to the daemon through a local socket to be executed there.

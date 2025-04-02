@@ -1,0 +1,66 @@
+From b704e2ee358646ba14f8dc5c723676c5e80dc495 Mon Sep 17 00:00:00 2001
+From: Peter <petershh@disroot.org>
+Date: Thu, 11 Jul 2024 20:55:24 +0300
+Subject: [PATCH] Introduce utmps support (#1962)
+
+utmps library can be used to provide utmp functionality on systems whose
+libcs do not implement it, e.g. musl.
+
+For more details, see https://skarnet.org/software/utmps/.
+
+Signed-off-by: Peter Shkenev <petershh@disroot.org>
+---
+ CMakeLists.txt            |  3 +++
+ cmake/Findutmps.cmake     | 12 ++++++++++++
+ src/helper/CMakeLists.txt |  5 +++++
+ 3 files changed, 20 insertions(+)
+ create mode 100644 cmake/Findutmps.cmake
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 4e845434e..690ee7095 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -168,6 +168,9 @@ else()
+     set(RUNTIME_DIR_DEFAULT "${CMAKE_INSTALL_FULL_LOCALSTATEDIR}/run/sddm")
+ endif()
+ 
++# utmps
++find_package(utmps)
++add_feature_info("utmps" UTMPS_FOUND "utmps support")
+ 
+ # Set constants
+ set(DATA_INSTALL_DIR            "${CMAKE_INSTALL_FULL_DATADIR}/sddm"                CACHE PATH      "System application data install directory")
+diff --git a/cmake/Findutmps.cmake b/cmake/Findutmps.cmake
+new file mode 100644
+index 000000000..0661875a4
+--- /dev/null
++++ b/cmake/Findutmps.cmake
+@@ -0,0 +1,12 @@
++# - Try to find utmps and its dependencies
++# Once done this will define
++# UTMPS_FOUND - system has utmps and dependencies
++# UTMPS_INCLUDE_DIR - the utmps include dir
++# UTMPS_LIBRARIES - libutmps
++
++find_path(UTMPS_INCLUDE_DIR NAMES utmps/utmpx.h)
++find_library(UTMPS_LIBRARIES utmps)
++
++if (UTMPS_INCLUDE_DIR AND UTMPS_LIBRARIES)
++    set(UTMPS_FOUND TRUE)
++endif (UTMPS_INCLUDE_DIR AND UTMPS_LIBRARIES)
+diff --git a/src/helper/CMakeLists.txt b/src/helper/CMakeLists.txt
+index 9ec6cac4a..f235a2c33 100644
+--- a/src/helper/CMakeLists.txt
++++ b/src/helper/CMakeLists.txt
+@@ -53,6 +53,11 @@ else()
+     target_link_libraries(sddm-helper crypt)
+ endif()
+ 
++if (UTMPS_FOUND)
++    target_include_directories(sddm-helper SYSTEM PRIVATE ${UTMPS_INCLUDE_DIR})
++    target_link_libraries(sddm-helper ${UTMPS_LIBRARIES})
++endif (UTMPS_FOUND)
++
+ install(TARGETS sddm-helper RUNTIME DESTINATION "${CMAKE_INSTALL_LIBEXECDIR}")
+ 
+ add_executable(sddm-helper-start-wayland HelperStartWayland.cpp waylandsocketwatcher.cpp waylandhelper.cpp ${CMAKE_SOURCE_DIR}/src/common/SignalHandler.cpp)

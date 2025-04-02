@@ -1,0 +1,116 @@
+From b5fd7ecedfa583985ce6faac3b434e2079d79430 Mon Sep 17 00:00:00 2001
+From: Aleksei Bavshin <alebastr89@gmail.com>
+Date: Tue, 27 Feb 2024 00:00:04 -0800
+Subject: [PATCH] Themes: set QtVersion=@QT_MAJOR_VERSION@
+
+---
+ data/themes/CMakeLists.txt                           | 12 +++++++++---
+ .../elarun/{metadata.desktop => metadata.desktop.in} |  2 +-
+ .../{metadata.desktop => metadata.desktop.in}        |  1 +
+ .../maya/{metadata.desktop => metadata.desktop.in}   |  1 +
+ src/greeter/CMakeLists.txt                           |  1 +
+ src/greeter/theme.qrc                                |  2 +-
+ .../theme/{metadata.desktop => metadata.desktop.in}  |  1 +
+ 7 files changed, 15 insertions(+), 5 deletions(-)
+ rename data/themes/elarun/{metadata.desktop => metadata.desktop.in} (97%)
+ rename data/themes/maldives/{metadata.desktop => metadata.desktop.in} (92%)
+ rename data/themes/maya/{metadata.desktop => metadata.desktop.in} (92%)
+ rename src/greeter/theme/{metadata.desktop => metadata.desktop.in} (92%)
+
+diff --git a/data/themes/CMakeLists.txt b/data/themes/CMakeLists.txt
+index 60b29be2e..a18fe8926 100644
+--- a/data/themes/CMakeLists.txt
++++ b/data/themes/CMakeLists.txt
+@@ -10,9 +10,15 @@ foreach(THEME ${THEMES})
+ 
+     qt_add_translation(QM_FILES "${TRANSLATION_SOURCES}")
+ 
+-    install(DIRECTORY "${THEME}" DESTINATION "${DATA_INSTALL_DIR}/themes" PATTERN "${THEME}/*.ts"
+-            EXCLUDE PATTERN "${THEME}/.gitattributes"
+-            EXCLUDE)
++    configure_file("${THEME}/metadata.desktop.in" "${THEME}/metadata.desktop" @ONLY)
++
++    install(DIRECTORY "${THEME}" DESTINATION "${DATA_INSTALL_DIR}/themes"
++            PATTERN "${THEME}/*.in" EXCLUDE
++            PATTERN "${THEME}/*.ts" EXCLUDE
++            PATTERN "${THEME}/.gitattributes" EXCLUDE)
++
++    install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${THEME}/metadata.desktop"
++            DESTINATION "${DATA_INSTALL_DIR}/themes/${THEME}/")
+ 
+     list(APPEND THEMES_QM_FILES ${QM_FILES})
+ endforeach(THEME)
+diff --git a/data/themes/elarun/metadata.desktop b/data/themes/elarun/metadata.desktop.in
+similarity index 97%
+rename from data/themes/elarun/metadata.desktop
+rename to data/themes/elarun/metadata.desktop.in
+index 50455880a..a992a6102 100644
+--- a/data/themes/elarun/metadata.desktop
++++ b/data/themes/elarun/metadata.desktop.in
+@@ -46,4 +46,4 @@ TranslationsDirectory=translations
+ Theme-Id=elarun
+ Theme-API=2.0
+ Website=https://github.com/sddm/sddm
+-
++QtVersion=@QT_MAJOR_VERSION@
+diff --git a/data/themes/maldives/metadata.desktop b/data/themes/maldives/metadata.desktop.in
+similarity index 92%
+rename from data/themes/maldives/metadata.desktop
+rename to data/themes/maldives/metadata.desktop.in
+index acd0fa47d..8931da6cd 100644
+--- a/data/themes/maldives/metadata.desktop
++++ b/data/themes/maldives/metadata.desktop.in
+@@ -14,3 +14,4 @@ TranslationsDirectory=translations
+ Email=abdurrahmanavci@gmail.com
+ Theme-Id=maldives
+ Theme-API=2.0
++QtVersion=@QT_MAJOR_VERSION@
+diff --git a/data/themes/maya/metadata.desktop b/data/themes/maya/metadata.desktop.in
+similarity index 92%
+rename from data/themes/maya/metadata.desktop
+rename to data/themes/maya/metadata.desktop.in
+index 0c2ab2623..ccda38bfb 100644
+--- a/data/themes/maya/metadata.desktop
++++ b/data/themes/maya/metadata.desktop.in
+@@ -14,3 +14,4 @@ TranslationsDirectory=translations
+ Email=spremi@ymail.com
+ Theme-Id=maya
+ Theme-API=2.0
++QtVersion=@QT_MAJOR_VERSION@
+diff --git a/src/greeter/CMakeLists.txt b/src/greeter/CMakeLists.txt
+index 72769e4d0..b9159c53d 100644
+--- a/src/greeter/CMakeLists.txt
++++ b/src/greeter/CMakeLists.txt
+@@ -36,6 +36,7 @@ set(GREETER_SOURCES
+ )
+ 
+ configure_file("theme.qrc" "theme.qrc")
++configure_file("theme/metadata.desktop.in" "theme/metadata.desktop" @ONLY)
+ 
+ qt_add_resources(RESOURCES ${CMAKE_CURRENT_BINARY_DIR}/theme.qrc)
+ 
+diff --git a/src/greeter/theme.qrc b/src/greeter/theme.qrc
+index efed01179..299169ec1 100644
+--- a/src/greeter/theme.qrc
++++ b/src/greeter/theme.qrc
+@@ -7,7 +7,7 @@
+     <file alias="Main.qml">${CMAKE_CURRENT_SOURCE_DIR}/theme/Main.qml</file>
+     <file alias="reboot.png">${CMAKE_CURRENT_SOURCE_DIR}/theme/reboot.png</file>
+     <file alias="shutdown.png">${CMAKE_CURRENT_SOURCE_DIR}/theme/shutdown.png</file>
+-    <file alias="metadata.desktop">${CMAKE_CURRENT_SOURCE_DIR}/theme/metadata.desktop</file>
++    <file alias="metadata.desktop">${CMAKE_CURRENT_BINARY_DIR}/theme/metadata.desktop</file>
+     <file alias="theme.conf">${CMAKE_CURRENT_SOURCE_DIR}/theme/theme.conf</file>
+ </qresource>
+ </RCC>
+diff --git a/src/greeter/theme/metadata.desktop b/src/greeter/theme/metadata.desktop.in
+similarity index 92%
+rename from src/greeter/theme/metadata.desktop
+rename to src/greeter/theme/metadata.desktop.in
+index a1c22ce93..0a4c9f349 100644
+--- a/src/greeter/theme/metadata.desktop
++++ b/src/greeter/theme/metadata.desktop.in
+@@ -14,3 +14,4 @@ TranslationsDirectory=translations
+ Email=abdurrahmanavci@gmail.com
+ Theme-Id=maui
+ Theme-API=2.0
++QtVersion=@QT_MAJOR_VERSION@

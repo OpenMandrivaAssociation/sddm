@@ -1,0 +1,87 @@
+From cda8d936c2c47a85fa95797431b51d1e39b5c022 Mon Sep 17 00:00:00 2001
+From: nerdopolis <bluescreen_avenger@verizon.net>
+Date: Tue, 30 Jan 2024 23:11:52 -0500
+Subject: [PATCH] Allow non-root greeters and sessions to start on kernels
+ without VTs
+
+---
+ src/daemon/Greeter.cpp            |  2 +-
+ src/daemon/Seat.cpp               | 14 ++++++++++++++
+ src/daemon/Seat.h                 |  1 +
+ src/helper/backend/PamBackend.cpp |  6 ++++--
+ 4 files changed, 20 insertions(+), 3 deletions(-)
+
+diff --git a/src/daemon/Greeter.cpp b/src/daemon/Greeter.cpp
+index 07fccde48..f898a72d8 100644
+--- a/src/daemon/Greeter.cpp
++++ b/src/daemon/Greeter.cpp
+@@ -211,7 +211,7 @@ namespace SDDM {
+             env.insert(QStringLiteral("XDG_SEAT"), m_display->seat()->name());
+             env.insert(QStringLiteral("XDG_SEAT_PATH"), daemonApp->displayManager()->seatPath(m_display->seat()->name()));
+             env.insert(QStringLiteral("XDG_SESSION_PATH"), daemonApp->displayManager()->sessionPath(QStringLiteral("Session%1").arg(daemonApp->newSessionId())));
+-            if (m_display->seat()->name() == QLatin1String("seat0"))
++            if (m_display->seat()->name() == QLatin1String("seat0") && m_display->terminalId() > 0)
+                 env.insert(QStringLiteral("XDG_VTNR"), QString::number(m_display->terminalId()));
+             env.insert(QStringLiteral("XDG_SESSION_CLASS"), QStringLiteral("greeter"));
+             env.insert(QStringLiteral("XDG_SESSION_TYPE"), m_display->sessionType());
+diff --git a/src/daemon/Seat.cpp b/src/daemon/Seat.cpp
+index ec2bf8ac6..bead6344d 100644
+--- a/src/daemon/Seat.cpp
++++ b/src/daemon/Seat.cpp
+@@ -32,8 +32,10 @@
+ 
+ #include <functional>
+ #include <optional>
++#include <unistd.h>
+ #include <Login1Manager.h>
+ #include <Login1Session.h>
++#include <Login1Seat.h>
+ 
+ namespace SDDM {
+     Seat::Seat(const QString &name, QObject *parent) : QObject(parent), m_name(name) {
+@@ -141,4 +143,16 @@ namespace SDDM {
+             VirtualTerminal::jumpToVt(*nextVt, true);
+         }
+     }
++
++    bool Seat::canTTY() {
++        OrgFreedesktopLogin1ManagerInterface manager(Logind::serviceName(), Logind::managerPath(), QDBusConnection::systemBus());
++        if (manager.isValid()) {
++            auto seatPath = manager.GetSeat(m_name);
++            OrgFreedesktopLogin1SeatInterface seatIface(Logind::serviceName(), seatPath.value().path(), QDBusConnection::systemBus());
++            if (seatIface.property("CanTTY").isValid())
++                return seatIface.canTTY();
++        }
++
++        return m_name.compare(QStringLiteral("seat0"), Qt::CaseInsensitive) == 0 && access(VirtualTerminal::defaultVtPath, F_OK) == 0;
++    }
+ }
+diff --git a/src/daemon/Seat.h b/src/daemon/Seat.h
+index 82294dee4..3cfdfdbf1 100644
+--- a/src/daemon/Seat.h
++++ b/src/daemon/Seat.h
+@@ -35,6 +35,7 @@ namespace SDDM {
+ 
+         const QString &name() const;
+         void createDisplay(Display::DisplayServerType serverType);
++        bool canTTY();
+ 
+     public slots:
+         void removeDisplay(SDDM::Display* display);
+diff --git a/src/helper/backend/PamBackend.cpp b/src/helper/backend/PamBackend.cpp
+index 8ffa24ab6..f371c3375 100644
+--- a/src/helper/backend/PamBackend.cpp
++++ b/src/helper/backend/PamBackend.cpp
+@@ -252,8 +252,10 @@ namespace SDDM {
+         QProcessEnvironment sessionEnv = m_app->session()->processEnvironment();
+         const auto sessionType = sessionEnv.value(QStringLiteral("XDG_SESSION_TYPE"));
+         const auto sessionClass = sessionEnv.value(QStringLiteral("XDG_SESSION_CLASS"));
+-        QString tty = VirtualTerminal::path(sessionEnv.value(QStringLiteral("XDG_VTNR")).toInt());
+-        m_pam->setItem(PAM_TTY, qPrintable(tty));
++        if (sessionEnv.contains(QStringLiteral("XDG_VTNR"))) {
++            QString tty = VirtualTerminal::path(sessionEnv.value(QStringLiteral("XDG_VTNR")).toInt());
++            m_pam->setItem(PAM_TTY, qPrintable(tty));
++        }
+         if (sessionType == QLatin1String("x11") && (sessionClass == QLatin1String("user") || !m_displayServer)) {
+             QString display = sessionEnv.value(QStringLiteral("DISPLAY"));
+             if (!display.isEmpty()) {

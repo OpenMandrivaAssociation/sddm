@@ -1,0 +1,92 @@
+From 8d32f3261eaa1f63ab060a8f5e1b114ac9d79ac5 Mon Sep 17 00:00:00 2001
+From: Aleksei Bavshin <alebastr89@gmail.com>
+Date: Tue, 30 Jan 2024 21:10:15 -0800
+Subject: [PATCH] Themes: hide LayoutBox when keyboard model is empty or
+ disabled
+
+---
+ data/themes/elarun/Main.qml   | 4 ++++
+ data/themes/maldives/Main.qml | 2 ++
+ data/themes/maya/Main.qml     | 4 ++++
+ src/greeter/theme/Main.qml    | 4 ++++
+ 4 files changed, 14 insertions(+)
+
+diff --git a/data/themes/elarun/Main.qml b/data/themes/elarun/Main.qml
+index e559b741b..523dab7b3 100644
+--- a/data/themes/elarun/Main.qml
++++ b/data/themes/elarun/Main.qml
+@@ -270,6 +270,8 @@ Rectangle {
+                 height: parent.height
+                 anchors.verticalCenter: parent.verticalCenter
+ 
++                visible: layoutBox.visible
++
+                 text: textConstants.layout
+                 font.pixelSize: 14
+                 verticalAlignment: Text.AlignVCenter
+@@ -281,6 +283,8 @@ Rectangle {
+                 anchors.verticalCenter: parent.verticalCenter
+                 font.pixelSize: 14
+ 
++                visible: keyboard.enabled && keyboard.layouts.length > 0
++
+                 arrowIcon: "angle-down.png"
+ 
+                 KeyNavigation.backtab: session; KeyNavigation.tab: user_entry
+diff --git a/data/themes/maldives/Main.qml b/data/themes/maldives/Main.qml
+index 4fac9f3c5..7f1959a5f 100644
+--- a/data/themes/maldives/Main.qml
++++ b/data/themes/maldives/Main.qml
+@@ -201,6 +201,8 @@ Rectangle {
+                         spacing : 4
+                         anchors.bottom: parent.bottom
+ 
++                        visible: keyboard.enabled && keyboard.layouts.length > 0
++
+                         Text {
+                             id: lblLayout
+                             width: parent.width
+diff --git a/data/themes/maya/Main.qml b/data/themes/maya/Main.qml
+index d8e470b39..d166b718c 100644
+--- a/data/themes/maya/Main.qml
++++ b/data/themes/maya/Main.qml
+@@ -239,6 +239,8 @@ Rectangle {
+         width   : spUnit * 2
+         height  : parent.height
+ 
++        visible : keyboard.enabled && keyboard.layouts.length > 0
++
+         color       : primaryHue1
+         borderColor : primaryHue3
+         focusColor  : accentLight
+@@ -261,6 +263,8 @@ Rectangle {
+ 
+         text    : textConstants.layout
+ 
++        visible : maya_layout.visible
++
+         color   : normalText
+ 
+         font.family     : opensans_cond_light.name
+diff --git a/src/greeter/theme/Main.qml b/src/greeter/theme/Main.qml
+index 0a2ab9c84..2106f6004 100644
+--- a/src/greeter/theme/Main.qml
++++ b/src/greeter/theme/Main.qml
+@@ -236,6 +236,8 @@ Rectangle {
+                     height: parent.height
+                     anchors.verticalCenter: parent.verticalCenter
+ 
++                    visible: layoutBox.visible
++
+                     text: textConstants.layout
+                     font.pixelSize: 16
+                     verticalAlignment: Text.AlignVCenter
+@@ -247,6 +249,8 @@ Rectangle {
+                     anchors.verticalCenter: parent.verticalCenter
+                     font.pixelSize: 14
+ 
++                    visible: keyboard.enabled && keyboard.layouts.length > 0
++
+                     arrowIcon: "angle-down.png"
+ 
+                     KeyNavigation.backtab: session; KeyNavigation.tab: btnShutdown

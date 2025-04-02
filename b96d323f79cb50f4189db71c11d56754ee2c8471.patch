@@ -1,0 +1,26 @@
+From b96d323f79cb50f4189db71c11d56754ee2c8471 Mon Sep 17 00:00:00 2001
+From: YaoBing Xiao <xiaoyaobing@uniontech.com>
+Date: Fri, 25 Oct 2024 09:26:30 +0800
+Subject: [PATCH] xcb: use xcb_connection_has_error to check for failue
+
+xcb_connect() always returns a non-NULL pointer to a
+xcb_connection_t, even on failure.
+
+Signed-off-by: YaoBing Xiao <xiaoyaobing@uniontech.com>
+---
+ src/greeter/XcbKeyboardBackend.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/greeter/XcbKeyboardBackend.cpp b/src/greeter/XcbKeyboardBackend.cpp
+index cf3dff59d..4279bf1a5 100644
+--- a/src/greeter/XcbKeyboardBackend.cpp
++++ b/src/greeter/XcbKeyboardBackend.cpp
+@@ -80,7 +80,7 @@ namespace SDDM {
+         xcb_generic_error_t *error = nullptr;
+ 
+         m_conn = xcb_connect(nullptr, nullptr);
+-        if (m_conn == nullptr) {
++        if (xcb_connection_has_error(m_conn)) {
+             qCritical() << "xcb_connect failed, keyboard extension disabled";
+             d->enabled = false;
+             return;

@@ -1,0 +1,26 @@
+From 76454b651d4694da756a814cb4bae11714ae3a6d Mon Sep 17 00:00:00 2001
+From: snowcrash79 <35747241+snowcrash79@users.noreply.github.com>
+Date: Thu, 23 Jan 2025 17:50:22 -0300
+Subject: [PATCH] Update es.ts
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Updated string for keyboard "layout" to "distribución"
+---
+ data/translations/es.ts | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/data/translations/es.ts b/data/translations/es.ts
+index 5e042c0cc..9985c87af 100644
+--- a/data/translations/es.ts
++++ b/data/translations/es.ts
+@@ -27,7 +27,7 @@
+         </message>
+         <message>
+             <source>Layout</source>
+-            <translation>Diseño</translation>
++            <translation>Distribución</translation>
+         </message>
+         <message>
+             <source>Login</source>
