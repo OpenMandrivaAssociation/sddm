@@ -1,6 +1,6 @@
 #define date 20231112
 
-Name: plasma6-sddm
+Name: sddm
 Summary: Lightweight display manager
 Version: 0.21.0
 %if 0%{?date:1}
@@ -9,7 +9,7 @@ Release: 0.%{date}.1
 # git archive --format=tar --prefix sddm-0.20.1-$(date +%Y%m%d)/ HEAD | xz -vf > sddm-0.20.1-$(date +%Y%m%d).tar.xz
 Source0: https://github.com/sddm/sddm/archive/develop/sddm-%{version}-%{date}.tar.gz
 %else
-Release: 2
+Release: 3
 Source0: https://github.com/sddm/sddm/archive/refs/tags/v%{version}.tar.gz
 %endif
 URL: https://github.com/sddm
@@ -34,6 +34,14 @@ BuildRequires: pkgconfig(libsystemd)
 BuildRequires: pam-devel
 BuildRequires: systemd-rpm-macros
 
+BuildSystem: cmake
+BuildOption: -DBUILD_WITH_QT6:BOOL=ON
+BuildOption: -DSESSION_COMMAND:FILEPATH=%{_sysconfdir}/X11/Xsession
+BuildOption: -DENABLE_JOURNALD:BOOL=ON
+BuildOption: -DENABLE_PAM:BOOL=ON
+BuildOption: -DUID_MIN="1000"
+BuildOption: -DUID_MAX="60000"
+
 # For qml(QtQuick.VirtualKeyboard) -- provided by both lib64Qt6VirtualKeyboard
 # and qt5-qtvirtualkeyboard (but obviously we need the qt6 version)
 Requires: %mklibname Qt6VirtualKeyboard
@@ -42,7 +50,9 @@ Requires: %mklibname Qt6VirtualKeyboard
 Requires: xinitrc
 %systemd_requires
 Provides: dm
-Conflicts: sddm
+
+# Renamed after 6.0 2025-05-02
+%rename plasma6-sddm
 
 %patchlist
 sddm-0.20.0-allow-setting-default-session.patch
@@ -91,29 +101,10 @@ https://github.com/sddm/sddm/commit/42e88b70c3e558495d07d29d346664301da6e974.pat
 %description
 Lightweight display manager (login screen).
 
-%prep
-%if 0%{?date:1}
-%autosetup -n sddm-develop -p1
-%else
-%autosetup -p1 -n sddm-%{version}
-%endif
-
+%prep -a
 sed -i -e 's,system-login,system-auth,g' services/*.pam
 
-%cmake_kde5 \
-    -DBUILD_WITH_QT6:BOOL=ON \
-    -DSESSION_COMMAND:FILEPATH=/etc/X11/Xsession \
-    -DENABLE_JOURNALD=ON \
-    -DENABLE_PAM=ON \
-    -DUID_MIN="1000" \
-    -DUID_MAX="60000"
-
-%build
-%ninja -C build
-
-%install
-%ninja_install -C build
-
+%install -a
 install -Dpcm 644 %{S:1} %{buildroot}%{_sysconfdir}/sddm.conf
 install -Dpcm 644 %{S:2} %{buildroot}%{_sysconfdir}/pam.d/sddm
 install -Dpcm 644 %{S:3} %{buildroot}%{_sysconfdir}/pam.d/sddm-autologin
@@ -126,9 +117,6 @@ sed -i -e 's,\(^background=\).*,\1%{_datadir}/mdk/backgrounds/OpenMandriva-splas
 sed -i -e 's,\(^background=\).*,\1%{_datadir}/mdk/backgrounds/OpenMandriva-splash.png,' %{buildroot}%{_datadir}/sddm/themes/maldives/theme.conf
 
 mkdir -p %{buildroot}%{_localstatedir}/lib/sddm
-
-%pre
-%sysusers_create_package %{name} %{S:4}
 
 %post
 %systemd_post sddm.service
