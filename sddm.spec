@@ -9,7 +9,7 @@ Release: 0.%{date}.1
 # git archive --format=tar --prefix sddm-0.20.1-$(date +%Y%m%d)/ HEAD | xz -vf > sddm-0.20.1-$(date +%Y%m%d).tar.xz
 Source0: https://github.com/sddm/sddm/archive/develop/sddm-%{version}-%{date}.tar.gz
 %else
-Release: 10
+Release: 11
 Source0: https://github.com/sddm/sddm/archive/refs/tags/v%{version}.tar.gz
 %endif
 URL: https://github.com/sddm
@@ -97,6 +97,12 @@ https://github.com/sddm/sddm/commit/228778c2b4b7e26db1e1d69fe484ed75c5791c3a.pat
 https://github.com/sddm/sddm/commit/e505a38c241677c3b3c8f4bdaf65249d452f05e3.patch
 https://github.com/sddm/sddm/commit/9e51fa00c9329f2e9dd6faf0bf8cd86e10f210d3.patch
 https://github.com/sddm/sddm/commit/42e88b70c3e558495d07d29d346664301da6e974.patch
+https://github.com/sddm/sddm/commit/f78888726f98d772f27d58b9569d28ada388dd91.patch
+https://github.com/sddm/sddm/commit/124982514ea6c3c14eeea8c18d33e16b7496d0e3.patch
+https://github.com/sddm/sddm/commit/03e22643b975aa8cc1bea2f20152731220fb54a1.patch
+https://github.com/sddm/sddm/commit/4fe234bd475ccb2a1e5aa194bec5c3aad08cebe6.patch
+https://github.com/sddm/sddm/commit/08a4a77073ffc5566baa54fa5345f20eea999648.patch
+https://github.com/sddm/sddm/commit/662a409aabec39bdbff2a13fa008e6a7a873dca1.patch
 
 %description
 Lightweight display manager (login screen).
@@ -117,15 +123,6 @@ sed -i -e 's,\(^background=\).*,\1%{_datadir}/mdk/backgrounds/OpenMandriva-splas
 sed -i -e 's,\(^background=\).*,\1%{_datadir}/mdk/backgrounds/OpenMandriva-splash.png,' %{buildroot}%{_datadir}/sddm/themes/maldives/theme.conf
 
 mkdir -p %{buildroot}%{_localstatedir}/lib/sddm
-
-%post
-%systemd_post sddm.service
-
-%preun
-%systemd_preun sddm.service
-
-%postun
-%systemd_postun sddm.service
 
 %files
 %{_bindir}/sddm

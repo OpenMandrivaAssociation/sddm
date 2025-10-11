@@ -1,0 +1,38 @@
+From 4fe234bd475ccb2a1e5aa194bec5c3aad08cebe6 Mon Sep 17 00:00:00 2001
+From: Nikolas Kyx <55556836+nyx191@users.noreply.github.com>
+Date: Wed, 30 Apr 2025 19:59:27 +0300
+Subject: [PATCH] Do not manage setCursor with startProcess as latter adds
+ X-specific logic
+
+---
+ src/helper/xorguserhelper.cpp | 16 +++++++++-------
+ 1 file changed, 9 insertions(+), 7 deletions(-)
+
+diff --git a/src/helper/xorguserhelper.cpp b/src/helper/xorguserhelper.cpp
+index a06590686..4db2bfb94 100644
+--- a/src/helper/xorguserhelper.cpp
++++ b/src/helper/xorguserhelper.cpp
+@@ -212,14 +212,16 @@ void XOrgUserHelper::startDisplayCommand()
+         env.insert(QStringLiteral("XCURSOR_SIZE"), xcursorSize);
+ 
+     // Set cursor
+-    qInfo("Setting default cursor...");
+-    QProcess *setCursor = nullptr;
+-    if (startProcess(QStringLiteral("xsetroot -cursor_name left_ptr"), env, &setCursor)) {
+-        if (!setCursor->waitForFinished(5000)) {
+-            qWarning() << "Could not setup default cursor";
+-            setCursor->kill();
++    {
++        qInfo("Setting default cursor...");
++        QProcess setCursor;
++        setCursor.setProcessEnvironment(env);
++        setCursor.start(QStringLiteral("xsetroot"), QStringList{QStringLiteral("-cursor_name"), QStringLiteral("left_ptr")});
++        if (!setCursor.waitForFinished(5000)) {
++            qWarning() << "Could not setup default cursor" << setCursor.error();
++            setCursor.kill();
++            setCursor.waitForFinished(-1);
+         }
+-        setCursor->deleteLater();
+     }
+ 
+     // Unlike libXcursor, xcb-util-cursor no longer looks at XCURSOR_*. Set the resources.

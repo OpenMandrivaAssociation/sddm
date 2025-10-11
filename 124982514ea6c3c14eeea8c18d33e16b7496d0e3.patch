@@ -1,0 +1,34 @@
+From 124982514ea6c3c14eeea8c18d33e16b7496d0e3 Mon Sep 17 00:00:00 2001
+From: Nikolas Kyx <55556836+nyx191@users.noreply.github.com>
+Date: Tue, 29 Apr 2025 19:17:53 +0300
+Subject: [PATCH] xorg-user: Allow overriding -verbose Xorg option
+
+Hardcoded value of 3 leads to dumping ton of poorly-formatted
+information from Xorg stderr to syslog as one-line warning.
+Apparently, there is no easy way to avoid this in SDDM code,
+so allow user to reduce amount of information on Xorg stderr
+e.g. with `ServerArguments=-nolisten tcp -verbose 0`.
+---
+ src/daemon/XorgUserDisplayServer.cpp | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/src/daemon/XorgUserDisplayServer.cpp b/src/daemon/XorgUserDisplayServer.cpp
+index 1e7c008a4..96484b8d8 100644
+--- a/src/daemon/XorgUserDisplayServer.cpp
++++ b/src/daemon/XorgUserDisplayServer.cpp
+@@ -55,13 +55,13 @@ QString XorgUserDisplayServer::command(Display *display)
+              << QStringLiteral("-screen") << QStringLiteral("800x600");
+     } else {
+         args << mainConfig.X11.ServerPath.get()
++             << QStringLiteral("-verbose") << QStringLiteral("3")
+              << mainConfig.X11.ServerArguments.get().split(QLatin1Char(' '), Qt::SkipEmptyParts)
+              << QStringLiteral("-background") << QStringLiteral("none")
+              << QStringLiteral("-seat") << display->seat()->name()
+              << QStringLiteral("-noreset")
+              << QStringLiteral("-keeptty")
+-             << QStringLiteral("-novtswitch")
+-             << QStringLiteral("-verbose") << QStringLiteral("3");
++             << QStringLiteral("-novtswitch");
+     }
+ 
+     return args.join(QLatin1Char(' '));

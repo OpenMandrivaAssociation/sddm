@@ -1,0 +1,77 @@
+From 03e22643b975aa8cc1bea2f20152731220fb54a1 Mon Sep 17 00:00:00 2001
+From: Nikolas Kyx <55556836+nyx191@users.noreply.github.com>
+Date: Wed, 30 Apr 2025 10:09:40 +0300
+Subject: [PATCH] Delete QProcess objects only after waiting for process
+ termination
+
+---
+ src/daemon/XorgDisplayServer.cpp | 8 ++++----
+ src/helper/xorguserhelper.cpp    | 7 +++++--
+ 2 files changed, 9 insertions(+), 6 deletions(-)
+
+diff --git a/src/daemon/XorgDisplayServer.cpp b/src/daemon/XorgDisplayServer.cpp
+index 475582b95..a24132077 100644
+--- a/src/daemon/XorgDisplayServer.cpp
++++ b/src/daemon/XorgDisplayServer.cpp
+@@ -243,14 +243,13 @@ namespace SDDM {
+         const auto program = displayStopCommand.takeFirst();
+         displayStopScript->start(program, displayStopCommand);
+ 
++        // delete displayStopScript on finish
++        connect(displayStopScript, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished), displayStopScript, &QProcess::deleteLater);
++
+         // wait for finished
+         if (!displayStopScript->waitForFinished(5000))
+             displayStopScript->kill();
+ 
+-        // clean up the script process
+-        displayStopScript->deleteLater();
+-        displayStopScript = nullptr;
+-
+         // emit signal
+         emit stopped();
+     }
+@@ -305,6 +304,7 @@ namespace SDDM {
+             if (!xrdbProcess.waitForFinished(5000)) {
+                 qDebug() << "Could not set Xcursor resources" << xrdbProcess.error();
+                 xrdbProcess.kill();
++                xrdbProcess.waitForFinished(-1);
+             }
+         }
+ 
+diff --git a/src/helper/xorguserhelper.cpp b/src/helper/xorguserhelper.cpp
+index b190dcf5a..a06590686 100644
+--- a/src/helper/xorguserhelper.cpp
++++ b/src/helper/xorguserhelper.cpp
+@@ -237,6 +237,7 @@ void XOrgUserHelper::startDisplayCommand()
+         if (!xrdbProcess.waitForFinished(5000)) {
+             qDebug() << "Could not set Xcursor resources" << xrdbProcess.error();
+             xrdbProcess.kill();
++            xrdbProcess.waitForFinished(-1);
+         }
+     }
+ 
+@@ -245,9 +246,10 @@ void XOrgUserHelper::startDisplayCommand()
+     qInfo("Running display setup script: %s", qPrintable(cmd));
+     QProcess *displayScript = nullptr;
+     if (startProcess(cmd, env, &displayScript)) {
++        // delete displayScript on finish
++        connect(displayScript, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished), displayScript, &QProcess::deleteLater);
+         if (!displayScript->waitForFinished(30000))
+             displayScript->kill();
+-        displayScript->deleteLater();
+     }
+ }
+ 
+@@ -257,9 +259,10 @@ void XOrgUserHelper::displayFinished()
+     qInfo("Running display stop script: %s", qPrintable(cmd));
+     QProcess *displayStopScript = nullptr;
+     if (startProcess(cmd, sessionEnvironment(), &displayStopScript)) {
++        // delete displayStopScript on finish
++        connect(displayStopScript, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished), displayStopScript, &QProcess::deleteLater);
+         if (!displayStopScript->waitForFinished(5000))
+             displayStopScript->kill();
+-        displayStopScript->deleteLater();
+     }
+ }
+ 

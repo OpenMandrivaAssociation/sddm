@@ -1,0 +1,23 @@
+From 662a409aabec39bdbff2a13fa008e6a7a873dca1 Mon Sep 17 00:00:00 2001
+From: Alex Volkov <alex@bootes.sytes.net>
+Date: Mon, 18 Aug 2025 15:13:35 +0500
+Subject: [PATCH] fixed wrong string literal assignment
+
+Signed-off-by: Alex Volkov <alex@bootes.sytes.net>
+---
+ src/daemon/Display.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/daemon/Display.cpp b/src/daemon/Display.cpp
+index e10977ebd..c872615d0 100644
+--- a/src/daemon/Display.cpp
++++ b/src/daemon/Display.cpp
+@@ -77,7 +77,7 @@ namespace SDDM {
+     }
+ 
+     int fetchAvailableVt() {
+-        if (!isTtyInUse(QStringLiteral("tty" STRINGIFY(SDDM_INITIAL_VT)))) {
++        if (!isTtyInUse(QStringLiteral("tty%1").arg(SDDM_INITIAL_VT))) {
+             return SDDM_INITIAL_VT;
+         }
+         const auto vt = VirtualTerminal::currentVt();

@@ -1,0 +1,55 @@
+From f78888726f98d772f27d58b9569d28ada388dd91 Mon Sep 17 00:00:00 2001
+From: Nikolas Kyx <55556836+nyx191@users.noreply.github.com>
+Date: Tue, 29 Apr 2025 19:11:51 +0300
+Subject: [PATCH] Bump minimal timeout for waitForFinished() to 5 seconds
+
+Killing xsetroot early on slow machines leads to warning in journal
+---
+ src/daemon/XorgDisplayServer.cpp | 4 ++--
+ src/helper/xorguserhelper.cpp    | 4 ++--
+ 2 files changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/src/daemon/XorgDisplayServer.cpp b/src/daemon/XorgDisplayServer.cpp
+index 4a75662d4..475582b95 100644
+--- a/src/daemon/XorgDisplayServer.cpp
++++ b/src/daemon/XorgDisplayServer.cpp
+@@ -285,7 +285,7 @@ namespace SDDM {
+         connect(setCursor, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished), setCursor, &QProcess::deleteLater);
+ 
+         // wait for finished
+-        if (!setCursor->waitForFinished(1000)) {
++        if (!setCursor->waitForFinished(5000)) {
+             qWarning() << "Could not setup default cursor";
+             setCursor->kill();
+         }
+@@ -302,7 +302,7 @@ namespace SDDM {
+                 xrdbProcess.write(QStringLiteral("Xcursor.size: %1\n").arg(xcursorSize).toUtf8());
+ 
+             xrdbProcess.closeWriteChannel();
+-            if (!xrdbProcess.waitForFinished(1000)) {
++            if (!xrdbProcess.waitForFinished(5000)) {
+                 qDebug() << "Could not set Xcursor resources" << xrdbProcess.error();
+                 xrdbProcess.kill();
+             }
+diff --git a/src/helper/xorguserhelper.cpp b/src/helper/xorguserhelper.cpp
+index 65dbe1ebe..b190dcf5a 100644
+--- a/src/helper/xorguserhelper.cpp
++++ b/src/helper/xorguserhelper.cpp
+@@ -215,7 +215,7 @@ void XOrgUserHelper::startDisplayCommand()
+     qInfo("Setting default cursor...");
+     QProcess *setCursor = nullptr;
+     if (startProcess(QStringLiteral("xsetroot -cursor_name left_ptr"), env, &setCursor)) {
+-        if (!setCursor->waitForFinished(1000)) {
++        if (!setCursor->waitForFinished(5000)) {
+             qWarning() << "Could not setup default cursor";
+             setCursor->kill();
+         }
+@@ -234,7 +234,7 @@ void XOrgUserHelper::startDisplayCommand()
+             xrdbProcess.write(QStringLiteral("Xcursor.size: %1\n").arg(xcursorSize).toUtf8());
+ 
+         xrdbProcess.closeWriteChannel();
+-        if (!xrdbProcess.waitForFinished(1000)) {
++        if (!xrdbProcess.waitForFinished(5000)) {
+             qDebug() << "Could not set Xcursor resources" << xrdbProcess.error();
+             xrdbProcess.kill();
+         }
