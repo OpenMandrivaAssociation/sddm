@@ -1,0 +1,22 @@
+diff -up sddm-0.21.0/src/daemon/XorgDisplayServer.cpp.omv~ sddm-0.21.0/src/daemon/XorgDisplayServer.cpp
+--- sddm-0.21.0/src/daemon/XorgDisplayServer.cpp.omv~	2026-03-26 02:58:42.195286637 +0100
++++ sddm-0.21.0/src/daemon/XorgDisplayServer.cpp	2026-03-26 02:58:46.616463300 +0100
+@@ -123,7 +123,6 @@ namespace SDDM {
+         }
+ 
+         args << QStringLiteral("-auth") << m_xauth.authPath()
+-             << QStringLiteral("-noreset")
+              << QStringLiteral("-displayfd") << QString::number(pipeFds[1]);
+ 
+         process->setArguments(args);
+diff -up sddm-0.21.0/src/daemon/XorgUserDisplayServer.cpp.omv~ sddm-0.21.0/src/daemon/XorgUserDisplayServer.cpp
+--- sddm-0.21.0/src/daemon/XorgUserDisplayServer.cpp.omv~	2026-03-26 02:58:52.320650191 +0100
++++ sddm-0.21.0/src/daemon/XorgUserDisplayServer.cpp	2026-03-26 02:58:58.445691305 +0100
+@@ -59,7 +59,6 @@ QString XorgUserDisplayServer::command(D
+              << mainConfig.X11.ServerArguments.get().split(QLatin1Char(' '), Qt::SkipEmptyParts)
+              << QStringLiteral("-background") << QStringLiteral("none")
+              << QStringLiteral("-seat") << display->seat()->name()
+-             << QStringLiteral("-noreset")
+              << QStringLiteral("-keeptty")
+              << QStringLiteral("-novtswitch");
+     }
