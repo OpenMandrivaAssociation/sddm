@@ -1,0 +1,26 @@
+From dfa5315fd600760f8f3abddf7fb704202ffb07b3 Mon Sep 17 00:00:00 2001
+From: sgakerru <sulmpx60@yandex.ru>
+Date: Sat, 1 Nov 2025 19:44:18 +0400
+Subject: [PATCH] Display: also reuse session created by sddm-autologin
+
+If we have an online session created by 'sddm-autologin',
+try to reuse it as if it was created by 'sddm'
+---
+ src/daemon/Display.cpp | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/src/daemon/Display.cpp b/src/daemon/Display.cpp
+index c872615d0..a36b89d98 100644
+--- a/src/daemon/Display.cpp
++++ b/src/daemon/Display.cpp
+@@ -419,7 +419,9 @@ namespace SDDM {
+             for(const SessionInfo &s : reply.value()) {
+                 if (s.userName == user) {
+                     OrgFreedesktopLogin1SessionInterface session(Logind::serviceName(), s.sessionPath.path(), QDBusConnection::systemBus());
+-                    if (session.service() == QLatin1String("sddm") && session.state() == QLatin1String("online")) {
++                    if ((session.service() == QLatin1String("sddm")
++                        || session.service() == QLatin1String("sddm-autologin"))
++                            && session.state() == QLatin1String("online")) {
+                         m_reuseSessionId = s.sessionId;
+                         break;
+                     }

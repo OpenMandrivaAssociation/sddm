@@ -1,0 +1,24 @@
+From 45e6c62cbbea2417514fb8d1cb3c382ba55bdf41 Mon Sep 17 00:00:00 2001
+From: Neal Gompa <neal@gompa.dev>
+Date: Fri, 27 Mar 2026 07:19:06 -0400
+Subject: [PATCH] CI: Install the right package for "dnf builddep" command
+
+With Fedora and openSUSE transitioning to DNF5, the builddep command
+is now provided by "dnf5-plugins" instead of "dnf-plugins-core".
+---
+ .github/workflows/build.yml | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/.github/workflows/build.yml b/.github/workflows/build.yml
+index c8bcfc2b1..80700546f 100644
+--- a/.github/workflows/build.yml
++++ b/.github/workflows/build.yml
+@@ -50,7 +50,7 @@ jobs:
+         if: ${{ contains(matrix.container-image, 'fedora') || contains(matrix.container-image, 'centos') || contains(matrix.container-image, 'opensuse') }}
+         run: |
+           set -x
+-          dnf --assumeyes install dnf-plugins-core
++          if [[ "${{ matrix.container-image }}" =~ "centos" ]]; then dnf --assumeyes install dnf-plugins-core; else dnf --assumeyes install dnf5-plugins; fi
+           if [[ "${{ matrix.container-image }}" =~ "centos" ]]; then dnf --assumeyes config-manager --set-enabled crb && dnf --assumeyes install epel-release; fi
+           dnf --assumeyes builddep sddm
+           if [ "${{ matrix.qt }}" = "qt5" ] && [[ "${{ matrix.container-image }}" =~ "fedora" ]]; then dnf --assumeyes install qt5-qtbase-devel qt5-qtdeclarative-devel qt5-qttools-devel; fi

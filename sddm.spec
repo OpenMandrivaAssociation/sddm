@@ -9,7 +9,7 @@ Release: 0.%{date}.1
 # git archive --format=tar --prefix sddm-0.20.1-$(date +%Y%m%d)/ HEAD | xz -vf > sddm-0.20.1-$(date +%Y%m%d).tar.xz
 Source0: https://github.com/sddm/sddm/archive/develop/sddm-%{version}-%{date}.tar.gz
 %else
-Release: 12
+Release: 13
 Source0: https://github.com/sddm/sddm/archive/refs/tags/v%{version}.tar.gz
 %endif
 URL: https://github.com/sddm
@@ -103,6 +103,10 @@ https://github.com/sddm/sddm/commit/03e22643b975aa8cc1bea2f20152731220fb54a1.pat
 https://github.com/sddm/sddm/commit/4fe234bd475ccb2a1e5aa194bec5c3aad08cebe6.patch
 https://github.com/sddm/sddm/commit/08a4a77073ffc5566baa54fa5345f20eea999648.patch
 https://github.com/sddm/sddm/commit/662a409aabec39bdbff2a13fa008e6a7a873dca1.patch
+https://github.com/sddm/sddm/commit/dfa5315fd600760f8f3abddf7fb704202ffb07b3.patch
+https://github.com/sddm/sddm/commit/6f082f4734a33627b742d65b30a0a76951787fc8.patch
+https://github.com/sddm/sddm/commit/ddae4d97c70482f7713491da0faef3f96e94ba44.patch
+https://github.com/sddm/sddm/commit/bc9eee8280275723767213220e88f6b14157ba1f.patch
 # -noreset is removed in Xlibre
 sddm-0.21.0-no-noreset.patch
 

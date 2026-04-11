@@ -1,0 +1,30 @@
+From ddae4d97c70482f7713491da0faef3f96e94ba44 Mon Sep 17 00:00:00 2001
+From: Baurzhan Muftakhidinov <baurthefirst@gmail.com>
+Date: Fri, 16 Jan 2026 21:29:27 +0500
+Subject: [PATCH] Update Kazakh translation
+
+---
+ data/translations/kk.ts | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/data/translations/kk.ts b/data/translations/kk.ts
+index 5c56a77de..b907baf88 100644
+--- a/data/translations/kk.ts
++++ b/data/translations/kk.ts
+@@ -5,14 +5,14 @@
+     <name>PictureBox</name>
+     <message>
+         <source>Press to login</source>
+-        <translation type="unfinished"></translation>
++        <translation>Кіру үшін басыңыз</translation>
+     </message>
+ </context>
+ <context>
+     <name>QObject</name>
+     <message>
+         <source>%1 (Wayland)</source>
+-        <translation type="unfinished"></translation>
++        <translation>%1 (Wayland)</translation>
+     </message>
+ </context>
+ <context>
